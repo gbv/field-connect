@@ -291,7 +291,7 @@ border: 1px solid #555;</string>
             <item row="2" column="0">
              <widget class="QLabel" name="labelCrs">
               <property name="toolTip">
-               <string>Koordinatenbezugssystem</string>
+               <string>Coordinate reference system</string>
               </property>
               <property name="text">
                <string>CRS:</string>
@@ -446,7 +446,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ist diese Option aktiviert, werden die hierarchischen Relationen zur vereinfachten Relation &lt;span style=&quot; font-style:italic;&quot;&gt;isChildOf&lt;/span&gt; zusammengefasst, die jeweils die unmittelbar übergeordnete Ressource angibt. Diese Option sollte im Normalfall aktiviert bleiben.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Combines hierarchical relations into the simplified relation &amp;quot;isChildOf&amp;quot;. Only available for CSV export. Corresponds to the checkbox &amp;quot;Combine hierarchical relations&amp;quot; in the user interface. (Default value: true)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>combineHierarchicalRelations</string>
@@ -564,7 +564,7 @@ border: 1px solid #555;</string>
             <item row="1" column="0">
              <widget class="QLabel" name="label_4">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ist das Ziel KBS anders als das Layer KBS, wird nach einer Koordinatentransformation gefragt&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string/>
               </property>
               <property name="text">
                <string>Target CRS:</string>
@@ -596,7 +596,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; font-style:italic; color:#212529;&quot;&gt;permitDeletions (Boolean)&lt;/span&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529;&quot;&gt;: Erlaubt es, Felder beim Import zu entfernen. Entspricht der Checkbox &amp;quot;Löschen erlauben&amp;quot; in der Benutzeroberfläche. (Standardwert: false)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Allows fields to be removed during import. Corresponds to the checkbox &amp;quot;Permit deletions&amp;quot; in the user interface. (Default value: false)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Permit deletions</string>
@@ -629,7 +629,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; font-style:italic; color:#212529;&quot;&gt;ignoreUnconfiguredFields (Boolean)&lt;/span&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529;&quot;&gt;: Bricht den Import nicht ab, wenn unkonfigurierte Felder gefunden werden. Entspricht der Checkbox &amp;quot;Nicht konfigurierte Felder ignorieren&amp;quot; in der Benutzeroberfläche. (Standardwert: false)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Does not abort the import if unconfigured fields are found. Corresponds to the checkbox &amp;quot;Ignore unconfigured fields&amp;quot; in the user interface. (Default value: false)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Ignore unconf. Fields</string>

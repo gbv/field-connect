@@ -190,10 +190,25 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         gs = self.treeRoot.findGroups()
         [self.selectExGroup.addItem(group.name(), group) for group in gs] if gs else self.selectExGroup.addItem(self.tr('No groups available'))
 
+    def setProjectCrs(self):
+        """Sets the project crs when connecting to Field Desktop if available,
+        or uses the one set in the QGIS Project"""
+        epsgId = safe_get(self.api.get(f'/{self.activeProject}/project', port=3001).json(), 'resource', 'epsgId')
+        crs = QgsCoordinateReferenceSystem(epsgId)
+
+        if crs.isValid():
+            self.project.setCrs(crs)
+            self.selectImportCrs.setCrs(crs)
+            self.selectExportCrs.setCrs(crs)
+        else:
+            projectCrs = self.project.crs()
+            self.selectExportCrs.setCrs(projectCrs)
+            self.selectExportCrs.setCrs(projectCrs)
+            self.selectExportCrs.setCrs(projectCrs)
+            self.mB.pushWarning(self.plugin_name, self.tr(f'Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS Project crs.'))
+
     def toggleFieldInfo(self, user='', version=''):
-        """
-        Show user and version when connected, hide if not
-        """
+        """Show user and version when connected, hide if not"""
         d = {self.labelFieldUser:user, self.labelFieldVersion:version}
         for k,v in d.items():
             row = self.formLayout.getWidgetPosition(k)[0]
@@ -451,11 +466,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnExport.setEnabled(onOff)
         # on or off only
         if onOff:
-            self.btnConnect.setText(self.tr('Trennen'))
+            self.btnConnect.setText(self.tr('Disconnect'))
             self.selectCats.setEnabled(onOff)
         else:
             self.selectProject.setText('-')
-            self.btnConnect.setText(self.tr('Verbinden'))
+            self.btnConnect.setText(self.tr('Connect'))
             self.selectCats.setEnabled(onOff)
             self.projectConfig = {}
             self.projectConfigCategories = {}
@@ -481,6 +496,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.activeProject = safe_get(projectInfoJSON, 'activeProject')
             self.toggleFieldInfo(self.fieldUser, self.fieldVersion)
             self.selectProject.setText(self.activeProject)
+            self.setProjectCrs()
 
             # get config from active project as json
             self.projectConfig = self.api.get(f'/configuration/{self.activeProject}').json()

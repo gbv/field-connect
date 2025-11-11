@@ -56,7 +56,6 @@ class ApiClient:
         if not r:
             self.plugin.setConnectionEnabled(False)
             self.plugin.fieldDisconnect()
-            # todo: some message - self.plugin.labels['CONNECTION_LOST']
             self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_LOST'] + f': {r.text}')
             return False
         return True
