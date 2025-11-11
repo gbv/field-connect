@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/field_connect" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
