@@ -512,10 +512,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
         if not self.api.isConnectionActive(): return
 
-        # lang = QgsApplication.locale()  # for aliases - unused?
         # collect ui options
         csv_ui_opts = {
-            # todo: combineHierarchicalRelations = False untested
             'combineHierarchicalRelations': self.chkCombineRel.isChecked()
         }
 
@@ -579,6 +577,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     geom_type = "NoGeometry"
 
                 features[geom_type].append(feat)
+
+            # add empty list in case there are no features, to add a schema only layer anyway
+            if not features: features['NoGeometry'] = []
 
             for gType, feats in features.items():
                 layType = GEOJSON_TO_QGIS.get(gType).name
