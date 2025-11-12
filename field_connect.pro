@@ -16,7 +16,6 @@ FORMS = \
 
 # --- Translation output files (.ts)
 TRANSLATIONS = \
-    i18n/FieldConnect_en.ts \
     i18n/FieldConnect_de.ts \
     i18n/FieldConnect_es.ts \
     i18n/FieldConnect_fr.ts \
