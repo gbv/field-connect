@@ -44,7 +44,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="88"/>
         <source>Connected to Field Desktop</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbunden mit Field Desktop</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="89"/>
