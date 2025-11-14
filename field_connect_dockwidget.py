@@ -30,7 +30,7 @@ from collections import defaultdict
 from qgis.core import Qgis, QgsApplication, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
 QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
 QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, \
-QgsExpressionContextUtils, NULL
+QgsExpressionContextUtils, QgsMapLayer, NULL
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QVariant, pyqtSignal
 from qgis.gui import QgsMessageBar
@@ -684,6 +684,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 for i in range(len(fields)):
                     layer.setDefaultValueDefinition(i, QgsDefaultValue("''", False))
 
+                # apply layer properties
+                # change opacity
+                if layer.wkbType() != QgsWkbTypes.NoGeometry:
+                    layer.renderer().symbol().setOpacity(0.7)
+
                 if filename:
                     if not filename.lower().endswith(".gpkg"):
                         filename += ".gpkg"
@@ -723,7 +728,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     #         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
                     #         return
                     if error_code == 0:
-                        pass
+                        # save style to successfully written geopackage
+                        # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
+                        layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
                     else:
                         self.mB.pushCritical(self.plugin_name, self.labels['IMPORT_FAILED'] + f': {error_message}')
                         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
@@ -735,11 +742,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # add layer to group_ref
                 self.project.addMapLayer(layer, False)
                 group_ref.insertLayer(-1, layer)
-
-                # apply layer properties
-                # change opacity
-                if layer.wkbType() != QgsWkbTypes.NoGeometry:
-                    layer.renderer().symbol().setOpacity(0.7)
 
     def fieldExport(self):
         """
