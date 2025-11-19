@@ -96,48 +96,67 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # manual attribute translations
         self.trAttrs = {
-            'identifier': {'label': self.tr('Identifier'), 'description': self.tr('Identifier description')},
+            'identifier': {'label': self.tr('Identifier'), 'description': self.tr('The unique identifier of the resource')},
             'date': {
-                'label': self.tr('Date'),
-                'value': {'label': self.tr('value'), 'description': self.tr('The date specification for a single date; the start date for a date range')},
-                'endValue': {'label': self.tr('endValue'), 'description': self.tr('The end date for a date range')},
-                'isRange': {'label': self.tr('isRange?'), 'description': self.tr('Indicates whether the date is a date range. Possible values are: true (date range), false (single date).')}
+                'value': {'label': self.tr('Value'), 'description': self.tr('The date specification for a single date; the start date for a date range')},
+                'endValue': {'label': self.tr('End value'), 'description': self.tr('The end date for a date range')},
+                'isRange': {'label': self.tr('Is range?'), 'description': self.tr('Indicates whether the date is a date range. Possible values are: true (date range), false (single date).')}
             },
             'relations': {
                 'label': self.tr('Relation'),
-                'isChildOf': {'label': self.tr('belongs to'), 'description': self.tr('Specifies the direct parent resource in the hierarchy; remains empty for top-level resources.')},
-                'depicts': {'label': self.tr('depicts'), 'description': self.tr('Links the image to one or more resources')},
-                'isDepictedIn': {'label': self.tr('is depicted in'), 'description': self.tr('Links the resource to one or more images.')},
-                'isMapLayerOf': {'label': self.tr('is map layer of'), 'description': self.tr('Adds the image as a map layer in the context of the resource specified as the target.')},
-                'hasMapLayer': {'label': self.tr('has map layer'), 'description': self.tr('Adds one or more images as a map layer in the context of this resource.')},
-                'hasDefaultMapLayer': {'label': self.tr('hasDefaultMapLayer'), 'description': self.tr('hasDefaultMapLayer Description')},
-                'isAbove': {'label': self.tr('is above'), 'description': self.tr('is above description')}
+                'isChildOf': {'label': self.tr('Is child of'), 'description': self.tr('Specifies the direct parent resource in the hierarchy; remains empty for top-level resources.')},
+                'isRecordedIn': {'label': self.tr('Is recorded in'), 'description': self.tr('Specifies the operation in which the resource has been recorded; remains empty for top-level resources.')},
+                'liesWithin': {'label': self.tr('Lies within'), 'description': self.tr('Specifies the direct parent resource in the hierarchy; remains empty for top-level resources or if the direct parent resource is an operation.')},
+                'depicts': {'label': self.tr('Depicts'), 'description': self.tr('Links the image to one or more resources')},
+                'isDepictedIn': {'label': self.tr('Is depicted in'), 'description': self.tr('Links the resource to one or more images.')},
+                'isMapLayerOf': {'label': self.tr('Is map layer of'), 'description': self.tr('Adds the image as a map layer in the context of the resource specified as the target.')},
+                'hasMapLayer': {'label': self.tr('Has map layer'), 'description': self.tr('Adds one or more images as a map layer in the context of this resource.')},
+                'hasDefaultMapLayer': {'label': self.tr('Has default map layer'), 'description': self.tr('Specifies that the linked image is a default map layer in the context of this resource.')}
             },
             'dating': {
-                'label': self.tr('Dating'),
-                'type': {'label': self.tr('type'), 'description': self.tr('The dating type. Possible values are: range (Period), single (Single year), before (Before), after (After), scientific (Scientific).')},
+                'type': {'label': self.tr('Type'), 'description': self.tr('The dating type. Possible values are: range (Period), single (Single year), before (Before), after (After), scientific (Scientific).')},
                 'begin': {
-                    'label': self.tr('begin'),
-                    'description': self.tr('Year specification that is set for the dating type after and for the start date for the dating type range.'),
+                    'label': self.tr('Beginning:'),
+                    'description': self.tr('Year specification that is set for the dating type "after" and as the start date for the dating type "range".'),
                     'inputType': {'label': self.tr('Dating system'), 'description': self.tr('The time scale. Possible values are: bce (BCE), ce (CE), bp (BP).')},
                     'inputYear': {'label': self.tr('Year'), 'description': self.tr('The year.')}
                 },
-                'end': {'label': self.tr('end'), 'description': self.tr('Year specification, which is set for the dating types single, before and scientific as well as for the end date for the dating type range.'),},
-                'margin': {'label': self.tr('margin'), 'description': self.tr('Tolerance margin in years for dating type scientific.')},
-                'source': {'label': self.tr('source'), 'description': self.tr('Source of the dating, multilingual text field.')},
-                'isImprecise': {'label': self.tr('is imprecise?'), 'description': self.tr('Specification "Imprecise". Cannot be set for dating type scientific. Possible values are: true (yes), false (no).')},
-                'isUncertain': {'label': self.tr('is uncertain?'), 'description': self.tr('Specification "Uncertain". Cannot be set for dating type scientific. Possible values are: true (yes), false (no).')},
+                'end': {'label': self.tr('End:'), 'description': self.tr('Year specification that is set for the dating types "single", "before" and "scientific" and as the end date for the dating type "range".'),},
+                'margin': {'label': self.tr('Margin'), 'description': self.tr('Tolerance margin in years for dating type "scientific".')},
+                'source': {'label': self.tr('Source'), 'description': self.tr('Source of the dating.')},
+                'isImprecise': {'label': self.tr('Is imprecise?'), 'description': self.tr('Specification "Imprecise". Cannot be set for dating type "scientific". Possible values are: true (yes), false (no).')},
+                'isUncertain': {'label': self.tr('Is uncertain?'), 'description': self.tr('Specification "Uncertain". Cannot be set for dating type "scientific". Possible values are: true (yes), false (no).')},
+            },
+            'measurement': {
+                'inputValue': {'label': self.tr('Value'), 'description': self.tr('The measured numerical value.')},
+                'inputRangeEndValue': {'label': self.tr('End value'), 'description': self.tr('The second measured numerical value, if the dimension is a range.')},
+                'measurementComment': {'label': self.tr('Comment')},
+                'isImprecise': {'label': self.tr('Is imprecise?'), 'description': self.tr('Specification "Imprecise". Possible values are: true (yes), false (no).')},
+            },
+            'dimension': {
+                'measurementPosition': {'label': self.tr('As measured by')},
+                'inputUnit': {'label': self.tr('Unit'), 'description': self.tr('The unit of measurement. Possible values: mm, cm, m.')}
+            },
+            'weight': {
+                'measurementDevice': {'label': self.tr('Measurement device')},
+                'inputUnit': {'label': self.tr('Unit'), 'description': self.tr('The unit of measurement. Possible values: mg, g, kg.')}
+            },
+            'volume': {
+                'measurementTechnique': {'label': self.tr('Measurement technique')},
+                'inputUnit': {'label': self.tr('Unit'), 'description': self.tr('The unit of measurement. Possible values: ml, l.')}
+            },
+            'literature': {
+                'quotation': {'label': self.tr('Literature quotation')},
+                'zenonId': {'label': self.tr('Zenon ID')},
+                'doi': {'label': self.tr('DOI')},
+                'page': {'label': self.tr('Page')},
+                'figure': {'label': self.tr('Figure')}
             },
             'period': {
                 'label': self.tr('Period'),
-                'description': self.tr('Period description'),
                 'value': {'label': self.tr('Value'), 'description': self.tr('The identifier of the selected value; if two values are selected, the first of the two values.')},
-                'endValue': {'label': self.tr('EndValue'), 'description': self.tr('The identifier of the second selected value if two values are selected.')}
+                'endValue': {'label': self.tr('End value'), 'description': self.tr('The identifier of the second selected value if two values are selected.')}
             },
-            'dimensionLength': {
-                'label': self.tr('dimensionLength'), 'description': self.tr('dimensionLength description')
-            },
-            'webGisId': {'label': self.tr('Web-GIS-ID'), 'description': self.tr('Web-GIS-ID description')},
             "de": {'label': self.tr('German')},
             "en": {'label': self.tr('English')},
             "es": {'label': self.tr('Spanish')},
@@ -150,7 +169,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # link identical translations
         self.trAttrs['dating']['end']['inputType'] = self.trAttrs['dating']['begin']['inputType']
         self.trAttrs['dating']['end']['inputYear'] = self.trAttrs['dating']['begin']['inputYear']
-        # dimension*?
+        self.trAttrs['dimension']['inputValue'] = self.trAttrs['measurement']['inputValue']
+        self.trAttrs['dimension']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
+        self.trAttrs['dimension']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
+        self.trAttrs['dimension']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
+        self.trAttrs['weight']['inputValue'] = self.trAttrs['measurement']['inputValue']
+        self.trAttrs['weight']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
+        self.trAttrs['weight']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
+        self.trAttrs['weight']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
+        self.trAttrs['volume']['inputValue'] = self.trAttrs['measurement']['inputValue']
+        self.trAttrs['volume']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
+        self.trAttrs['volume']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
+        self.trAttrs['volume']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
 
         # layout
         self.toggleFieldInfo()
@@ -205,7 +235,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectExportCrs.setCrs(projectCrs)
             self.selectExportCrs.setCrs(projectCrs)
             self.selectExportCrs.setCrs(projectCrs)
-            self.mB.pushWarning(self.plugin_name, self.tr(f'Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS Project crs.'))
+            self.mB.pushWarning(self.plugin_name, self.tr(f'Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.'))
 
     def toggleFieldInfo(self, user='', version=''):
         """Show user and version when connected, hide if not"""

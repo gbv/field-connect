@@ -336,7 +336,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>GPKG</string>
+                 <string>GeoPackage</string>
                 </property>
                </widget>
               </item>
@@ -401,10 +401,10 @@ border: 1px solid #555;</string>
                    <bool>false</bool>
                   </property>
                   <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Loads field aliases and descriptions from Field Desktop into the attribute table.&lt;br/&gt;Might increase import time&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.&lt;br/&gt;Might increase import time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="text">
-                   <string>Load aliases</string>
+                   <string>Load labels and descriptions</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -446,10 +446,10 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Combines hierarchical relations into the simplified relation &amp;quot;isChildOf&amp;quot;. Only available for CSV export. Corresponds to the checkbox &amp;quot;Combine hierarchical relations&amp;quot; in the user interface. (Default value: true)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;If this option is enabled, the hierarchical relations are combined into the simplified relation &amp;quot;isChildOf&amp;quot;, which specifies the direct parent resource. This option should normally remain enabled.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
-                 <string>combineHierarchicalRelations</string>
+                 <string>Combine hierarchical relations</string>
                 </property>
                 <property name="checked">
                  <bool>true</bool>
@@ -596,10 +596,10 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Allows fields to be removed during import. Corresponds to the checkbox &amp;quot;Permit deletions&amp;quot; in the user interface. (Default value: false)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;If this option is enabled, fields can not only be changed but also be deleted. Any fields (including relations) for which the corresponding field in the attribute table is empty will be deleted. Fields not listed in the attribute table remain unchanged.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
-                 <string>Permit deletions</string>
+                 <string>Permit field deletions</string>
                 </property>
                </widget>
               </item>
@@ -629,10 +629,10 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Does not abort the import if unconfigured fields are found. Corresponds to the checkbox &amp;quot;Ignore unconfigured fields&amp;quot; in the user interface. (Default value: false)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;If this option is enabled, the export process will not be aborted if unconfigured fields are encountered. Instead, data in unconfigured fields will be ignored.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
-                 <string>Ignore unconf. Fields</string>
+                 <string>Ignore unconfigured fields</string>
                 </property>
                </widget>
               </item>
