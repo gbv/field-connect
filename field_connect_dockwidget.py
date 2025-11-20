@@ -859,6 +859,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 options.layerName = lupLayerTemp.name()
                 QgsVectorFileWriter.writeAsVectorFormatV3(lupLayerTemp, filename, transformContext, options)
                 lupLayerTemp.setDataSource(f'{filename}|layername={options.layerName}', options.layerName, 'ogr', False)
+        # save qgis project to geopackage to keep value relations and layer variables
+        if filename: self.project.write(f'geopackage:{filename}?projectName={self.activeProject}')
 
         self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
         self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
