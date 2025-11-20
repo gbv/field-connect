@@ -844,13 +844,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
                         return
 
-                # save style to successfully written geopackage
-                # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
-                layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
-
                 # add layer to group_ref
                 self.project.addMapLayer(layer, False)
                 group_ref.insertLayer(-1, layer)
+
+            # save style to geopackage
+            # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
+            if filename: layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
 
         # add lookup layer
         if lupLayerTemp:
