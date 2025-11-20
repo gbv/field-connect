@@ -237,6 +237,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectExportCrs.setCrs(projectCrs)
             self.mB.pushWarning(self.plugin_name, self.tr(f'Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.'))
 
+    def normalize_export_value(self, value):
+        """Normalize attribute values for CSV export.
+        Converts QGIS multiselect formats {a,b,c} → a;b;c, stripping any quotes."""
+
+        if isinstance(value, str) and value.startswith('{') and value.endswith('}'):
+            inner = value[1:-1].strip()
+            if inner:
+                # remove any existing double quotes and split by comma
+                parts = [p.strip().replace('"', '') for p in inner.split(',') if p.strip()]
+                return ';'.join(parts)
+            else:
+                return ''
+
+        return value
+
     def toggleFieldInfo(self, user='', version=''):
         """Show user and version when connected, hide if not"""
         d = {self.labelFieldUser:user, self.labelFieldVersion:version}
@@ -277,6 +292,27 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectCats.model().item(0).setCheckState(Qt.Checked if all_checked else Qt.Unchecked)
             self.selectCats.model().item(0).setText(self.labels['DESELECT_ALL'] if all_checked else self.labels['SELECT_ALL'])
         self.selectCats.model().blockSignals(False)
+
+    def createLookupLayerTemp(self):
+        """Create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'"""
+        fields = QgsFields()
+        # fields.append(QgsField('id', QVariant.Int))
+        fields.append(QgsField('group_id', QVariant.String))
+        fields.append(QgsField('key', QVariant.String))
+        fields.append(QgsField('value', QVariant.String))
+        fields.append(QgsField('description', QVariant.String))
+
+        lupLayer = QgsVectorLayer(
+            'None',   # no geometry
+            f'{self.activeProject}_lookup',
+            "memory"
+        )
+
+        pr = lupLayer.dataProvider()
+        pr.addAttributes(fields)
+        lupLayer.updateFields()
+
+        return lupLayer
 
     def loadImportCategories(self):
         """Loads available categories for import with translated labels
@@ -346,6 +382,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if isinstance(data, dict):
                 if 'name' in data and isinstance(data['name'], str):
                     fieldname = data['name']
+                    inputType = data.get('inputType', '')
                     if fieldname != 'category':
                         if fieldname in seen:
                             print(f'Duplicate field "{fieldname}" found at {path}')
@@ -364,7 +401,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 vlabel = vdef.get('label', {}).get(lang, key)
                                 vmap[vlabel] = key  # vmaps need the format description:value, although the gui says value:description
                             if vmap:
-                                valuemaps[fieldname] = {'map': vmap}
+                                valuemaps[fieldname] = {'map': vmap, 'type': inputType}
 
                         # handle relation fields
                         if data.get('inputType') == 'relation':
@@ -541,6 +578,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
         if not self.api.isConnectionActive(): return
+        lupLayerTemp = None
 
         # collect ui options
         csv_ui_opts = {
@@ -577,6 +615,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # print(f'csv_header_translations: {csv_header_translations}')
                 # print(f'valuemaps: {valuemaps}')
             csv_rows = {row["identifier"]: row for row in csv_reader}
+            # print(f'csv_rows: {csv_rows}')
 
             # create fields here for reuse
             fields = QgsFields()
@@ -658,15 +697,57 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         # assign value map
                         if fname in valuemaps:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[fname])
-                            layer.setEditorWidgetSetup(i, setup)
-                            valuemaps.pop(fname, None)
-                            continue
+                            inputType = valuemaps[fname].get('type', '')
+                            # handle checkboxes here
+                            if inputType == 'checkboxes':
+                                lup_entries = []
+                                f_idx = layer.fields().indexFromName(fname)
+                                # convert values to value relation compatible ones like "red;blue;green" to '{red,blue,green}'
+                                for feature in layer.getFeatures():
+                                    val = feature[f_idx]
+                                    if isinstance(val, str) and ';' in val:
+                                        parts = [p.strip() for p in val.split(';') if p.strip()]
+                                        new_val = '{' + ','.join(parts) + '}'
+                                        layer.dataProvider().changeAttributeValues({feature.id(): {f_idx: new_val}})
+
+                                if not lupLayerTemp: lupLayerTemp:QgsVectorLayer = self.createLookupLayerTemp()
+                                for k, v in valuemaps[fname].get('map', {}).items():
+                                    # group_id, key, value, description
+                                    f = QgsFeature()
+                                    f.setFields(lupLayerTemp.fields())
+                                    group_id = f'{cat}_{fname}'
+                                    f['group_id'] = group_id
+                                    f['key'] = k
+                                    f['value'] = v
+                                    f['description'] = ''
+                                    # print(f'isValid: {f.isValid()}, {k}, {v}, {group_id}')
+                                    # todo: show warning if not .isValid()
+                                    lup_entries.append(f)
+                                lupLayerTemp.dataProvider().addFeatures(lup_entries)
+                                lupLayerTemp.updateFields()
+                                lupLayerTemp.updateExtents()
+                                # create value relation
+                                vRelConfig = {
+                                    'Layer': lupLayerTemp.id(),
+                                    'Key': 'key',
+                                    'Value': 'value',
+                                    'FilterExpression': f'"group_id" = \'{group_id}\'',
+                                    'AllowMulti': True,
+                                    'UseCompleter': False,
+                                }
+                                layer.setEditorWidgetSetup(i, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
+                                valuemaps.pop(fname, None)
+                                continue
+                            else:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[fname])
+                                layer.setEditorWidgetSetup(i, setup)
+                                valuemaps.pop(fname, None)
+                                continue
 
                         # test for composite field valuelists
                         if split[-1] in valuemaps:
                             # print(f'only composite field assigned? fname: {fname}')
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[split[-1]])
+                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[-1]])
                             layer.setEditorWidgetSetup(i, setup)
                             valuemaps.pop(split[-1], None)
                             continue
@@ -690,7 +771,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         for base, sub in lup.items():
                             if base in valuemaps and base in split and sub in split:
-                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[base])
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[base])
                                 layer.setEditorWidgetSetup(i, setup)
                                 # to see whats left unassigned at the end
                                 valuemaps.pop(base, None)
@@ -702,11 +783,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
                         print(f'unassigned vmaps:\n{joined}')
 
-
                 # write category to layer variables
                 #! gets lost outside a saved project
                 # todo: for export: try to read this first, then try english datasource name but set translated name as layername
-                QgsExpressionContextUtils.setLayerVariable(layer, "field_category", cat)
+                QgsExpressionContextUtils.setLayerVariable(layer, 'field_category', cat)
                 # read category
                 # QgsExpressionContextUtils.layerScope(layer).variable("category") - also variables().items() for looping
 
@@ -758,25 +838,33 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     #         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
                     #         return
                     if error_code == 0:
-                        # save style to successfully written geopackage
-                        # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
-                        layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
+                        pass
                     else:
                         self.mB.pushCritical(self.plugin_name, self.labels['IMPORT_FAILED'] + f': {error_message}')
                         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
                         return
 
-                self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
-                self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
+                # save style to successfully written geopackage
+                # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
+                layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
 
                 # add layer to group_ref
                 self.project.addMapLayer(layer, False)
                 group_ref.insertLayer(-1, layer)
 
+        # add lookup layer
+        if lupLayerTemp:
+            self.project.addMapLayer(lupLayerTemp, True)
+            if filename:
+                options.layerName = lupLayerTemp.name()
+                QgsVectorFileWriter.writeAsVectorFormatV3(lupLayerTemp, filename, transformContext, options)
+                lupLayerTemp.setDataSource(f'{filename}|layername={options.layerName}', options.layerName, 'ogr', False)
+
+        self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
+        self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
+
     def fieldExport(self):
-        """
-        Export group of layers back to Field Desktop using POST /import/{format}
-        """
+        """Export group of layers back to Field Desktop using POST /import/{format}"""
         if not self.api.isConnectionActive(): return
 
         opts = {
@@ -822,7 +910,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         opts['coordinateTransform'] = False
                         return True
                     elif clicked == cancel_button:
-                        # User cancelled — stop processing
                         return False
 
                 # abort if layer smells fishy
@@ -893,9 +980,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             gj_exp_geoms['features'].append(gj_obj)
 
                         # --- CSV row ---
-                        row = {field: f[field] for field in fields}
+                        # row = {field: f[field] for field in fields}
+                        row = {}
+                        for idx, field_name in enumerate(fields):
+                            val = f[idx]
+                            setup = layer.editorWidgetSetup(idx)
+
+                            if setup and setup.type() == 'ValueRelation':
+                                # config = setup.config()
+                                print(f'before: {val}')
+                                val = self.normalize_export_value(val)
+                                print(val)
+                            row[field_name] = val
+
                         csv_exp_rows[category].append(row)
-                        # print(csv_exp_rows[category])
+                        print(csv_exp_rows[category])
 
             # upload csv here, after all data has been collected
             headers = {'Content-Type': 'text/csv; charset=utf-8'}
