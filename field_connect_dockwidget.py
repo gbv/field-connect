@@ -89,6 +89,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'IMPORT_FAILED': self.tr('Import failed!'),
             'IMPORT_SUCCESS': self.tr('Import successful!'),
             'LAYER_VALIDATION_FAILED': self.tr('Layer validation failed!'),
+            'CAT_NAME_EXTRACTION_FAILED': self.tr('Could not extract category name. Please set the layer variable "field_category" manually'),
             'NO_CATS_FOUND': self.tr('No categories found'),
             'REQUEST_FAILED': self.tr('Request failed'),
             'SELECT_ALL': self.tr('Select all')
@@ -314,6 +315,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return lupLayer
 
+    # dataSourceUri: .gpkg|layername=.*_CategoryName'
+    def getCategoryNameForExport(self, layer: QgsVectorLayer):
+        """Extract the category name from the layer variable 'field_category' which is set on import, or
+        try the dataSourceUri as fallback"""
+        catName = QgsExpressionContextUtils.layerScope(layer).variable('field_category') or layer.dataProvider().dataSourceUri().split('_')[-1] or ''
+
+        return catName
+
     def loadImportCategories(self):
         """Loads available categories for import with translated labels
         and their original name as userData."""
@@ -325,8 +334,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             """
             Recursively collect categories from nested dict/list structures.
             """
-            if not isinstance(node, dict):
-                return
+            if not isinstance(node, dict): return
 
             item = node.get("item")
             if isinstance(item, dict) and "name" in item:
@@ -652,7 +660,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             for gType, feats in features.items():
                 layType = GEOJSON_TO_QGIS.get(gType).name
-                layName = f'{self.activeProject}_{label}_{cat}{"_" + gType if layType else ""}'
+                layNameSource = f'{self.activeProject}_{cat}'
+                layName = f'{self.activeProject}_{label}'
                 layer = QgsVectorLayer(layType, layName, 'memory')
                 pr = layer.dataProvider()
                 layer.setCrs(crs)
@@ -787,8 +796,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 #! gets lost outside a saved project
                 # todo: for export: try to read this first, then try english datasource name but set translated name as layername
                 QgsExpressionContextUtils.setLayerVariable(layer, 'field_category', cat)
-                # read category
-                # QgsExpressionContextUtils.layerScope(layer).variable("category") - also variables().items() for looping
 
                 # set layer definition to avoid writing NULL values which field rejects
                 for i in range(len(fields)):
@@ -805,7 +812,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # print(filename)
                     options = QgsVectorFileWriter.SaveVectorOptions()
                     options.driverName = 'gpkg'
-                    options.layerName = f'{layName}'
+                    options.layerName = f'{layNameSource}'
                     options.fileEncoding = 'UTF-8'
                     # primary key field needs to be of type integer
                     # options.layerOptions = ['FID=identifier']  # sets the primary key field for gpkg to prevent default fid field
@@ -824,9 +831,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         options
                     )
                     # make layer persistent
-                    # todo: set datasource here to have the english label in layername= and use the translated label for the
-                    # layer name that is visible in qgis
-                    layer.setDataSource(f'{filename}|layername={layName}', layName, 'ogr', False)
+                    layer.setDataSource(f'{filename}|layername={layNameSource}', layNameSource, 'ogr', False)
+                    layer.setName(layName)
 
                     # print('error_code:', error_code, 'error_message:', error_message, 'new_filename:', new_filename, 'new_layer:', new_layer)
                     # python 3.10+
@@ -856,6 +862,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if lupLayerTemp:
             self.project.addMapLayer(lupLayerTemp, True)
             if filename:
+                options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
                 options.layerName = lupLayerTemp.name()
                 QgsVectorFileWriter.writeAsVectorFormatV3(lupLayerTemp, filename, transformContext, options)
                 lupLayerTemp.setDataSource(f'{filename}|layername={options.layerName}', options.layerName, 'ogr', False)
@@ -890,8 +897,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             catLayers = defaultdict(list)
             for lTl in cData.findLayers():
                 layer: QgsVectorLayer = lTl.layer()
+                layerCrs: QgsCoordinateReferenceSystem = layer.crs()
                 # ask for coordinate transformation once
-                if layer.crs().authid() != opts['targetCrs'].authid() and opts['coordinateTransform'] is None:
+                if layerCrs.isValid() and layerCrs.authid() != opts['targetCrs'].authid() and opts['coordinateTransform'] is None:
                     # todo: test message box
                     msg = QMessageBox(self)
                     msg.setWindowTitle(self.tr("Coordinate transformation"))
@@ -916,11 +924,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                 # abort if layer smells fishy
                 if QgsWkbTypes.geometryDisplayString(layer.geometryType()) in validGeomTypes and layer.isValid():
-                    # extract category from layer name
-                    # todo: get this from somewhere else since layers could be renamed manually <- .dataProvider().dataSourceUri()
-                    # todo: dataSourceUri only works for geopkg so we need a fallback for a temporary layer (variable should work since
-                    # todo: a temp layer should keep its variable or gets deleted/saved, try name extraction last)
-                    cat = layer.name().split('_')[-2]
+                    cat = self.getCategoryNameForExport(layer)
+                    if not cat:
+                        self.mB.pushWarning(self.plugin_name, self.labels['CAT_NAME_EXTRACTION_FAILED'])
+                        return
                     # check if cat is in Field Desktop, throw error and abort if not
                     # todo: self.getCategoryList()
                     catLayers[cat].append(layer)
@@ -984,19 +991,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         # --- CSV row ---
                         # row = {field: f[field] for field in fields}
                         row = {}
-                        for idx, field_name in enumerate(fields):
-                            val = f[idx]
+                        for field_name in fields:
+                            val = f[field_name]
+                            idx = layer.fields().indexFromName(field_name)
                             setup = layer.editorWidgetSetup(idx)
 
                             if setup and setup.type() == 'ValueRelation':
                                 # config = setup.config()
-                                print(f'before: {val}')
                                 val = self.normalize_export_value(val)
-                                print(val)
                             row[field_name] = val
 
                         csv_exp_rows[category].append(row)
-                        print(csv_exp_rows[category])
+                    # print(csv_exp_rows[category])
 
             # upload csv here, after all data has been collected
             headers = {'Content-Type': 'text/csv; charset=utf-8'}
@@ -1039,6 +1045,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # resp = \
             self.api.post('/import/geojson', params=params, headers=headers, data=data)
 
+            # todo: success message
             # print(csv_exp_rows)
             # print(gj_exp_geoms)
         else: return
