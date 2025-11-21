@@ -30,7 +30,7 @@ from collections import defaultdict
 from qgis.core import Qgis, QgsApplication, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
 QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
 QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, \
-QgsExpressionContextUtils, QgsMapLayer, NULL
+QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, NULL
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QVariant, pyqtSignal
 from qgis.gui import QgsMessageBar
@@ -92,7 +92,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'CAT_NAME_EXTRACTION_FAILED': self.tr('Could not extract category name. Please set the layer variable "field_category" manually'),
             'NO_CATS_FOUND': self.tr('No categories found'),
             'REQUEST_FAILED': self.tr('Request failed'),
-            'SELECT_ALL': self.tr('Select all')
+            'SELECT_ALL': self.tr('Select all'),
+            'INFO_NO_LAYER_SELECTED': self.tr('No layer selected in the layer tree!')
         }
 
         # manual attribute translations
@@ -506,6 +507,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         s.setValue(f'{pn}/import/setalias', self.chkSetAliases.isChecked())
         s.setValue(f'{pn}/import/combineHierarchicalRelations', self.chkCombineRel.isChecked())
         # export tab
+        s.setValue(f'{pn}/export/mode', self.radioExGroup.objectName() if self.radioExGroup.isChecked() else self.radioExActiveLayer.objectName())
         s.setValue(f'{pn}/export/permitDeletions', self.chkPermitDel.isChecked())
         s.setValue(f'{pn}/export/ignoreUnconfiguredFields', self.chkIgnoreUnconfFields.isChecked())
 
@@ -521,6 +523,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.chkSetAliases.setChecked(s.value(f'{pn}/import/setalias', True, bool))
         self.chkCombineRel.setChecked(s.value(f'{pn}/import/combineHierarchicalRelations', True, bool))
         # export tab
+        exMode = s.value(f'{pn}/export/mode', 'radioExGroup')
+        next(rb.setChecked(True) for rb in (self.radioExGroup, self.radioExActiveLayer) if rb.objectName() == exMode)
         self.chkPermitDel.setChecked(s.value(f'{pn}/export/permitDeletions', False, bool))
         self.chkIgnoreUnconfFields.setChecked(s.value(f'{pn}/export/ignoreUnconfiguredFields', False, bool))
 
@@ -536,6 +540,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.chkCombineRel.setEnabled(onOff)
         # export tab
         self.selectExGroup.setEnabled(onOff)
+        self.radioExGroup.setEnabled(onOff)
+        self.radioExActiveLayer.setEnabled(onOff)
         self.chkPermitDel.setEnabled(onOff)
         self.chkIgnoreUnconfFields.setEnabled(onOff)
         self.btnExport.setEnabled(onOff)
@@ -878,7 +884,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         opts = {
             'coordinateTransform': None,
-            'targetCrs': self.selectExportCrs.crs()
+            'targetCrs': self.selectExportCrs.crs(),
+            'groupExport': self.radioExGroup.isChecked(),
+            'activeLayer': iface.activeLayer()
         }
         #! lowercase true/false important
         params = {
@@ -891,7 +899,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         }
 
         validGeomTypes = ('Polygon', 'Line', 'Point', 'No geometry')  # Other possible values: Unknown geometry, Invalid geometry
-        cData = self.selectExGroup.currentData()
+        # use layer group or create group with currently active layer
+        if opts['groupExport']:
+            cData = self.selectExGroup.currentData()
+        elif opts['activeLayer']:
+                tGroup = QgsLayerTreeGroup('temp')
+                tGroup.addLayer(opts['activeLayer'])
+                cData = tGroup
+        else:
+            self.mB.pushInfo(self.plugin_name, self.labels['INFO_NO_LAYER_SELECTED'])
+            return
         if cData:
             # create dict with category and list of layers - cat:[*QgsVectorLayer]
             catLayers = defaultdict(list)
