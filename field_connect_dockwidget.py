@@ -508,6 +508,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         s.setValue(f'{pn}/import/combineHierarchicalRelations', self.chkCombineRel.isChecked())
         # export tab
         s.setValue(f'{pn}/export/mode', self.radioExGroup.objectName() if self.radioExGroup.isChecked() else self.radioExActiveLayer.objectName())
+        s.setValue(f'{pn}/export/quickExport', self.chkQuickExport.isChecked())
+        s.setValue(f'{pn}/export/commitSave', self.chkCommitSave.isChecked())
         s.setValue(f'{pn}/export/permitDeletions', self.chkPermitDel.isChecked())
         s.setValue(f'{pn}/export/ignoreUnconfiguredFields', self.chkIgnoreUnconfFields.isChecked())
 
@@ -525,6 +527,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # export tab
         exMode = s.value(f'{pn}/export/mode', 'radioExGroup')
         next(rb.setChecked(True) for rb in (self.radioExGroup, self.radioExActiveLayer) if rb.objectName() == exMode)
+        self.chkQuickExport.setChecked(s.value(f'{pn}/export/quickExport', False, bool))
+        self.chkCommitSave.setChecked(s.value(f'{pn}/export/commitSave', True, bool))
         self.chkPermitDel.setChecked(s.value(f'{pn}/export/permitDeletions', False, bool))
         self.chkIgnoreUnconfFields.setChecked(s.value(f'{pn}/export/ignoreUnconfiguredFields', False, bool))
 
@@ -542,6 +546,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.selectExGroup.setEnabled(onOff)
         self.radioExGroup.setEnabled(onOff)
         self.radioExActiveLayer.setEnabled(onOff)
+        self.chkQuickExport.setEnabled(onOff)
+        self.chkCommitSave.setEnabled(onOff)
         self.chkPermitDel.setEnabled(onOff)
         self.chkIgnoreUnconfFields.setEnabled(onOff)
         self.btnExport.setEnabled(onOff)
@@ -886,7 +892,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'coordinateTransform': None,
             'targetCrs': self.selectExportCrs.crs(),
             'groupExport': self.radioExGroup.isChecked(),
-            'activeLayer': iface.activeLayer()
+            'activeLayer': iface.activeLayer(),
+            'quickExport': self.chkQuickExport.isChecked(),
+            'commitSave': self.chkCommitSave.isChecked()
         }
         #! lowercase true/false important
         params = {
@@ -903,14 +911,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if opts['groupExport']:
             cData = self.selectExGroup.currentData()
         elif opts['activeLayer']:
-                tGroup = QgsLayerTreeGroup('temp')
-                tGroup.addLayer(opts['activeLayer'])
-                cData = tGroup
+            tGroup = QgsLayerTreeGroup('temp')
+            tGroup.addLayer(opts['activeLayer'])
+            cData = tGroup
         else:
             self.mB.pushInfo(self.plugin_name, self.labels['INFO_NO_LAYER_SELECTED'])
             return
         if cData:
             # create dict with category and list of layers - cat:[*QgsVectorLayer]
+            # todo?: get count for progress bar here?
             catLayers = defaultdict(list)
             for lTl in cData.findLayers():
                 layer: QgsVectorLayer = lTl.layer()
@@ -971,7 +980,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     fields = [f.name() for f in layer.fields() if f.name() not in unwanted]
                     # print(f'fields: {fields}')
 
-                    for f in layer.getFeatures():
+                    # feed all features or only features in the edit buffer here
+                    if opts['quickExport']:
+                        # theres also .editBuffer().changedAttributeValues() and .editBuffer().changedGeometries()
+                        if layer.isEditable():
+                            fids = layer.editBuffer().allAddedOrEditedFeatures()
+                            features = (layer.getFeature(fid) for fid in fids)
+                        else:
+                            # print(f'Quick Export: Skipping layer {layer.name()}')
+                            continue
+                    else:
+                        features = layer.getFeatures()
+                    for f in features:
                         # --- GeoJSON feature ---
                         geom: QgsGeometry = f.geometry()
                         if not geom.isEmpty():
@@ -1020,6 +1040,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         csv_exp_rows[category].append(row)
                     # print(csv_exp_rows[category])
+
+                    if opts['commitSave']:
+                        if layer.isEditable():
+                            if not layer.commitChanges():
+                                errors = "; ".join(layer.commitErrors())
+                                self.mB.pushWarning(self.plugin_name, self.tr(f'Could not save layer {layer.name()}: {errors}'))
 
             # upload csv here, after all data has been collected
             headers = {'Content-Type': 'text/csv; charset=utf-8'}

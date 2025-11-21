@@ -228,7 +228,7 @@ border: 1px solid #555;</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabImport">
        <attribute name="title">
@@ -673,14 +673,17 @@ border: 1px solid #555;</string>
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
-                <property name="statusTip">
+                <property name="toolTip">
                  <string>Only export added or edited features in the edit buffer. Layers need to be in edit mode and unsaved.</string>
+                </property>
+                <property name="statusTip">
+                 <string/>
                 </property>
                 <property name="text">
                  <string>Quick export</string>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -708,6 +711,9 @@ border: 1px solid #555;</string>
                <widget class="QCheckBox" name="chkCommitSave">
                 <property name="enabled">
                  <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>Saves the layer during the export. Useful in combination with the quick export option</string>
                 </property>
                 <property name="text">
                  <string>Commit and Save</string>
