@@ -251,6 +251,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 return ';'.join(parts)
             else:
                 return ''
+        elif value == NULL:
+            return ''
 
         return value
 
