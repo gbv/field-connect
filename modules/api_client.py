@@ -2,6 +2,7 @@ from qgis.core import Qgis
 from requests import Session, exceptions
 from requests.models import Response
 from urllib.parse import urlparse, urlunparse
+from ..utils.helpers import safe_get
 from typing import TYPE_CHECKING
 
 
@@ -84,8 +85,10 @@ class ApiClient:
         if r.status_code == 200:
             return r
         elif r.status_code == 400:
-            # print(r.text)
-            self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['BAD_REQUEST'] + f': {r.text}')
+            r = r.json()
+            error = safe_get(r, 'error')
+            importErrors = safe_get(r, 'importErrors')
+            self.plugin.mB.pushWarning(self.plugin.plugin_name, f'{error}: {'; '.join(importErrors)}')
             return None
         elif r.status_code == 401:
             self.plugin.setConnectionEnabled(False)
