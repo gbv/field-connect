@@ -57,7 +57,7 @@ class ApiClient:
         if not r:
             self.plugin.setConnectionEnabled(False)
             self.plugin.fieldDisconnect()
-            self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_LOST'] + f': {r.text}')
+            self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_LOST'])
             return False
         return True
 
@@ -88,7 +88,7 @@ class ApiClient:
             r = r.json()
             error = safe_get(r, 'error')
             importErrors = safe_get(r, 'importErrors')
-            self.plugin.mB.pushWarning(self.plugin.plugin_name, f'{error}: {'; '.join(importErrors)}')
+            self.plugin.mB.pushWarning(self.plugin.plugin_name, error + (': ' + '; '.join(str(e) for e in importErrors) if importErrors else ""))
             return None
         elif r.status_code == 401:
             self.plugin.setConnectionEnabled(False)

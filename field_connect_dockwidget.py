@@ -24,10 +24,10 @@
 
 import os, json, csv, io, re
 from requests.models import Response
-from urllib.parse import urlparse, urlunparse, ParseResult
+from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
-from qgis.core import Qgis, QgsApplication, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
+from qgis.core import Qgis, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
 QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
 QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, \
 QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, NULL
@@ -40,6 +40,7 @@ from PyQt5.QtWidgets import QStatusBar, QSizePolicy, QGraphicsDropShadowEffect, 
 QMessageBox, QFormLayout, QLabel, QFileDialog
 
 from .modules.api_client import ApiClient
+from .modules.cldr_loader import CLDRLoader
 from .utils.constants import GEOJSON_TO_QGIS
 from .utils.helpers import *
 from .resources import *
@@ -51,7 +52,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
-    def __init__(self, plugin_dir, parent=None):
+    def __init__(self, plugin_dir, locale, parent=None):
         """Constructor."""
         super(FieldConnectDockWidget, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -60,6 +61,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+
+        self.loc = locale
+        self.CLDRLoader = CLDRLoader(plugin_dir)
+        self.CLDRTranslations = self.CLDRLoader.load_language_for(self.loc)
 
         # hide server address input in ui for now
         self.labelServerAddress.hide()
@@ -158,15 +163,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 'label': self.tr('Period'),
                 'value': {'label': self.tr('Value'), 'description': self.tr('The identifier of the selected value; if two values are selected, the first of the two values.')},
                 'endValue': {'label': self.tr('End value'), 'description': self.tr('The identifier of the second selected value if two values are selected.')}
-            },
-            "de": {'label': self.tr('German')},
-            "en": {'label': self.tr('English')},
-            "es": {'label': self.tr('Spanish')},
-            "fr": {'label': self.tr('French')},
-            "it": {'label': self.tr('Italian')},
-            "pt": {'label': self.tr('Portuguese')},
-            "tr": {'label': self.tr('Turkish')},
-            "uk": {'label': self.tr('Ukrainian')}
+            }
         }
         # link identical translations
         self.trAttrs['dating']['end']['inputType'] = self.trAttrs['dating']['begin']['inputType']
@@ -183,6 +180,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.trAttrs['volume']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
         self.trAttrs['volume']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
         self.trAttrs['volume']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
+
+        # merge self.trAttrs into cldr dict
+        if self.CLDRTranslations: self.trAttrs = deep_merge(self.CLDRTranslations, self.trAttrs)
 
         # layout
         self.toggleFieldInfo()
@@ -329,7 +329,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def loadImportCategories(self):
         """Loads available categories for import with translated labels
         and their original name as userData."""
-        lang = QgsApplication.locale()
         self.selectCats.clear()
         cats = []
 
@@ -342,7 +341,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             item = node.get("item")
             if isinstance(item, dict) and "name" in item:
                 uLabel = item["name"]
-                tLabel = safe_get(item, "label", lang)
+                tLabel = safe_get(item, "label", self.loc)
                 cats.append((tLabel or uLabel, uLabel))
 
             # Recurse into subtrees
@@ -380,8 +379,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Moves relation fields into a nested 'relations' dict.
         Moves composite fields into nested dicts keyed by their 'name'.
         Also collects value maps from valuelist properties for later assignment."""
-
-        lang = QgsApplication.locale()
         translations = {'relations': {}}
         valuemaps = {}
 
@@ -400,8 +397,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         seen.add(fieldname)
 
                         # try to get translated label for the current locale
-                        label = data.get('label', {}).get(lang, fieldname)
-                        description = data.get('description', {}).get(lang, '')
+                        label = data.get('label', {}).get(self.loc, fieldname)
+                        description = data.get('description', {}).get(self.loc, '')
                         if not description:
                             description = data.get('description', {}).get('en', '')
 
@@ -409,7 +406,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             vmap = {}
                             values = data['valuelist'].get('values', {})
                             for key, vdef in values.items():
-                                vlabel = vdef.get('label', {}).get(lang, key)
+                                vlabel = vdef.get('label', {}).get(self.loc, key)
                                 vmap[vlabel] = key  # vmaps need the format description:value, although the gui says value:description
                             if vmap:
                                 valuemaps[fieldname] = {'map': vmap, 'type': inputType}
@@ -434,8 +431,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     sf_name = sf.get('name')
                                     if not sf_name:
                                         continue
-                                    sf_label = sf.get('label', {}).get(lang, sf_name)
-                                    sf_descr = sf.get('description', {}).get(lang, '')
+                                    sf_label = sf.get('label', {}).get(self.loc, sf_name)
+                                    sf_descr = sf.get('description', {}).get(self.loc, '')
                                     if not sf_descr:
                                         sf_descr = sf.get('description', {}).get('en', '')
                                     comp[sf_name] = {
@@ -447,7 +444,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                         vmap = {}
                                         values = sf['valuelist'].get('values', {})
                                         for key, vdef in values.items():
-                                            vlabel = vdef.get('label', {}).get(lang, key)
+                                            vlabel = vdef.get('label', {}).get(self.loc, key)
                                             vmap[vlabel] = key
                                         if vmap:
                                             valuemaps[sf_name] = {'map': vmap}
@@ -702,7 +699,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 continue
 
                             if len(part) == 2 and part in csv_header_translations:
-                                parts.append(safe_get(csv_header_translations, part, 'label'))
+                                parts.append(safe_get(csv_header_translations, part, 'label', default=part))
                                 continue
 
                             # build path to look for a translation - dating, dating.begin, dating.begin.inputType etc.

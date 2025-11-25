@@ -51,12 +51,12 @@ class FieldConnect:
         self.plugin_dir = os.path.dirname(__file__)
 
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
+        self.locale = QSettings().value('locale/userLocale')[0:2]
         # print(locale)
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'FieldConnect_{}.qm'.format(locale))
+            'FieldConnect_{}.qm'.format(self.locale))
 
         # print(locale_path)
 
@@ -230,7 +230,7 @@ class FieldConnect:
             #    removed on close (see self.onClosePlugin method)
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = FieldConnectDockWidget(self.plugin_dir)
+                self.dockwidget = FieldConnectDockWidget(self.plugin_dir, self.locale)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)

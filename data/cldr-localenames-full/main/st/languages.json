@@ -1,0 +1,16 @@
+{
+  "main": {
+    "st": {
+      "identity": {
+        "language": "st"
+      },
+      "localeDisplayNames": {
+        "languages": {
+          "cy": "Sewelsh",
+          "en": "Senyesemane",
+          "st": "Sesotho"
+        }
+      }
+    }
+  }
+}
