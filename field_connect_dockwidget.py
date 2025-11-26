@@ -27,17 +27,17 @@ from requests.models import Response
 from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
-from qgis.core import Qgis, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
+from qgis.core import Qgis, QgsMessageLog, QgsApplication, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
 QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
 QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, \
-QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, NULL
-from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import Qt, QVariant, pyqtSignal
+QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, QgsTask, NULL
+from qgis.PyQt import QtWidgets, uic, QtTest
+from qgis.PyQt.QtCore import Qt, QVariant, QTimer, pyqtSignal
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QStatusBar, QSizePolicy, QGraphicsDropShadowEffect, \
-QMessageBox, QFormLayout, QLabel, QFileDialog
+QMessageBox, QFormLayout, QLabel, QFileDialog, QApplication
 
 from .modules.api_client import ApiClient
 from .modules.cldr_loader import CLDRLoader
@@ -69,6 +69,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # hide server address input in ui for now
         self.labelServerAddress.hide()
         self.lineEditServerAddress.hide()
+        self.progressBar.hide()
 
         self.plugin_name = 'Field Connect'
         self.plugin_dir = plugin_dir
@@ -83,6 +84,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.activeProject = ''
 
         self.connected = False
+        self._import_running = False
+        self._export_running = False
 
         # weblate/linguist translation labels - extraction with pylupdate5 field_connect.pro
         self.labels = {
@@ -93,6 +96,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'FIELD_CONNECTED': self.tr('Connected to Field Desktop'),
             'IMPORT_FAILED': self.tr('Import failed!'),
             'IMPORT_SUCCESS': self.tr('Import successful!'),
+            'EXPORT_FAILED': self.tr('Export failed!'),
+            'EXPORT_SUCCESS': self.tr('Export successful!'),
             'LAYER_VALIDATION_FAILED': self.tr('Layer validation failed!'),
             'CAT_NAME_EXTRACTION_FAILED': self.tr('Could not extract category name. Please set the layer variable "field_category" manually'),
             'NO_CATS_FOUND': self.tr('No categories found'),
@@ -256,9 +261,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return value
 
-    def toggleFieldInfo(self, user='', version=''):
-        """Show user and version when connected, hide if not"""
-        d = {self.labelFieldUser:user, self.labelFieldVersion:version}
+    def toggleFieldInfo(self, user='', version='', activeProject=''):
+        """Show user, version and active project when connected, hide if not"""
+        d = {self.labelFieldUser:user, self.labelFieldVersion:version, self.labelFieldProject:activeProject}
         for k,v in d.items():
             row = self.formLayout.getWidgetPosition(k)[0]
             w = self.formLayout.itemAt(row, QFormLayout.FieldRole)
@@ -297,10 +302,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectCats.model().item(0).setText(self.labels['DESELECT_ALL'] if all_checked else self.labels['SELECT_ALL'])
         self.selectCats.model().blockSignals(False)
 
+    def showOrHideProgressBar(self):
+        """Shows the progress bar if an import/export is actively running or hides it if not"""
+        self.progressBar.show() if (self._import_running or self._export_running) else self.progressBar.hide()
+
     def createLookupLayerTemp(self):
         """Create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'"""
         fields = QgsFields()
         # fields.append(QgsField('id', QVariant.Int))
+        # todo: QgsField constructor is deprecated
         fields.append(QgsField('group_id', QVariant.String))
         fields.append(QgsField('key', QVariant.String))
         fields.append(QgsField('value', QVariant.String))
@@ -495,10 +505,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return translations, valuemaps
 
+    # todo: try to save/load active tab (import/export)
     def saveSettings(self):
-        """
-        Save user settings made in the ui
-        """
+        """Save user settings made in the ui"""
         pn = self.plugin_name.replace(' ', '').lower()
         s = QgsSettings()
         # import tab
@@ -513,9 +522,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         s.setValue(f'{pn}/export/ignoreUnconfiguredFields', self.chkIgnoreUnconfFields.isChecked())
 
     def loadSettings(self):
-        """
-        Load user settings made in the ui
-        """
+        """Load user settings made in the ui"""
         pn = self.plugin_name.replace(' ', '').lower()
         s = QgsSettings()
         # import tab
@@ -555,11 +562,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.btnConnect.setText(self.tr('Disconnect'))
             self.selectCats.setEnabled(onOff)
         else:
-            self.selectProject.setText('-')
             self.btnConnect.setText(self.tr('Connect'))
             self.selectCats.setEnabled(onOff)
             self.projectConfig = {}
             self.projectConfigCategories = {}
+            self.fieldUser = ''
+            self.fieldVersion = ''
+            self.activeProject = ''
+            self._import_running = False
+            self._export_running = False
 
     def fieldConnect(self):
         """Connects to field and enables import/export form if the request was successful"""
@@ -578,10 +589,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if projectInfo:
             self.setConnectionEnabled(True)
             projectInfoJSON = projectInfo.json()
-            self.fieldUser, self.fieldVersion = safe_get(projectInfoJSON, 'user'), safe_get(projectInfoJSON, 'version')
-            self.activeProject = safe_get(projectInfoJSON, 'activeProject')
-            self.toggleFieldInfo(self.fieldUser, self.fieldVersion)
-            self.selectProject.setText(self.activeProject)
+            self.fieldUser, self.fieldVersion, self.activeProject = safe_get(projectInfoJSON, 'user'), safe_get(projectInfoJSON, 'version'), safe_get(projectInfoJSON, 'activeProject')
+            self.toggleFieldInfo(self.fieldUser, self.fieldVersion, self.activeProject)
             self.setProjectCrs()
 
             # get config from active project as json
@@ -597,6 +606,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
         if not self.api.isConnectionActive(): return
+        self._import_running = True
+        self.progressBar.reset()
+        QTimer.singleShot(1000, self.showOrHideProgressBar)
         lupLayerTemp = None
 
         # collect ui options
@@ -624,7 +636,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         cats = dict(zip([d for d in self.selectCats.checkedItemsData() if d], [i for i in self.selectCats.checkedItems() if i != self.labels['DESELECT_ALL']]))  # untranslated: translated
 
-        for cat, label in cats.items():
+        self.progressBar.setMaximum(len(cats))
+
+        for i, (cat, label) in enumerate(cats.items(), start=1):
+            self.progressBar.setValue(i)
+            self.progressBar.setFormat(self.tr(f'Importing category {label} %p%'))
+            QApplication.processEvents()
+            # simulate longer export
+            # QtTest.QTest.qWait(1000)
+
             csv_reader = self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
             csv_header = csv_reader.fieldnames
             if self.chkSetAliases.isChecked():
@@ -882,10 +902,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
         self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
+        self._import_running = False
+        self.showOrHideProgressBar()
 
     def fieldExport(self):
         """Export group of layers back to Field Desktop using POST /import/{format}"""
         if not self.api.isConnectionActive(): return
+        self.progressBar.reset()
+        self._export_running = True
+        QTimer.singleShot(1000, self.showOrHideProgressBar)
 
         opts = {
             'coordinateTransform': None,
@@ -966,10 +991,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             gj_exp_geoms['type'] = 'FeatureCollection'
             # gj_exp_geoms['features'] = []
 
+            self.progressBar.setMaximum(len(catLayers))
+
             # iterate through each catLayers type
-            for category, layers in catLayers.items():
+            for i, (category, layers) in enumerate(catLayers.items(), start=1):
                 # print(f'cat: {category}, layers: {layers}')
                 for layer in layers:
+                    self.progressBar.setValue(i)
+                    self.progressBar.setFormat(self.tr(f'Exporting layer {layer.name()} %p%'))
+                    QApplication.processEvents()  # updates progress bar
+                    # simulate longer export
+                    # QtTest.QTest.qWait(1000)
                     # todo?: precision as ui param?
                     exporter = QgsJsonExporter(layer, precision=6)
                     exporter.setTransformGeometries(False)  # transforms to EPSG:4326 by default
@@ -1086,11 +1118,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # print('Exporting GeoJSON with merge=true...')
             # resp = \
             self.api.post('/import/geojson', params=params, headers=headers, data=data)
-
-            # todo: success message
             # print(csv_exp_rows)
             # print(gj_exp_geoms)
-        else: return
+
+        self.mB.pushSuccess(self.plugin_name, self.labels['EXPORT_SUCCESS'])
+        self.sB.showMessage(self.labels['EXPORT_SUCCESS'], 10000)
+        self._export_running = False
+        self.showOrHideProgressBar()
 
     # todo: use this in loadImportCategories - old?
     def getCategoryList(self):
