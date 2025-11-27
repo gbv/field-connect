@@ -207,6 +207,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # export tab
         self.exportUpdateLayerGroups()
+        # save settings on init, in case object names change
+        self.saveSettings()
         # load saved settings
         self.loadSettings()
 
@@ -517,7 +519,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         s.setValue(f'{pn}/import/setalias', self.chkSetAliases.isChecked())
         s.setValue(f'{pn}/import/combineHierarchicalRelations', self.chkCombineRel.isChecked())
         # export tab
-        s.setValue(f'{pn}/export/mode', self.radioExGroup.objectName() if self.radioExGroup.isChecked() else self.radioExActiveLayer.objectName())
+        s.setValue(f'{pn}/export/mode', self.radioExGroup.objectName() if self.radioExGroup.isChecked() else self.radioExSelectedLayers.objectName())
         s.setValue(f'{pn}/export/quickExport', self.chkQuickExport.isChecked())
         s.setValue(f'{pn}/export/commitSave', self.chkCommitSave.isChecked())
         s.setValue(f'{pn}/export/permitDeletions', self.chkPermitDel.isChecked())
@@ -534,7 +536,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.chkCombineRel.setChecked(s.value(f'{pn}/import/combineHierarchicalRelations', True, bool))
         # export tab
         exMode = s.value(f'{pn}/export/mode', 'radioExGroup')
-        next(rb.setChecked(True) for rb in (self.radioExGroup, self.radioExActiveLayer) if rb.objectName() == exMode)
+        next(rb.setChecked(True) for rb in (self.radioExGroup, self.radioExSelectedLayers) if rb.objectName() == exMode)
         self.chkQuickExport.setChecked(s.value(f'{pn}/export/quickExport', False, bool))
         self.chkCommitSave.setChecked(s.value(f'{pn}/export/commitSave', True, bool))
         self.chkPermitDel.setChecked(s.value(f'{pn}/export/permitDeletions', False, bool))
@@ -553,7 +555,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # export tab
         self.selectExGroup.setEnabled(onOff)
         self.radioExGroup.setEnabled(onOff)
-        self.radioExActiveLayer.setEnabled(onOff)
+        self.radioExSelectedLayers.setEnabled(onOff)
         self.chkQuickExport.setEnabled(onOff)
         self.chkCommitSave.setEnabled(onOff)
         self.chkPermitDel.setEnabled(onOff)
@@ -921,7 +923,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'coordinateTransform': None,
             'targetCrs': self.selectExportCrs.crs(),
             'groupExport': self.radioExGroup.isChecked(),
-            'activeLayer': iface.activeLayer(),
+            'selectedLayers': iface.layerTreeView().selectedLayers(),
             'quickExport': self.chkQuickExport.isChecked(),
             'commitSave': self.chkCommitSave.isChecked()
         }
@@ -939,9 +941,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # use layer group or create group with currently active layer
         if opts['groupExport']:
             cData = self.selectExGroup.currentData()
-        elif opts['activeLayer']:
+        elif opts['selectedLayers']:
             tGroup = QgsLayerTreeGroup('temp')
-            tGroup.addLayer(opts['activeLayer'])
+            for lay in opts['selectedLayers']:
+                tGroup.addLayer(lay)
             cData = tGroup
         else:
             self.mB.pushInfo(self.plugin_name, self.labels['INFO_NO_LAYER_SELECTED'])

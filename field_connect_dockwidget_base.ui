@@ -575,7 +575,7 @@ Might increase import time.</string>
                </spacer>
               </item>
               <item>
-               <widget class="QRadioButton" name="radioExActiveLayer">
+               <widget class="QRadioButton" name="radioExSelectedLayers">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -583,7 +583,7 @@ Might increase import time.</string>
                  <string>Only export the layer selected in the layer tree</string>
                 </property>
                 <property name="text">
-                 <string>Active Layer</string>
+                 <string>Selected layer(s)</string>
                 </property>
                </widget>
               </item>
@@ -679,7 +679,7 @@ Might increase import time.</string>
                  <string>Saves the layer during the export. Useful in combination with the quick export option</string>
                 </property>
                 <property name="text">
-                 <string>Commit and Save</string>
+                 <string>Commit and save</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
