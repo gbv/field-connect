@@ -336,7 +336,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def getCategoryNameForExport(self, layer: QgsVectorLayer):
         """Extract the category name from the layer variable 'field_category' which is set on import, or
         try the dataSourceUri as fallback"""
-        catName = QgsExpressionContextUtils.layerScope(layer).variable('field_category') or layer.dataProvider().dataSourceUri().split('_')[-1] or ''
+        catName = QgsExpressionContextUtils.layerScope(layer).variable('field_category') or layer.dataProvider().dataSourceUri().split('_')[-2] or ''
 
         return catName
 
