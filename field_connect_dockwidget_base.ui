@@ -361,53 +361,6 @@ border: 1px solid #555;</string>
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_8">
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QCheckBox" name="chkSetAliases">
-                  <property name="enabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.&lt;br/&gt;Might increase import time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Load labels and descriptions</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_7">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </item>
-            <item row="7" column="0">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>CSV:</string>
-              </property>
-             </widget>
-            </item>
             <item row="7" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <property name="leftMargin">
@@ -419,7 +372,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;If this option is enabled, the hierarchical relations are combined into the simplified relation &amp;quot;isChildOf&amp;quot;, which specifies the direct parent resource. This option should normally remain enabled.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</string>
                 </property>
                 <property name="text">
                  <string>Combine hierarchical relations</string>
@@ -487,6 +440,43 @@ border: 1px solid #555;</string>
                  <string>Import</string>
                 </property>
                </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="6" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chkSetAliases">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.
+Might increase import time.</string>
+                </property>
+                <property name="text">
+                 <string>Load labels and descriptions</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
@@ -830,13 +820,6 @@ border: 1px solid #555;</string>
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>Mode:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="labelExCsv">
-              <property name="text">
-               <string>CSV:</string>
               </property>
              </widget>
             </item>

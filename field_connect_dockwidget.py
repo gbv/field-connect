@@ -96,6 +96,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'FIELD_CONNECTED': self.tr('Connected to Field Desktop'),
             'IMPORT_FAILED': self.tr('Import failed!'),
             'IMPORT_SUCCESS': self.tr('Import successful!'),
+            'EXPORT_ERRORS': self.tr('Export finished with errors!'),
             'EXPORT_FAILED': self.tr('Export failed!'),
             'EXPORT_SUCCESS': self.tr('Export successful!'),
             'LAYER_VALIDATION_FAILED': self.tr('Layer validation failed!'),
@@ -103,7 +104,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'NO_CATS_FOUND': self.tr('No categories found'),
             'REQUEST_FAILED': self.tr('Request failed'),
             'SELECT_ALL': self.tr('Select all'),
-            'INFO_NO_LAYER_SELECTED': self.tr('No layer selected in the layer tree!')
+            'INFO_NO_LAYER_SELECTED': self.tr('No layer selected in the layer tree!'),
+            'INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS': self.tr('No unsaved layers for quick export available')
         }
 
         # manual attribute translations
@@ -602,6 +604,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.sB.showMessage(self.tr('Choose categories and format'))
             self.setConnectionStatus()
 
+    # todo: check if self.activeProject is still the same as the currently open project in field
     def fieldImport(self):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
@@ -910,6 +913,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not self.api.isConnectionActive(): return
         self.progressBar.reset()
         self._export_running = True
+        _export_unsaved_layers = None
+        _export_errors = False
         QTimer.singleShot(1000, self.showOrHideProgressBar)
 
         opts = {
@@ -940,7 +945,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             cData = tGroup
         else:
             self.mB.pushInfo(self.plugin_name, self.labels['INFO_NO_LAYER_SELECTED'])
-            return
+            cData = None
         if cData:
             # create dict with category and list of layers - cat:[*QgsVectorLayer]
             # todo?: get count for progress bar here?
@@ -989,7 +994,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             csv_exp_rows, gj_exp_geoms = defaultdict(list), defaultdict(list)
             # set geojson base structure
             gj_exp_geoms['type'] = 'FeatureCollection'
-            # gj_exp_geoms['features'] = []
+            gj_exp_geoms['features'] = []
 
             self.progressBar.setMaximum(len(catLayers))
 
@@ -997,6 +1002,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for i, (category, layers) in enumerate(catLayers.items(), start=1):
                 # print(f'cat: {category}, layers: {layers}')
                 for layer in layers:
+                    if opts['quickExport'] and not layer.isModified():
+                        continue
                     self.progressBar.setValue(i)
                     self.progressBar.setFormat(self.tr(f'Exporting layer {layer.name()} %p%'))
                     QApplication.processEvents()  # updates progress bar
@@ -1017,6 +1024,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         if layer.isEditable():
                             fids = layer.editBuffer().allAddedOrEditedFeatures()
                             features = (layer.getFeature(fid) for fid in fids)
+                            if fids and not _export_unsaved_layers: _export_unsaved_layers = True
                         else:
                             # print(f'Quick Export: Skipping layer {layer.name()}')
                             continue
@@ -1078,51 +1086,60 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 errors = "; ".join(layer.commitErrors())
                                 self.mB.pushWarning(self.plugin_name, self.tr(f'Could not save layer {layer.name()}: {errors}'))
 
-            # upload csv here, after all data has been collected
-            headers = {'Content-Type': 'text/csv; charset=utf-8'}
-            for cat, rows in csv_exp_rows.items():
-                if not rows: continue
+            if opts['quickExport'] and not _export_unsaved_layers:
+                self.mB.pushInfo(self.plugin_name, self.labels['INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS'])
+                self.sB.showMessage(self.labels['INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS'], 10000)
+            else:
+                # upload csv here, after all data has been collected
+                headers = {'Content-Type': 'text/csv; charset=utf-8'}
+                for cat, rows in csv_exp_rows.items():
+                    if not rows: continue
 
-                seen = set()
-                fieldnames = [k for row in rows for k in row.keys() if not (k in seen or seen.add(k))]
-                # print(f'fieldnames: {fieldnames}')
+                    seen = set()
+                    fieldnames = [k for row in rows for k in row.keys() if not (k in seen or seen.add(k))]
+                    # print(f'fieldnames: {fieldnames}')
 
-                csv_buffer = io.StringIO()
-                writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(rows)
+                    csv_buffer = io.StringIO()
+                    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(rows)
 
-                csv_content = csv_buffer.getvalue()  # POST data
-                csv_buffer.close()
+                    csv_content = csv_buffer.getvalue()  # POST data
+                    csv_buffer.close()
 
-                params['category'] = cat
-                data = csv_content.encode('utf-8')
+                    params['category'] = cat
+                    data = csv_content.encode('utf-8')
+                    params['merge'] = 'false'
+                    # print(f'Exporting {cat} as csv with merge=false...')
+                    csvResp = \
+                    self.api.post('/import/csv', params=params, headers=headers, data=data)
+                    params['merge'] = 'true'
+                    # print(f'Exporting {cat} as csv with merge=true...')
+                    csvRespMerge = \
+                    self.api.post('/import/csv', params=params, headers=headers, data=data)
+                    if not all([csvResp, csvRespMerge]): _export_errors = True
+
+                # todo?: always the same params as csv export?
+                # upload geojson here
+                headers = {'Content-Type': 'application/geo+json'}
+                data = json.dumps(gj_exp_geoms)
                 params['merge'] = 'false'
-                # print(f'Exporting {cat} as csv with merge=false...')
-                # resp = \
-                self.api.post('/import/csv', params=params, headers=headers, data=data)
+                # print('Exporting GeoJSON with merge=false...')
+                geoResp = \
+                self.api.post('/import/geojson', params=params, headers=headers, data=data)
                 params['merge'] = 'true'
-                # print(f'Exporting {cat} as csv with merge=true...')
-                # resp = \
-                self.api.post('/import/csv', params=params, headers=headers, data=data)
+                # print('Exporting GeoJSON with merge=true...')
+                geoRespMerge = \
+                self.api.post('/import/geojson', params=params, headers=headers, data=data)
+                # print(csv_exp_rows)
+                # print(gj_exp_geoms)
+                if not all([geoResp, geoRespMerge]): _export_errors = True
 
-            # todo?: always the same params as csv export?
-            # upload geojson here
-            headers = {'Content-Type': 'application/geo+json'}
-            data = json.dumps(gj_exp_geoms)
-            params['merge'] = 'false'
-            # print('Exporting GeoJSON with merge=false...')
-            # resp = \
-            self.api.post('/import/geojson', params=params, headers=headers, data=data)
-            params['merge'] = 'true'
-            # print('Exporting GeoJSON with merge=true...')
-            # resp = \
-            self.api.post('/import/geojson', params=params, headers=headers, data=data)
-            # print(csv_exp_rows)
-            # print(gj_exp_geoms)
-
-        self.mB.pushSuccess(self.plugin_name, self.labels['EXPORT_SUCCESS'])
-        self.sB.showMessage(self.labels['EXPORT_SUCCESS'], 10000)
+                if _export_errors:
+                    self.sB.showMessage(self.labels['EXPORT_ERRORS'], 10000)
+                else:
+                    self.mB.pushSuccess(self.plugin_name, self.labels['EXPORT_SUCCESS'])
+                    self.sB.showMessage(self.labels['EXPORT_SUCCESS'], 10000)
         self._export_running = False
         self.showOrHideProgressBar()
 
