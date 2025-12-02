@@ -31,7 +31,7 @@ from qgis.core import Qgis, QgsMessageLog, QgsApplication, QgsProject, QgsVector
 QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
 QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, \
 QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, QgsTask, NULL
-from qgis.PyQt import QtWidgets, uic, QtTest
+from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QVariant, QTimer, pyqtSignal
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
@@ -613,7 +613,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not self.api.isConnectionActive(): return
         self._import_running = True
         self.progressBar.reset()
-        QTimer.singleShot(1000, self.showOrHideProgressBar)
+        self.showOrHideProgressBar()
         lupLayerTemp = None
 
         # collect ui options
@@ -647,8 +647,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.progressBar.setValue(i)
             self.progressBar.setFormat(self.tr(f'Importing category {label} %p%'))
             QApplication.processEvents()
-            # simulate longer export
-            # QtTest.QTest.qWait(1000)
 
             csv_reader = self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
             csv_header = csv_reader.fieldnames
@@ -908,7 +906,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
         self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
         self._import_running = False
-        self.showOrHideProgressBar()
+        QTimer.singleShot(2000, self.showOrHideProgressBar)
 
     def fieldExport(self):
         """Export group of layers back to Field Desktop using POST /import/{format}"""
@@ -917,7 +915,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._export_running = True
         _export_unsaved_layers = None
         _export_errors = False
-        QTimer.singleShot(1000, self.showOrHideProgressBar)
+        self.showOrHideProgressBar()
 
         opts = {
             'coordinateTransform': None,
@@ -999,19 +997,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             gj_exp_geoms['type'] = 'FeatureCollection'
             gj_exp_geoms['features'] = []
 
-            self.progressBar.setMaximum(len(catLayers))
+            total_cats = len(catLayers)
+            self.progressBar.setMaximum(total_cats + 1)  # + 1 GeoJSON
 
             # iterate through each catLayers type
-            for i, (category, layers) in enumerate(catLayers.items(), start=1):
+            for category, layers in catLayers.items():
                 # print(f'cat: {category}, layers: {layers}')
                 for layer in layers:
                     if opts['quickExport'] and not layer.isModified():
                         continue
-                    self.progressBar.setValue(i)
-                    self.progressBar.setFormat(self.tr(f'Exporting layer {layer.name()} %p%'))
-                    QApplication.processEvents()  # updates progress bar
-                    # simulate longer export
-                    # QtTest.QTest.qWait(1000)
                     # todo?: precision as ui param?
                     exporter = QgsJsonExporter(layer, precision=6)
                     exporter.setTransformGeometries(False)  # transforms to EPSG:4326 by default
@@ -1095,8 +1089,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 # upload csv here, after all data has been collected
                 headers = {'Content-Type': 'text/csv; charset=utf-8'}
-                for cat, rows in csv_exp_rows.items():
+                for i, (cat, rows) in enumerate(csv_exp_rows.items(), start=1):
                     if not rows: continue
+                    self.progressBar.setValue(i)
+                    self.progressBar.setFormat(self.tr(f'Exporting category {cat} %p%'))
+                    QApplication.processEvents()
 
                     seen = set()
                     fieldnames = [k for row in rows for k in row.keys() if not (k in seen or seen.add(k))]
@@ -1120,8 +1117,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # print(f'Exporting {cat} as csv with merge=true...')
                     csvRespMerge = \
                     self.api.post('/import/csv', params=params, headers=headers, data=data)
+                    QApplication.processEvents()
                     if not all([csvResp, csvRespMerge]): _export_errors = True
 
+                self.progressBar.setValue(total_cats)
+                self.progressBar.setFormat(self.tr(f'Exporting GeoJSON %p%'))
+                QApplication.processEvents()
                 # todo?: always the same params as csv export?
                 # upload geojson here
                 headers = {'Content-Type': 'application/geo+json'}
@@ -1134,6 +1135,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # print('Exporting GeoJSON with merge=true...')
                 geoRespMerge = \
                 self.api.post('/import/geojson', params=params, headers=headers, data=data)
+                self.progressBar.setValue(total_cats + 1)
+                QApplication.processEvents()
                 # print(csv_exp_rows)
                 # print(gj_exp_geoms)
                 if not all([geoResp, geoRespMerge]): _export_errors = True
@@ -1144,7 +1147,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.mB.pushSuccess(self.plugin_name, self.labels['EXPORT_SUCCESS'])
                     self.sB.showMessage(self.labels['EXPORT_SUCCESS'], 10000)
         self._export_running = False
-        self.showOrHideProgressBar()
+        QTimer.singleShot(2000, self.showOrHideProgressBar)
 
     # todo: use this in loadImportCategories - old?
     def getCategoryList(self):
