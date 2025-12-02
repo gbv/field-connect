@@ -217,6 +217,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnImport.clicked.connect(self.fieldImport)
         self.btnExport.clicked.connect(self.fieldExport)
         self.selectCats.model().itemChanged.connect(self.handleCats)
+        self.tabWidget.currentChanged.connect(self.saveTabIndex)
         # export
         self.treeRoot.addedChildren.connect(self.exportUpdateLayerGroups)
         self.treeRoot.removedChildren.connect(self.exportUpdateLayerGroups)
@@ -509,7 +510,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return translations, valuemaps
 
-    # todo: try to save/load active tab (import/export)
+    def saveTabIndex(self, idx):
+        """Save tab index separately as it resets to 0 when reloading the plugin"""
+        pn = self.plugin_name.replace(' ', '').lower()
+        s = QgsSettings()
+        s.setValue(f'{pn}/activeTabIndex', idx)
+
     def saveSettings(self):
         """Save user settings made in the ui"""
         pn = self.plugin_name.replace(' ', '').lower()
@@ -529,6 +535,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Load user settings made in the ui"""
         pn = self.plugin_name.replace(' ', '').lower()
         s = QgsSettings()
+        self.tabWidget.setCurrentIndex(s.value(f'{pn}/activeTabIndex', 0, int))
         # import tab
         rbName = s.value(f'{pn}/import/format', 'radioFormatMemory')
         next(rb.setChecked(True) for rb in (self.radioFormatMemory, self.radioFormatGPKG) if rb.objectName() == rbName)
