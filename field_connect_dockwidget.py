@@ -956,7 +956,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 layerCrs: QgsCoordinateReferenceSystem = layer.crs()
                 # ask for coordinate transformation once
                 if layerCrs.isValid() and layerCrs.authid() != opts['targetCrs'].authid() and opts['coordinateTransform'] is None:
-                    # todo: test message box
                     msg = QMessageBox(self)
                     msg.setWindowTitle(self.tr("Coordinate transformation"))
                     msg.setText(self.tr("The layer CRS differs from the target CRS. Do you want to transform coordinates?"))
@@ -971,12 +970,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     if clicked == yes_button:
                         opts['coordinateTransform'] = True
-                        return True
                     elif clicked == no_button:
                         opts['coordinateTransform'] = False
-                        return True
                     elif clicked == cancel_button:
-                        return False
+                        self._export_running = False
+                        self.showOrHideProgressBar()
+                        return
 
                 # abort if layer smells fishy
                 if QgsWkbTypes.geometryDisplayString(layer.geometryType()) in validGeomTypes and layer.isValid():
