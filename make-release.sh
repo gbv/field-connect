@@ -9,11 +9,31 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-ZIPFILE="${PLUGIN_NAME}-v${VERSION}.zip"
+# --- Output ZIP in plugin folder ---
+ZIPFILE="$(pwd)/${PLUGIN_NAME}-v${VERSION}.zip"
 
+# Create temp dir safely
+TMPDIR=$(mktemp -d)
+echo "📁 Using temporary directory: $TMPDIR"
+
+cleanup() {
+  rm -rf "$TMPDIR"
+}
+trap cleanup EXIT
+
+# Export plugin to temp folder
+git archive --format=tar --prefix="${PLUGIN_NAME}/" HEAD | tar -x -C "$TMPDIR"
+
+# Strip # comments but keep docstrings and shebang
+echo "🧹 Stripping comments from Python files..."
+find "$TMPDIR/$PLUGIN_NAME" -name "*.py" | while read -r file; do
+  sed -i -E 's|^\s*#.*$||; s|\s+#.*$||' "$file"
+done
+
+# Create final ZIP in plugin folder
 echo "📦 Creating release archive: $ZIPFILE"
-git archive --format=zip --output="$ZIPFILE" --prefix="${PLUGIN_NAME}/" HEAD
-echo "✅ Archive created."
+(cd "$TMPDIR" && zip -r "$ZIPFILE" "$PLUGIN_NAME")
+echo "✅ Archive created: $ZIPFILE"
 
 # --- Optional tagging ---
 # echo ""
