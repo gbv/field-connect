@@ -425,7 +425,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 vmap[vlabel] = key  # vmaps need the format description:value, although the gui says value:description
                             if vmap:
                                 # add empty string option to clear selection
-                                if '' not in vmap: vmap[''] = ''
+                                if '' not in vmap and inputType != 'checkboxes': vmap[''] = ''
                                 valuemaps[fieldname] = {'map': vmap, 'type': inputType}
 
                         # handle relation fields
@@ -464,7 +464,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                             vlabel = vdef.get('label', {}).get(self.loc, key)
                                             vmap[vlabel] = key
                                         if vmap:
-                                            if '' not in vmap: vmap[''] = ''
+                                            if '' not in vmap and inputType != 'checkboxes': vmap[''] = ''
                                             valuemaps[sf_name] = {'map': vmap}
 
                             data = {k: v for k, v in data.items() if k != 'subfields'}
