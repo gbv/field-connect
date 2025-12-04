@@ -639,7 +639,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.project.homePath(),
                 'GeoPackage (*.gpkg)'
             )
-            if not filename: return
+            if not filename:
+                self._import_running = False
+                self.showOrHideProgressBar()
+                return
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
