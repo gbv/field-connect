@@ -624,6 +624,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._import_running = True
         self.progressBar.reset()
         self.showOrHideProgressBar()
+        activeGrp = None
+        lNames = []
         lupLayerTemp = None
 
         # collect ui options
@@ -632,6 +634,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         }
 
         filename = None
+        import_overwrite = False  # check if file path exists for handling/updating existing geopackages
         if self.radioFormatGPKG.isChecked():
             filename, filter = QFileDialog.getSaveFileName(
                 self,
@@ -643,6 +646,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self._import_running = False
                 self.showOrHideProgressBar()
                 return
+            elif os.path.exists(filename):
+                import_overwrite = True
+
+        if import_overwrite:
+            # takes the first group from the top if there are multiple with the same name
+            activeGrp = self.project.layerTreeRoot().findGroup(self.activeProject)
+            lNames = [l.name() for l in activeGrp.findLayers()]
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
@@ -650,7 +660,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         geoJSON = json.loads(rGeo.text)
 
         # create group at the bottom for inserting layers
-        group_ref = self.treeRoot.insertGroup(-1, f'{self.activeProject}')
+        if not import_overwrite: group_ref = self.treeRoot.insertGroup(-1, f'{self.activeProject}')
 
         cats = dict(zip([d for d in self.selectCats.checkedItemsData() if d], [i for i in self.selectCats.checkedItems() if i != self.labels['DESELECT_ALL']]))  # untranslated: translated
 
@@ -878,8 +888,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         options
                     )
                     # make layer persistent
-                    layer.setDataSource(f'{filename}|layername={layNameSource}', layNameSource, 'ogr', False)
-                    layer.setName(layName)
+                    if layName not in lNames:
+                        layer.setDataSource(f'{filename}|layername={layNameSource}', layNameSource, 'ogr', False)
+                        layer.setName(layName)
 
                     # print('error_code:', error_code, 'error_message:', error_message, 'new_filename:', new_filename, 'new_layer:', new_layer)
                     # python 3.10+
@@ -897,24 +908,37 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
                         return
 
-                # add layer to group_ref
-                self.project.addMapLayer(layer, False)
-                group_ref.insertLayer(-1, layer)
+                if not import_overwrite:
+                    # add layer to group_ref
+                    self.project.addMapLayer(layer, False)
+                    group_ref.insertLayer(-1, layer)
+                elif activeGrp:
+                    # only add layers that are not in the self.activeProject group
+                    if layName not in lNames:
+                        self.project.addMapLayer(layer, False)
+                        activeGrp.insertLayer(-1, layer)
 
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
-            if filename: layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
+            if filename and not import_overwrite: layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
 
         # add lookup layer
         if lupLayerTemp:
-            self.project.addMapLayer(lupLayerTemp, True)
+            if not import_overwrite: self.project.addMapLayer(lupLayerTemp, True)
             if filename:
                 options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
                 options.layerName = lupLayerTemp.name()
                 QgsVectorFileWriter.writeAsVectorFormatV3(lupLayerTemp, filename, transformContext, options)
-                lupLayerTemp.setDataSource(f'{filename}|layername={options.layerName}', options.layerName, 'ogr', False)
-        # save qgis project to geopackage to keep value relations and layer variables
+                if not import_overwrite: lupLayerTemp.setDataSource(f'{filename}|layername={options.layerName}', options.layerName, 'ogr', False)
+        # save qgis project to geopackage to keep value relations and layer variables - overwrites existing project
         if filename: self.project.write(f'geopackage:{filename}?projectName={self.activeProject}')
+
+        # refresh layers after overwriting data
+        if import_overwrite:
+            # todo: find a better way to refresh layers
+            # layer.dataProvider().forceReload() and layer.triggerRepaint() only worked in console
+            # and iface.mapCanvas().refresh() didnt work at all
+            QgsProject.instance().reloadAllLayers()
 
         self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
         self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
