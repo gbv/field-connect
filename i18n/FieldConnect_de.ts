@@ -6,12 +6,12 @@
     <message>
         <location filename="../field_connect.py" line="211"/>
         <source>&amp;Field Connect</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Field Connect</translation>
     </message>
     <message>
         <location filename="../field_connect.py" line="175"/>
         <source>Connect to Field Desktop</source>
-        <translation type="unfinished"></translation>
+        <translation>Mit Field Desktop verbinden</translation>
     </message>
 </context>
 <context>
@@ -24,22 +24,22 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="92"/>
         <source>Bad request</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungültige Anfrage</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="93"/>
         <source>Connection lost!</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbindung verloren!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="94"/>
         <source>Unauthorized</source>
-        <translation type="unfinished"></translation>
+        <translation>Unautorisiert</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="95"/>
         <source>Deselect all</source>
-        <translation type="unfinished"></translation>
+        <translation>Alle abwählen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="96"/>
@@ -49,142 +49,142 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="97"/>
         <source>Import failed!</source>
-        <translation type="unfinished"></translation>
+        <translation>Import fehlgeschlagen!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="98"/>
         <source>Import successful!</source>
-        <translation type="unfinished"></translation>
+        <translation>Import erfolgreich!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="101"/>
         <source>Layer validation failed!</source>
-        <translation type="unfinished"></translation>
+        <translation>Layer-Validierung fehlgeschlagen!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="103"/>
         <source>No categories found</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine Kategorien gefunden</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="104"/>
         <source>Request failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Anfrage fehlgeschlagen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="111"/>
         <source>Identifier</source>
-        <translation type="unfinished"></translation>
+        <translation>Bezeichner</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="113"/>
         <source>The date specification for a single date; the start date for a date range</source>
-        <translation type="unfinished"></translation>
+        <translation>Die Datumsangabe bei einem Einzeldatum; das Startdatum bei einem Datumsbereich</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="114"/>
         <source>The end date for a date range</source>
-        <translation type="unfinished"></translation>
+        <translation>Das Enddatum bei einem Datumsbereich</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="115"/>
         <source>Indicates whether the date is a date range. Possible values are: true (date range), false (single date).</source>
-        <translation type="unfinished"></translation>
+        <translation>Gibt an ob es sich um einen Datumsbereich handelt. Mögliche Werte sind: true (Datumsbereich), false (Einzeldatum).</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="118"/>
         <source>Relation</source>
-        <translation type="unfinished"></translation>
+        <translation>Relation</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="119"/>
         <source>Specifies the direct parent resource in the hierarchy; remains empty for top-level resources.</source>
-        <translation type="unfinished"></translation>
+        <translation>Gibt die übergeordnete Ressource in der Hierarchie an; bleibt bei Ressourcen auf oberster Ebene leer.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="122"/>
         <source>Links the image to one or more resources</source>
-        <translation type="unfinished"></translation>
+        <translation>Verknüpft das Bild mit einer oder mehreren Ressourcen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="133"/>
         <source>Dating system</source>
-        <translation type="unfinished"></translation>
+        <translation>Zeitrechnung</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="134"/>
         <source>Year</source>
-        <translation type="unfinished"></translation>
+        <translation>Jahr</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="168"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>Zeitraum</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="169"/>
         <source>Value</source>
-        <translation type="unfinished"></translation>
+        <translation>Wert</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="169"/>
         <source>The identifier of the selected value; if two values are selected, the first of the two values.</source>
-        <translation type="unfinished"></translation>
+        <translation>Der Bezeichner des ausgewählten Wertes; bei zwei ausgewählten Werten der erste der beiden Werte.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="170"/>
         <source>The identifier of the second selected value if two values are selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Der Bezeichner des zweiten ausgewählten Wertes, falls zwei Werte ausgewählt sind.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="228"/>
         <source>No groups available</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine Gruppen verfügbar</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="286"/>
         <source>Only the currently active project in Field Desktop can be imported!</source>
-        <translation type="unfinished"></translation>
+        <translation>Nur das aktuell in Field Desktop geöffnete Projekt kann importiert werden!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="602"/>
         <source>Choose categories and format</source>
-        <translation type="unfinished"></translation>
+        <translation>Kategorien und Format auswählen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="621"/>
         <source>Save GeoPackage as...</source>
-        <translation type="unfinished"></translation>
+        <translation>GeoPackage speichern als...</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="955"/>
         <source>Coordinate transformation</source>
-        <translation type="unfinished"></translation>
+        <translation>Koordinatentransformation</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="956"/>
         <source>The layer CRS differs from the target CRS. Do you want to transform coordinates?</source>
-        <translation type="unfinished"></translation>
+        <translation>Das CRS des Layers unterscheidet sich vom Ziel-CRS. Möchten Sie die Koordinaten transformieren?</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="959"/>
         <source>Yes to all</source>
-        <translation type="unfinished"></translation>
+        <translation>Ja zu allem</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="960"/>
         <source>No to all</source>
-        <translation type="unfinished"></translation>
+        <translation>Nein zu allem</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="961"/>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>Abbrechen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="123"/>
         <source>Links the resource to one or more images.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verknüpft die Ressource mit einem oder mehreren Bildern.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="124"/>
