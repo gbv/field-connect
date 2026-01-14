@@ -668,7 +668,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         for i, (cat, label) in enumerate(cats.items(), start=1):
             self.progressBar.setValue(i)
-            self.progressBar.setFormat(self.tr('Importing category {label} %p%').format(label))
+            self.progressBar.setFormat(self.tr('Importing category {label} %p%').format(label=label))
             QApplication.processEvents()
 
             csv_reader = self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
