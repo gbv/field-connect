@@ -462,11 +462,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="250"/>
-        <source>Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../field_connect_dockwidget.py" line="671"/>
         <source>Importing category {label} %p%</source>
         <translation type="unfinished"></translation>
@@ -474,11 +469,6 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="923"/>
         <source>Style saved by the Field Connect plugin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget.py" line="1120"/>
-        <source>Could not save layer {layer.name()}: {errors}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -499,6 +489,16 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1160"/>
         <source>Exporting GeoJSON %p%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="250"/>
+        <source>Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="1120"/>
+        <source>Could not save layer {layer}: {errors}</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -462,11 +462,6 @@
         <translation>Abbildung</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="250"/>
-        <source>Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.</source>
-        <translation>Ungültiger EPSG-Code in Field Desktop: {epsgId}. Das CRS des QGIS-Projekts wird verwendet.</translation>
-    </message>
-    <message>
         <location filename="../field_connect_dockwidget.py" line="671"/>
         <source>Importing category {label} %p%</source>
         <translation>Importiere Kategorie {label} %p%</translation>
@@ -475,16 +470,6 @@
         <location filename="../field_connect_dockwidget.py" line="923"/>
         <source>Style saved by the Field Connect plugin</source>
         <translation>Style wurde vom &quot;Field Connect&quot;-Plugin gesichert</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget.py" line="1001"/>
-        <source>Exporting layer {layer.name()} %p%</source>
-        <translation type="obsolete">Exportiere Layer {layer.name()} %p%</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget.py" line="1120"/>
-        <source>Could not save layer {layer.name()}: {errors}</source>
-        <translation>Layer {layer.name()} konnte nicht gespeichert werden: {errors}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="99"/>
@@ -505,6 +490,16 @@
         <location filename="../field_connect_dockwidget.py" line="1160"/>
         <source>Exporting GeoJSON %p%</source>
         <translation>Exportiere GeoJSON %p%</translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="250"/>
+        <source>Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="1120"/>
+        <source>Could not save layer {layer}: {errors}</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -533,11 +528,6 @@
         <location filename="../field_connect_dockwidget_base.ui" line="284"/>
         <source>Format:</source>
         <translation>Format:</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="839"/>
-        <source>CSV:</source>
-        <translation type="obsolete">CSV:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="813"/>
@@ -615,19 +605,9 @@
         <translation>GeoPackage</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="377"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.&lt;br/&gt;Might increase import time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wenn diese Option aktiviert ist, werden Feldbezeichnungen und -beschreibungen aus der Field-Projektkonfiguration in die Attributtabelle geladen.&lt;br/&gt;Dies kann die Importdauer verlängern.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
         <location filename="../field_connect_dockwidget_base.ui" line="461"/>
         <source>Load labels and descriptions</source>
         <translation>Bezeichnungen und Beschreibungen laden</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="422"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:&apos;Open SansVariable&apos;,&apos;sans-serif&apos;; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;If this option is enabled, the hierarchical relations are combined into the simplified relation &amp;quot;isChildOf&amp;quot;, which specifies the direct parent resource. This option should normally remain enabled.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:&apos;Open SansVariable&apos;,&apos;sans-serif&apos;; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &amp;quot;isChildOf&amp;quot; kombiniert, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="378"/>
@@ -650,11 +630,6 @@
         <translation>Ausschließlich den im Layer-Baum ausgewählten Layer exportieren</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="596"/>
-        <source>Active Layer</source>
-        <translation type="obsolete">Aktiver Layer</translation>
-    </message>
-    <message>
         <location filename="../field_connect_dockwidget_base.ui" line="640"/>
         <source>Only export added or edited features in the edit buffer. Layers need to be in edit mode and unsaved.</source>
         <translation>Ausschließlich neu hinzugefügte oder bearbeitete Features exportieren. Dazu müssen sich die Layer im Editierungsmodus befinden und die Änderungen noch nicht gespeichert worden sein.</translation>
@@ -668,11 +643,6 @@
         <location filename="../field_connect_dockwidget_base.ui" line="679"/>
         <source>Saves the layer during the export. Useful in combination with the quick export option</source>
         <translation>Speichert den Layer während des Exportprozesses. Nützlich in Kombination mit der Option &quot;Schneller Export&quot;</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="692"/>
-        <source>Commit and Save</source>
-        <translation type="obsolete">Übernehmen und speichern</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="718"/>
