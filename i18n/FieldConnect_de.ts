@@ -494,12 +494,12 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="250"/>
         <source>Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungültiger EPSG-Code in Field Desktop: {epsgId}. Das CRS des QGIS-Projekts wird verwendet.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1120"/>
         <source>Could not save layer {layer}: {errors}</source>
-        <translation type="unfinished"></translation>
+        <translation>Layer {layer} konnte nicht gespeichert werden: {errors}</translation>
     </message>
 </context>
 <context>
