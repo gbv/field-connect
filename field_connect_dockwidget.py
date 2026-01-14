@@ -247,7 +247,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectExportCrs.setCrs(projectCrs)
             self.selectExportCrs.setCrs(projectCrs)
             self.selectExportCrs.setCrs(projectCrs)
-            self.mB.pushWarning(self.plugin_name, self.tr(f'Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.'))
+            self.mB.pushWarning(self.plugin_name, self.tr('Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.').format(epsgId=epsgId))
 
     def normalize_export_value(self, value):
         """Normalize attribute values for CSV export.
@@ -668,7 +668,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         for i, (cat, label) in enumerate(cats.items(), start=1):
             self.progressBar.setValue(i)
-            self.progressBar.setFormat(self.tr(f'Importing category {label} %p%'))
+            self.progressBar.setFormat(self.tr('Importing category {label} %p%').format(label))
             QApplication.processEvents()
 
             csv_reader = self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
@@ -1117,7 +1117,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         if layer.isEditable():
                             if not layer.commitChanges():
                                 errors = "; ".join(layer.commitErrors())
-                                self.mB.pushWarning(self.plugin_name, self.tr(f'Could not save layer {layer.name()}: {errors}'))
+                                self.mB.pushWarning(self.plugin_name, self.tr('Could not save layer {layer}: {errors}').format(layer=layer.name(), errors=errors))
 
             if opts['quickExport'] and not _export_unsaved_layers:
                 self.mB.pushInfo(self.plugin_name, self.labels['INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS'])
@@ -1128,7 +1128,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 for i, (cat, rows) in enumerate(csv_exp_rows.items(), start=1):
                     if not rows: continue
                     self.progressBar.setValue(i)
-                    self.progressBar.setFormat(self.tr(f'Exporting category {cat} %p%'))
+                    self.progressBar.setFormat(self.tr('Exporting category {cat} %p%').format(cat=cat))
                     QApplication.processEvents()
 
                     seen = set()
