@@ -761,6 +761,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         layer.setFieldAlias(i, ' '.join(parts))
 
+                        inputType = valuemaps.get(fname, {}).get('type', '') or valuemaps.get(split[0], {}).get('type', '')
+                        # print(f'inputType: {inputType}, fname: {fname}')
                         # assign value map
                         if fname in valuemaps:
                             inputType = valuemaps[fname].get('type', '')
@@ -802,52 +804,60 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     'UseCompleter': False,
                                 }
                                 layer.setEditorWidgetSetup(i, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
-                                valuemaps.pop(fname, None)
+                                # valuemaps.pop(fname, None)
                                 continue
                             else:
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[fname])
                                 layer.setEditorWidgetSetup(i, setup)
-                                valuemaps.pop(fname, None)
+                                # valuemaps.pop(fname, None)
                                 continue
+                        # handle type dropdownRange which has the subfields value and endValue
+                        elif inputType == 'dropdownRange':
+                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
+                            layer.setEditorWidgetSetup(i, setup)
+                            if split[-1] == 'endValue': pass
+                                # valuemaps.pop(split[0], None)
+                            continue
 
                         # test for composite field valuelists
                         if split[-1] in valuemaps:
                             # print(f'only composite field assigned? fname: {fname}')
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[-1]])
                             layer.setEditorWidgetSetup(i, setup)
-                            valuemaps.pop(split[-1], None)
+                            # valuemaps.pop(split[-1], None)
                             continue
 
                         # lookups for vmaps
                         lup = {
                             # assign the valuemap with the key volume to the subfield measurementTechnique - info not in project config?
-                            'volume': 'measurementTechnique',
-                            'period': 'value',
-                            'weight': 'measurementDevice',
-                            'dimensionOther': 'measurementPosition',
-                            'dimensionHeight': 'measurementPosition',
-                            'dimensionDiameter': 'measurementPosition',
-                            'dimensionWidth': 'measurementPosition',
-                            'dimensionLength': 'measurementPosition',
-                            'dimensionVerticalExtent': 'measurementPosition',
-                            'dimensionThickness': 'measurementPosition',
-                            'dimensionDepth': 'measurementPosition',
-                            'dimensionPerimeter': 'measurementPosition',
+                            'volume': ['measurementTechnique'],
+                            # 'period': ['value', 'endValue'],  # assigned in inputType dropdownRange
+                            'weight': ['measurementDevice'],
+                            'dimensionOther': ['measurementPosition'],
+                            'dimensionHeight': ['measurementPosition'],
+                            'dimensionDiameter': ['measurementPosition'],
+                            'dimensionWidth': ['measurementPosition'],
+                            'dimensionLength': ['measurementPosition'],
+                            'dimensionVerticalExtent': ['measurementPosition'],
+                            'dimensionThickness': ['measurementPosition'],
+                            'dimensionDepth': ['measurementPosition'],
+                            'dimensionPerimeter': ['measurementPosition'],
                         }
 
                         for base, sub in lup.items():
-                            if base in valuemaps and base in split and sub in split:
+                            if base in valuemaps and base in split and any(s in split for s in sub):
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[base])
                                 layer.setEditorWidgetSetup(i, setup)
                                 # to see whats left unassigned at the end
-                                valuemaps.pop(base, None)
+                                if split[-1] == sub[-1]: pass
+                                    # valuemaps.pop(base, None)
                                 break  # stop after first match
 
                     # python 3.12+
                     # if valuemaps: print(f'unassigned vmaps:\n{',\n'.join([f'{k}: {v}' for k,v in valuemaps.items()])}')
-                    if valuemaps:
-                        joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
-                        print(f'unassigned vmaps:\n{joined}')
+                    # if valuemaps:
+                    #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
+                    #     print(f'unassigned vmaps:\n{joined}')
 
                 # write category to layer variables
                 #! gets lost outside a saved project
