@@ -489,22 +489,22 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="99"/>
         <source>Export finished with errors!</source>
-        <translation type="unfinished"></translation>
+        <translation>Export mit Fehlern beendet!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="108"/>
         <source>No unsaved layers for quick export available</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine ungespeicherten Layer für schnellen Export verfügbar</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1131"/>
         <source>Exporting category {cat} %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Kategorie {cat} %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1160"/>
         <source>Exporting GeoJSON %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere GeoJSON %p%</translation>
     </message>
 </context>
 <context>
@@ -627,7 +627,7 @@
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="422"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:&apos;Open SansVariable&apos;,&apos;sans-serif&apos;; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;If this option is enabled, the hierarchical relations are combined into the simplified relation &amp;quot;isChildOf&amp;quot;, which specifies the direct parent resource. This option should normally remain enabled.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Open SansVariable','sans-serif'; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &amp;quot;isChildOf&amp;quot; kombiniert, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:&apos;Open SansVariable&apos;,&apos;sans-serif&apos;; font-size:16px; color:#212529; background-color:#ffffff;&quot;&gt;Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &amp;quot;isChildOf&amp;quot; kombiniert, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="378"/>
@@ -702,23 +702,24 @@
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="375"/>
         <source>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &quot;isChildOf&quot; kombiniert, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="457"/>
         <source>If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.
 Might increase import time.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn diese Option aktiviert ist, werden Feldbezeichnungen und -beschreibungen aus der Field-Projektkonfiguration in die Attributtabelle geladen.
+Dies kann die Importdauer verlängern.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="586"/>
         <source>Selected layer(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>Ausgewählte(r) Layer</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="682"/>
         <source>Commit and save</source>
-        <translation type="unfinished"></translation>
+        <translation>Übernehmen und speichern</translation>
     </message>
 </context>
 </TS>
