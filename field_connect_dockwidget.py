@@ -779,13 +779,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                         layer.dataProvider().changeAttributeValues({feature.id(): {f_idx: new_val}})
 
                                 if not lupLayerTemp: lupLayerTemp:QgsVectorLayer = self.createLookupLayerTemp()
-                                if fname not in processed_vmaps:
-                                    processed_vmaps.append(fname)
+                                group_id = f'{cat}_{fname}'
+                                if group_id not in processed_vmaps:
+                                    processed_vmaps.append(group_id)
                                     for k, v in valuemaps[fname].get('map', {}).items():
                                         # group_id, key, value, description
                                         f = QgsFeature()
                                         f.setFields(lupLayerTemp.fields())
-                                        group_id = f'{cat}_{fname}'
                                         f['group_id'] = group_id
                                         f['key'] = k
                                         f['value'] = v
@@ -815,7 +815,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         elif inputType == 'dropdownRange':
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
                             layer.setEditorWidgetSetup(i, setup)
-                            if split[-1] == 'endValue': pass
                             continue
 
                         # test for composite field valuelists
@@ -846,8 +845,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             if base in valuemaps and base in split and any(s in split for s in sub):
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[base])
                                 layer.setEditorWidgetSetup(i, setup)
-                                # to see whats left unassigned at the end
-                                if split[-1] == sub[-1]: pass
                                 break  # stop after first match
 
                     # python 3.12+
