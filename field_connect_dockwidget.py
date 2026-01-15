@@ -627,6 +627,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         activeGrp = None
         lNames = []
         lupLayerTemp = None
+        processed_vmaps = []
 
         # collect ui options
         csv_ui_opts = {
@@ -765,7 +766,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         # print(f'inputType: {inputType}, fname: {fname}')
                         # assign value map
                         if fname in valuemaps:
-                            inputType = valuemaps[fname].get('type', '')
                             # handle checkboxes here
                             if inputType == 'checkboxes':
                                 lup_entries = []
@@ -779,21 +779,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                         layer.dataProvider().changeAttributeValues({feature.id(): {f_idx: new_val}})
 
                                 if not lupLayerTemp: lupLayerTemp:QgsVectorLayer = self.createLookupLayerTemp()
-                                for k, v in valuemaps[fname].get('map', {}).items():
-                                    # group_id, key, value, description
-                                    f = QgsFeature()
-                                    f.setFields(lupLayerTemp.fields())
-                                    group_id = f'{cat}_{fname}'
-                                    f['group_id'] = group_id
-                                    f['key'] = k
-                                    f['value'] = v
-                                    f['description'] = ''
-                                    # print(f'isValid: {f.isValid()}, {k}, {v}, {group_id}')
-                                    # todo: show warning if not .isValid()
-                                    lup_entries.append(f)
-                                lupLayerTemp.dataProvider().addFeatures(lup_entries)
-                                lupLayerTemp.updateFields()
-                                lupLayerTemp.updateExtents()
+                                if fname not in processed_vmaps:
+                                    processed_vmaps.append(fname)
+                                    for k, v in valuemaps[fname].get('map', {}).items():
+                                        # group_id, key, value, description
+                                        f = QgsFeature()
+                                        f.setFields(lupLayerTemp.fields())
+                                        group_id = f'{cat}_{fname}'
+                                        f['group_id'] = group_id
+                                        f['key'] = k
+                                        f['value'] = v
+                                        f['description'] = ''
+                                        # print(f'isValid: {f.isValid()}, {k}, {v}, {group_id}')
+                                        # todo: show warning if not .isValid()
+                                        lup_entries.append(f)
+                                    lupLayerTemp.dataProvider().addFeatures(lup_entries)
+                                    lupLayerTemp.updateFields()
+                                    lupLayerTemp.updateExtents()
                                 # create value relation
                                 vRelConfig = {
                                     'Layer': lupLayerTemp.id(),
@@ -804,19 +806,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     'UseCompleter': False,
                                 }
                                 layer.setEditorWidgetSetup(i, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
-                                # valuemaps.pop(fname, None)
                                 continue
                             else:
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[fname])
                                 layer.setEditorWidgetSetup(i, setup)
-                                # valuemaps.pop(fname, None)
                                 continue
                         # handle type dropdownRange which has the subfields value and endValue
                         elif inputType == 'dropdownRange':
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
                             layer.setEditorWidgetSetup(i, setup)
                             if split[-1] == 'endValue': pass
-                                # valuemaps.pop(split[0], None)
                             continue
 
                         # test for composite field valuelists
@@ -824,7 +823,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # print(f'only composite field assigned? fname: {fname}')
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[-1]])
                             layer.setEditorWidgetSetup(i, setup)
-                            # valuemaps.pop(split[-1], None)
                             continue
 
                         # lookups for vmaps
@@ -850,10 +848,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 layer.setEditorWidgetSetup(i, setup)
                                 # to see whats left unassigned at the end
                                 if split[-1] == sub[-1]: pass
-                                    # valuemaps.pop(base, None)
                                 break  # stop after first match
 
                     # python 3.12+
+                    # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
                     # if valuemaps: print(f'unassigned vmaps:\n{',\n'.join([f'{k}: {v}' for k,v in valuemaps.items()])}')
                     # if valuemaps:
                     #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
@@ -861,7 +859,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                 # write category to layer variables
                 #! gets lost outside a saved project
-                # todo: for export: try to read this first, then try english datasource name but set translated name as layername
                 QgsExpressionContextUtils.setLayerVariable(layer, 'field_category', cat)
 
                 # set layer definition to avoid writing NULL values which field rejects
