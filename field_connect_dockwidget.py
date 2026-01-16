@@ -125,7 +125,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 'isDepictedIn': {'label': self.tr('Is depicted in'), 'description': self.tr('Links the resource to one or more images.')},
                 'isMapLayerOf': {'label': self.tr('Is map layer of'), 'description': self.tr('Adds the image as a map layer in the context of the resource specified as the target.')},
                 'hasMapLayer': {'label': self.tr('Has map layer'), 'description': self.tr('Adds one or more images as a map layer in the context of this resource.')},
-                'hasDefaultMapLayer': {'label': self.tr('Has default map layer'), 'description': self.tr('Specifies that the linked image is a default map layer in the context of this resource.')}
+                'hasDefaultMapLayer': {'label': self.tr('Has default map layer'), 'description': self.tr('Specifies that the linked image is a default map layer in the context of this resource.')},
+                'isInstanceOf': {'label': self.tr('Typological classification')}
             },
             'dating': {
                 'type': {'label': self.tr('Type'), 'description': self.tr('The dating type. Possible values are: range (Period), single (Single year), before (Before), after (After), scientific (Scientific).')},
