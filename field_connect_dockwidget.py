@@ -673,7 +673,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.progressBar.setMaximum(len(cats))
 
-        for i, (cat, label) in enumerate(cats.items(), start=1):
+        for i, (cat, label) in enumerate(cats.items()):
             self.progressBar.setValue(i)
             self.progressBar.setFormat(self.tr('Importing category {label} %p%').format(label=label))
             QApplication.processEvents()
@@ -739,7 +739,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     layerFields = layer.fields()
 
                     # iterate through each field, split on dot and handle/translate
-                    for i, field in enumerate(layerFields):
+                    for fIdx, field in enumerate(layerFields):
                         fname = field.name()
                         split = fname.split('.')  # dating 0 begin inputType
                         inputType = safe_get(csv_header_translations, split[0], 'inputType', default='')
@@ -773,9 +773,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # set to latest description
                             desc = safe_get(csv_header_translations, *paths, 'description', default=desc)
 
-                        if desc: layer.setConstraintExpression(i,'true', desc)
+                        if desc: layer.setConstraintExpression(fIdx,'true', desc)
 
-                        layer.setFieldAlias(i, ' '.join(parts))
+                        layer.setFieldAlias(fIdx, ' '.join(parts))
 
                         # assign value map
                         if fname in valuemaps:
@@ -818,23 +818,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     'AllowMulti': True,
                                     'UseCompleter': False,
                                 }
-                                layer.setEditorWidgetSetup(i, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
+                                layer.setEditorWidgetSetup(fIdx, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
                                 continue
                             else:
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[fname])
-                                layer.setEditorWidgetSetup(i, setup)
+                                layer.setEditorWidgetSetup(fIdx, setup)
                                 continue
                         # handle type dropdownRange which has the subfields value and endValue
                         elif inputType == 'dropdownRange':
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
-                            layer.setEditorWidgetSetup(i, setup)
+                            layer.setEditorWidgetSetup(fIdx, setup)
                             continue
 
                         # test for composite field valuelists
                         if split[-1] in valuemaps:
                             # print(f'only composite field assigned? fname: {fname}')
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[-1]])
-                            layer.setEditorWidgetSetup(i, setup)
+                            layer.setEditorWidgetSetup(fIdx, setup)
                             continue
 
                         # lookups for vmaps
@@ -857,7 +857,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         for base, sub in lup.items():
                             if base in valuemaps and base in split and any(s in split for s in sub):
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[base])
-                                layer.setEditorWidgetSetup(i, setup)
+                                layer.setEditorWidgetSetup(fIdx, setup)
                                 break  # stop after first match
 
                     # python 3.12+
@@ -872,8 +872,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QgsExpressionContextUtils.setLayerVariable(layer, 'field_category', cat)
 
                 # set layer definition to avoid writing NULL values which field rejects
-                for i in range(len(fields)):
-                    layer.setDefaultValueDefinition(i, QgsDefaultValue("''", False))
+                for j in range(len(fields)):
+                    layer.setDefaultValueDefinition(j, QgsDefaultValue("''", False))
 
                 # apply layer properties
                 # change opacity
@@ -938,6 +938,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
             if filename and not import_overwrite: layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
+            self.progressBar.setValue(i+1)
+            QApplication.processEvents()
 
         # add lookup layer
         if lupLayerTemp:
