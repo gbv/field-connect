@@ -395,7 +395,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Moves relation fields into a nested 'relations' dict.
         Moves composite fields into nested dicts keyed by their 'name'.
         Also collects value maps from valuelist properties for later assignment."""
-        translations = {'relations': {}}
+        translations = {'identifier': {'inputType': 'identifier'}, 'relations': {'inputType': 'relation'}}
         valuemaps = {}
 
         def recurse(data, result, seen=None, path='root'):
@@ -427,13 +427,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             if vmap:
                                 # add empty string option to clear selection
                                 if '' not in vmap and inputType != 'checkboxes': vmap[''] = ''
-                                valuemaps[fieldname] = {'map': vmap, 'type': inputType}
+                                valuemaps[fieldname] = {'map': vmap, 'inputType': inputType}
 
                         # handle relation fields
                         if data.get('inputType') == 'relation':
                             result.setdefault('relations', {})[fieldname] = {
                                 'label': label,
                                 'description': description,
+                                'inputType': inputType
                             }
 
                         # handle composite fields
@@ -441,6 +442,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             comp = result.setdefault(fieldname, {
                                 'label': label,
                                 'description': description,
+                                'inputType': inputType
                             })
                             # collect subfields as nested entries
                             subfields = data.get('subfields', [])
@@ -451,11 +453,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                         continue
                                     sf_label = sf.get('label', {}).get(self.loc, sf_name)
                                     sf_descr = sf.get('description', {}).get(self.loc, '')
+                                    sf_inputType = sf.get('inputType', {})
                                     if not sf_descr:
                                         sf_descr = sf.get('description', {}).get('en', '')
                                     comp[sf_name] = {
                                         'label': sf_label,
                                         'description': sf_descr,
+                                        'inputType': sf_inputType
                                     }
 
                                     if 'valuelist' in sf:
@@ -466,7 +470,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                             vmap[vlabel] = key
                                         if vmap:
                                             if '' not in vmap and inputType != 'checkboxes': vmap[''] = ''
-                                            valuemaps[sf_name] = {'map': vmap}
+                                            valuemaps[sf_name] = {'map': vmap, 'inputType': sf_inputType}
 
                             data = {k: v for k, v in data.items() if k != 'subfields'}
                         # regular fields
@@ -474,6 +478,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             result[fieldname] = {
                                 'label': label,
                                 'description': description,
+                                'inputType': inputType
                             }
 
                 # recurse into nested structures
@@ -678,7 +683,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if self.chkSetAliases.isChecked():
                 # merge without overwriting nested items
                 csv_header_translations, valuemaps =  self.getCsvHeaderTranslations(cat)
-                csv_header_translations = deep_merge(self.trAttrs, csv_header_translations)
+                csv_header_translations = deep_merge(csv_header_translations, self.trAttrs)
                 # print(f'csv_header_translations: {csv_header_translations}')
                 # print(f'valuemaps: {valuemaps}')
             csv_rows = {row["identifier"]: row for row in csv_reader}
@@ -737,10 +742,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     for i, field in enumerate(layerFields):
                         fname = field.name()
                         split = fname.split('.')  # dating 0 begin inputType
+                        inputType = safe_get(csv_header_translations, split[0], 'inputType', default='')
                         paths = []
                         parts = []
                         desc = ''
-                        for part in split:
+                        for idx, part in enumerate(split):
                             # skip numbers only
                             if re.findall('^\d+$', part):
                                 parts.append(part)
@@ -748,6 +754,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                             if len(part) == 2 and part in csv_header_translations:
                                 parts.append(safe_get(csv_header_translations, part, 'label', default=part))
+                                paths.append(part)
+                                continue
+
+                            # skip first two parts (dimensionLength.0)
+                            if (idx > 1) and inputType in ('dimension', 'volume', 'weight', 'dating', 'literature'):
+                                # get translation from {inputType} or measurement key, if available in self.trAttrs
+                                paths.append(part)
+                                parts.append(safe_get(csv_header_translations, inputType, *paths[1:], 'label', default=False) or safe_get(csv_header_translations, 'measurement', part, 'label', default=part))
                                 continue
 
                             # build path to look for a translation - dating, dating.begin, dating.begin.inputType etc.
@@ -763,8 +777,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         layer.setFieldAlias(i, ' '.join(parts))
 
-                        inputType = valuemaps.get(fname, {}).get('type', '') or valuemaps.get(split[0], {}).get('type', '')
-                        # print(f'inputType: {inputType}, fname: {fname}')
                         # assign value map
                         if fname in valuemaps:
                             # handle checkboxes here
