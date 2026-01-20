@@ -504,7 +504,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="129"/>
         <source>Typological classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Typologische Einordnung</translation>
     </message>
 </context>
 <context>
@@ -617,7 +617,7 @@
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="378"/>
         <source>Combine hierarchical relations</source>
-        <translation>Hierarchische Relationen kombinieren</translation>
+        <translation>Hierarchische Relationen zusammenfassen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="554"/>
@@ -677,7 +677,7 @@
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="375"/>
         <source>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</source>
-        <translation>Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &quot;isChildOf&quot; kombiniert, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.</translation>
+        <translation>Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &quot;isChildOf&quot; zusammengefasst, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="457"/>
