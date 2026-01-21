@@ -59,7 +59,7 @@ class ApiClient:
             self.plugin.fieldDisconnect()
             self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_LOST'])
             return False
-        if not safe_get(r.json(), 'activeProject', default=False):
+        if activeProject != safe_get(r.json(), 'activeProject', default=False):
             self.plugin.setConnectionEnabled(False)
             self.plugin.fieldDisconnect()
             self.plugin.mB.pushCritical(self.plugin.plugin_name, self.plugin.labels['ACTIVE_PROJECT_CHANGED'])
