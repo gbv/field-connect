@@ -286,28 +286,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.formLayout.setWidget(row, QFormLayout.FieldRole, label)
                 k.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
-    # self.activeProject gets set when pressing the connect button and status == 200
-    # currently unused as only the activeProject is selectable
-    def isActiveProject(self, project):
-        if self.activeProject != project:
-            self.mB.pushMessage(': '.join([self.plugin_name, self.tr('Only the currently active project in Field Desktop can be imported!')]), Qgis.Warning, 5)
-
     # for de-/selecting items in the category field
     def handleCats(self, item):
-        self.selectCats.model().blockSignals(True)
-        row = self.selectCats.model().indexFromItem(item).row()
+        mdl = self.selectCats.model()
+        mdl.blockSignals(True)
+        row = mdl.indexFromItem(item).row()
         # print(row)
         if row == 0:  # first de-/select all entry
             state = item.checkState()
             for i in range(1, self.selectCats.count()):
-                self.selectCats.model().item(i).setCheckState(state)
+                mdl.item(i).setCheckState(state)
             item.setText(self.labels['DESELECT_ALL'] if state == Qt.Checked else self.labels['SELECT_ALL'])
         else:
             # update the first item to reflect whether all other items are checked
-            all_checked = all(self.selectCats.model().item(i).checkState() == Qt.Checked for i in range(1, self.selectCats.count()))
-            self.selectCats.model().item(0).setCheckState(Qt.Checked if all_checked else Qt.Unchecked)
-            self.selectCats.model().item(0).setText(self.labels['DESELECT_ALL'] if all_checked else self.labels['SELECT_ALL'])
-        self.selectCats.model().blockSignals(False)
+            all_checked = all(mdl.item(i).checkState() == Qt.Checked for i in range(1, self.selectCats.count()))
+            mdl.item(0).setCheckState(Qt.Checked if all_checked else Qt.Unchecked)
+            mdl.item(0).setText(self.labels['DESELECT_ALL'] if all_checked else self.labels['SELECT_ALL'])
+        mdl.blockSignals(False)
 
     def showOrHideProgressBar(self):
         """Shows the progress bar if an import/export is actively running or hides it if not"""
