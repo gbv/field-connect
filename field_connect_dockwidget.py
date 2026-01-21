@@ -89,6 +89,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # weblate/linguist translation labels - extraction with pylupdate5 field_connect.pro
         self.labels = {
+            'ACTIVE_PROJECT_CHANGED': self.tr('The active project in Field Desktop has changed! Disconnecting...'),
             'BAD_REQUEST': self.tr('Bad request'),
             'CONNECTION_LOST': self.tr('Connection lost!'),
             'CONNECTION_UNAUTHORIZED': self.tr('Unauthorized'),
@@ -626,7 +627,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def fieldImport(self):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
-        if not self.api.isConnectionActive(): return
+        if not self.api.isConnectionActiveAndValid(self.activeProject): return
         self._import_running = True
         self.progressBar.reset()
         self.showOrHideProgressBar()
@@ -966,7 +967,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def fieldExport(self):
         """Export group of layers back to Field Desktop using POST /import/{format}"""
-        if not self.api.isConnectionActive(): return
+        if not self.api.isConnectionActiveAndValid(self.activeProject): return
         self.progressBar.reset()
         self._export_running = True
         _export_unsaved_layers = None
@@ -1206,7 +1207,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     # todo: use this in loadImportCategories - old?
     def getCategoryList(self):
-        if self.api.isConnectionActive():
+        if self.api.isConnectionActiveAndValid(self.activeProject):
             return safe_get(self.api.get(f'/{self.activeProject}/configuration', 3001).json(), 'resource', 'order')
         else: return []
 

@@ -49,15 +49,20 @@ class ApiClient:
         self.session = Session()
         self.setConnected(False)
 
-    def isConnectionActive(self):
+    def isConnectionActiveAndValid(self, activeProject):
         """
-        Check if connection is still active and disconnect if not
+        Check if connection is still active and the project has not changed
         """
         r = self.get('/info')
         if not r:
             self.plugin.setConnectionEnabled(False)
             self.plugin.fieldDisconnect()
             self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_LOST'])
+            return False
+        if not safe_get(r.json(), 'activeProject', default=False):
+            self.plugin.setConnectionEnabled(False)
+            self.plugin.fieldDisconnect()
+            self.plugin.mB.pushCritical(self.plugin.plugin_name, self.plugin.labels['ACTIVE_PROJECT_CHANGED'])
             return False
         return True
 
