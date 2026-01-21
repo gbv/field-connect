@@ -618,7 +618,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.sB.showMessage(self.tr('Choose categories and format'))
             self.setConnectionStatus()
 
-    # todo: check if self.activeProject is still the same as the currently open project in field
+    # todo: fix: when active layer is inside a group, another import's lookup layer will be inserted into the group
     def fieldImport(self):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
@@ -626,6 +626,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._import_running = True
         self.progressBar.reset()
         self.showOrHideProgressBar()
+        csv_export_project = None
         activeGrp = None
         lNames = []
         lupLayerTemp = None
@@ -656,33 +657,70 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # takes the first group from the top if there are multiple with the same name
             activeGrp = self.project.layerTreeRoot().findGroup(self.activeProject)
             lNames = [l.name() for l in activeGrp.findLayers()]
+        else:
+            # create group at the bottom for inserting layers
+            group_ref = self.treeRoot.insertGroup(-1, f'{self.activeProject}')
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
         rGeo: Response = self.api.get(f'/export/geojson?context=project&formatted=true')
         geoJSON = json.loads(rGeo.text)
 
-        # create group at the bottom for inserting layers
-        if not import_overwrite: group_ref = self.treeRoot.insertGroup(-1, f'{self.activeProject}')
-
         cats = dict(zip([d for d in self.selectCats.checkedItemsData() if d], [i for i in self.selectCats.checkedItems() if i != self.labels['DESELECT_ALL']]))  # untranslated: translated
 
         self.progressBar.setMaximum(len(cats))
+
+        if self.chkSetAliases.isChecked():
+            # get fixed staff/campaigns lists from 'Project' csv export which are not available in the project config
+            csv_export_project = self.getCategoryCsv('Project', csv_ui_opts['combineHierarchicalRelations'])
+            # collect valuemaps from project csv export
+            prjMaps = {
+                'staff': {
+                    'map': {},
+                    'inputType': 'checkboxes',
+                },
+                'campaigns': {
+                    'map': {},
+                    'inputType': 'checkboxes',
+                },
+            }
+
+            for row in csv_export_project:
+                for key in prjMaps:
+                    cell = row.get(key)
+                    if not cell:
+                        continue
+
+                    for val in cell.split(';'):
+                        val = val.strip()
+                        if val:
+                            prjMaps[key]['map'][val] = val
+
+            FIELD_ALIASES = {
+                'staff': ('processor', 'supervisor',),
+                'campaigns': ('campaign',),
+            }
+
+            for src_key, targets in FIELD_ALIASES.items():
+                for field in targets:
+                    prjMaps[field] = prjMaps[src_key]
+            # print(prjMaps)
 
         for i, (cat, label) in enumerate(cats.items()):
             self.progressBar.setValue(i)
             self.progressBar.setFormat(self.tr('Importing category {label} %p%').format(label=label))
             QApplication.processEvents()
 
-            csv_reader = self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
+            csv_reader = csv_export_project if cat == 'Project' and csv_export_project else self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
             csv_header = csv_reader.fieldnames
             if self.chkSetAliases.isChecked():
                 # merge without overwriting nested items
                 csv_header_translations, valuemaps =  self.getCsvHeaderTranslations(cat)
                 csv_header_translations = deep_merge(csv_header_translations, self.trAttrs)
+                valuemaps = deep_merge(valuemaps, prjMaps)
                 # print(f'csv_header_translations: {csv_header_translations}')
                 # print(f'valuemaps: {valuemaps}')
-            csv_rows = {row["identifier"]: row for row in csv_reader}
+            csv_rows = {row['identifier']: row for row in csv_reader}
             # print(f'csv_rows: {csv_rows}')
 
             # create fields here for reuse
@@ -709,9 +747,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         feat.setGeometry(geom)
                         geom_type = gj_feat['geometry']['type']
                     else:
-                        geom_type = "NoGeometry"
+                        geom_type = 'NoGeometry'
                 else:
-                    geom_type = "NoGeometry"
+                    geom_type = 'NoGeometry'
 
                 features[geom_type].append(feat)
 
@@ -776,7 +814,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         # assign value map
                         if fname in valuemaps:
                             # handle checkboxes here
-                            if inputType == 'checkboxes':
+                            # todo: check if input type valuelistMultiInput is always a checkbox
+                            if inputType in ('checkboxes', 'valuelistMultiInput'):
                                 lup_entries = []
                                 f_idx = layer.fields().indexFromName(fname)
                                 # convert values to value relation compatible ones like "red;blue;green" to '{red,blue,green}'
