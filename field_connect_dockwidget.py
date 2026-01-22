@@ -759,7 +759,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for gType, feats in features.items():
                 layType = GEOJSON_TO_QGIS.get(gType).name
                 layNameSource = f'{self.activeProject}_{cat}_{gType}'
-                layName = f'{self.activeProject}_{label}_{gType}'
+                layName = re.sub(r'\s+', '_', f'{self.activeProject}_{label}_{gType}')
                 layer = QgsVectorLayer(layType, layName, 'memory')
                 pr = layer.dataProvider()
                 layer.setCrs(crs)
