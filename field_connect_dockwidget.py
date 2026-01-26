@@ -775,6 +775,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # iterate through each field, split on dot and handle/translate
                     for fIdx, field in enumerate(layerFields):
                         fname = field.name()
+                        f_idx = layer.fields().indexFromName(fname)
                         split = fname.split('.')  # dating 0 begin inputType
                         inputType = safe_get(csv_header_translations, split[0], 'inputType', default='')
                         paths = []
@@ -811,13 +812,20 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         layer.setFieldAlias(fIdx, ' '.join(parts))
 
+                        # determine field type (composite subfield or field itself)
+                        if inputType == 'composite' and split[-1] in valuemaps:
+                            vmap_source = split[-1]  # composite subfield
+                            vmap_input_type = valuemaps[vmap_source].get('inputType', inputType)
+                        else:
+                            vmap_source = fname  # regular field
+                            vmap_input_type = inputType
+
                         # assign value map
-                        if fname in valuemaps:
+                        if vmap_source in valuemaps:
                             # handle checkboxes here
                             # todo: check if input type valuelistMultiInput is always a checkbox
-                            if inputType in ('checkboxes', 'valuelistMultiInput'):
+                            if vmap_input_type in ('checkboxes', 'valuelistMultiInput'):
                                 lup_entries = []
-                                f_idx = layer.fields().indexFromName(fname)
                                 # convert values to value relation compatible ones like "red;blue;green" to '{red,blue,green}'
                                 for feature in layer.getFeatures():
                                     val = feature[f_idx]
@@ -830,7 +838,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 group_id = f'{cat}_{fname}'
                                 if group_id not in processed_vmaps:
                                     processed_vmaps.append(group_id)
-                                    for k, v in valuemaps[fname].get('map', {}).items():
+                                    for k, v in valuemaps[vmap_source].get('map', {}).items():
                                         # group_id, key, value, description
                                         f = QgsFeature()
                                         f.setFields(lupLayerTemp.fields())
@@ -856,19 +864,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 layer.setEditorWidgetSetup(fIdx, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
                                 continue
                             else:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[fname])
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[vmap_source])
                                 layer.setEditorWidgetSetup(fIdx, setup)
                                 continue
                         # handle type dropdownRange which has the subfields value and endValue
                         elif inputType == 'dropdownRange':
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
-                            layer.setEditorWidgetSetup(fIdx, setup)
-                            continue
-
-                        # test for composite field valuelists
-                        if split[-1] in valuemaps:
-                            # print(f'only composite field assigned? fname: {fname}')
-                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[-1]])
                             layer.setEditorWidgetSetup(fIdx, setup)
                             continue
 
@@ -896,8 +897,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 break  # stop after first match
 
                     # python 3.12+
-                    # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
                     # if valuemaps: print(f'unassigned vmaps:\n{',\n'.join([f'{k}: {v}' for k,v in valuemaps.items()])}')
+                    # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
                     # if valuemaps:
                     #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
                     #     print(f'unassigned vmaps:\n{joined}')
