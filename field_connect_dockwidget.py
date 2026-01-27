@@ -392,7 +392,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Moves composite fields into nested dicts keyed by their 'name'.
         Also collects value maps from valuelist properties for later assignment."""
         translations = {'identifier': {'inputType': 'identifier'}, 'relations': {'inputType': 'relation'}}
-        valuemaps = {}
+        valuemaps = {
+            'date': {
+                'isRange': {
+                    'map': {self.tr('Yes'):'true', self.tr('No'):'false', '':''},
+                    'inputType': 'dropdown'  # boolean
+                },
+            },
+        }
 
         def recurse(data, result, seen=None, path='root'):
             """Recursively collect field translations for the given locale."""
@@ -812,16 +819,22 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         layer.setFieldAlias(fIdx, ' '.join(parts))
 
-                        # determine field type (composite subfield or field itself)
+                        # determine field type (composite subfield, nested or field itself) and get the value map
                         if inputType == 'composite' and split[-1] in valuemaps:
-                            vmap_source = split[-1]  # composite subfield
-                            vmap_input_type = valuemaps[vmap_source].get('inputType', inputType)
+                            vmap_source = valuemaps.get(split[-1], {})  # composite subfield
+                            vmap_input_type = vmap_source.get('inputType', inputType)
+                        # get manually added nested map
+                        elif safe_get(valuemaps, *paths, default=False):
+                            vmap_source = safe_get(valuemaps, *paths, default={})
+                            vmap_input_type = safe_get(valuemaps, *paths, 'inputType', default=inputType)
                         else:
-                            vmap_source = fname  # regular field
+                            vmap_source = valuemaps.get(fname, {})  # regular field
                             vmap_input_type = inputType
+                        # print(vmap_input_type)
 
                         # assign value map
-                        if vmap_source in valuemaps:
+                        if vmap_source:
+                            # print(vmap_source)
                             # handle checkboxes here
                             # todo: check if input type valuelistMultiInput is always a checkbox
                             if vmap_input_type in ('checkboxes', 'valuelistMultiInput'):
@@ -838,7 +851,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 group_id = f'{cat}_{fname}'
                                 if group_id not in processed_vmaps:
                                     processed_vmaps.append(group_id)
-                                    for k, v in valuemaps[vmap_source].get('map', {}).items():
+                                    for k, v in vmap_source.get('map', {}).items():
                                         # group_id, key, value, description
                                         f = QgsFeature()
                                         f.setFields(lupLayerTemp.fields())
@@ -864,7 +877,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 layer.setEditorWidgetSetup(fIdx, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
                                 continue
                             else:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[vmap_source])
+                                setup = QgsEditorWidgetSetup('ValueMap', vmap_source)
                                 layer.setEditorWidgetSetup(fIdx, setup)
                                 continue
                         # handle type dropdownRange which has the subfields value and endValue
