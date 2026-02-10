@@ -24,10 +24,13 @@ trap cleanup EXIT
 # Export plugin to temp folder
 git archive --format=tar --prefix="${PLUGIN_NAME}/" HEAD | tar -x -C "$TMPDIR"
 
-# Strip # comments but keep docstrings and shebang
+# Strip # comments but keep docstrings, shebangs, and spacing
 echo "🧹 Stripping comments from Python files..."
 find "$TMPDIR/$PLUGIN_NAME" -name "*.py" | while read -r file; do
-  sed -i -E 's|^\s*#.*$||; s|\s+#.*$||' "$file"
+  sed -i -E '
+    /^\s*#/d        # delete full-line comments
+    s/\s+#.*$//     # strip inline comments
+  ' "$file"
 done
 
 # Create final ZIP in plugin folder
