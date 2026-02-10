@@ -8,7 +8,7 @@
                              -------------------
         begin                : 2025-08-18
         git sha              : $Format:%H$
-        copyright            : (C) 2025 by VZG
+        copyright            : (C) 2026 by VZG
         email                : oliver.zapiec@gbv.de
  ***************************************************************************/
 
@@ -29,10 +29,10 @@ from collections import defaultdict
 
 from qgis.core import Qgis, QgsMessageLog, QgsApplication, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
 QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
-QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, \
+QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, QgsFieldConstraints, \
 QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, QgsTask, NULL
 from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import Qt, QVariant, QTimer, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QVariant, QMetaType, QDateTime, QTimeZone, QTimer, pyqtSignal
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from PyQt5.QtGui import QColor
@@ -41,9 +41,11 @@ QMessageBox, QFormLayout, QLabel, QFileDialog, QApplication
 
 from .modules.api_client import ApiClient
 from .modules.cldr_loader import CLDRLoader
+from .modules.datetime_transformer import DateTimeTransformer
 from .utils.constants import GEOJSON_TO_QGIS
 from .utils.helpers import *
 from .resources import *
+from functools import partial
 
 
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -87,7 +89,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._import_running = False
         self._export_running = False
 
-        # weblate/linguist translation labels - extraction with pylupdate5 field_connect.pro
+        # weblate/linguist translation labels - extraction with pylupdate5 -noobsolete field_connect.pro
         self.labels = {
             'ACTIVE_PROJECT_CHANGED': self.tr('The active project in Field Desktop has changed! Disconnecting...'),
             'BAD_REQUEST': self.tr('Bad request'),
@@ -200,6 +202,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.hzLineSettings)[0], QFormLayout.SpanningRole, self.hzLineSettings)
         # add fullwidth for category selection
         # self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.selectCats)[0], QFormLayout.SpanningRole, self.selectCats)
+
+        # timezone combobox
+        self.tz_ids = sorted(tz.data().decode('utf-8') for tz in QTimeZone.availableTimeZoneIds() if not tz.startsWith(b'UTC'))
+        tzObjs = (self.selectImportTz, self.selectExportTz,)
+        for cbox in tzObjs:
+            cbox.setCompleter(None)
+            cbox.addItems(self.tz_ids)
+            cbox.lineEdit().setPlaceholderText(self.tr('Type to filter...'))
+
         self.setConnectionStatus()
         self.mB: QgsMessageBar = iface.messageBar()
         self.sB = QStatusBar()
@@ -209,12 +220,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # export tab
         self.exportUpdateLayerGroups()
-        # save settings on init, in case object names change
-        self.saveSettings()
+
+        # todo: test loading/saving after object names change
         # load saved settings
-        self.loadSettings()
+        try: self.loadSettings()
+        except:
+            print('Error loading settings')  # debug
+            self.removeSettings()
+            self.saveSettings()
+            self.loadSettings()
 
         # connections
+        self.selectImportTz.lineEdit().textChanged.connect(partial(self.onTimezoneTextChanged, self.selectImportTz))
+        self.selectImportTzReset.clicked.connect(partial(self.resetTimezone, self.selectImportTz))
+        self.selectExportTz.lineEdit().textChanged.connect(partial(self.onTimezoneTextChanged, self.selectExportTz))
+        self.selectExportTzReset.clicked.connect(partial(self.resetTimezone, self.selectExportTz))
         self.btnConnect.clicked.connect(self.fieldConnect)
         self.btnImport.clicked.connect(self.fieldImport)
         self.btnExport.clicked.connect(self.fieldExport)
@@ -234,6 +254,24 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         gs = self.treeRoot.findGroups()
         [self.selectExGroup.addItem(group.name(), group) for group in gs] if gs else self.selectExGroup.addItem(self.tr('No groups available'))
 
+    def resetTimezone(self, cbox):
+        """Resets the timezone value to the system timezone"""
+        cbox.setCurrentText(QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+
+    def onTimezoneTextChanged(self, cbox, text):
+        """Filter combobox values after input"""
+        # cbox.blockSignals(True)
+        cbox.lineEdit().blockSignals(True)
+        cbox.clear()
+
+        filtered = [tz for tz in self.tz_ids if text.lower() in tz.lower()] if text else self.tz_ids
+
+        cbox.addItems(filtered)
+        cbox.setEditText(text)
+
+        cbox.lineEdit().blockSignals(False)
+        # cbox.blockSignals(False)
+
     def setProjectCrs(self):
         """Sets the project crs when connecting to Field Desktop if available,
         or uses the one set in the QGIS Project"""
@@ -251,20 +289,34 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectExportCrs.setCrs(projectCrs)
             self.mB.pushWarning(self.plugin_name, self.tr('Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.').format(epsgId=epsgId))
 
-    def normalize_export_value(self, value):
-        """Normalize attribute values for CSV export.
-        Converts QGIS multiselect formats {a,b,c} → a;b;c, stripping any quotes."""
+    def normalize_export_value(self, value, dT=None):
+        """
+        Normalize attribute values for CSV export.
 
+        - ValueRelation: {a,b,c} → a;b;c
+        - datetime strings: apply timezone conversion
+        - NULL → empty string
+        """
+
+        # QGIS NULL → CSV empty
+        if value == NULL or value is None:
+            return ''
+
+        # ValueRelation multiselect
         if isinstance(value, str) and value.startswith('{') and value.endswith('}'):
             inner = value[1:-1].strip()
-            if inner:
-                # remove any existing double quotes and split by comma
-                parts = [p.strip().replace('"', '') for p in inner.split(',') if p.strip()]
-                return ';'.join(parts)
-            else:
+            if not inner:
                 return ''
-        elif value == NULL:
-            return ''
+            parts = [
+                p.strip().replace('"', '')
+                for p in inner.split(',')
+                if p.strip()
+            ]
+            return ';'.join(parts)
+
+        # datetime conversion
+        if dT and isinstance(value, str) and dT.can_transform(value):
+            return dT.transform(value)
 
         return value
 
@@ -311,12 +363,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def createLookupLayerTemp(self):
         """Create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'"""
         fields = QgsFields()
-        # fields.append(QgsField('id', QVariant.Int))
+        # fields.append(QgsField('id', QMetaType.Int))
         # todo: QgsField constructor is deprecated
-        fields.append(QgsField('group_id', QVariant.String))
-        fields.append(QgsField('key', QVariant.String))
-        fields.append(QgsField('value', QVariant.String))
-        fields.append(QgsField('description', QVariant.String))
+        fields.append(QgsField('group_id', QMetaType.QString))
+        fields.append(QgsField('key', QMetaType.QString))
+        fields.append(QgsField('value', QMetaType.QString))
+        fields.append(QgsField('description', QMetaType.QString))
 
         lupLayer = QgsVectorLayer(
             'None',   # no geometry
@@ -384,21 +436,31 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
         self.selectCats.setEnabled(True)
 
-    # todo: change method name as it does more than get translations now
-    def getCsvHeaderTranslations(self, cat):  # 🐱
-        """Get translations from the project config.
+    def getFieldInformations(self, cat):  # 🐱
+        """Extract translations and relevant informations from the project config.
         Ignores the category field as it is not getting exported in a CSV export.
         Moves relation fields into a nested 'relations' dict.
         Moves composite fields into nested dicts keyed by their 'name'.
         Also collects value maps from valuelist properties for later assignment."""
         translations = {'identifier': {'inputType': 'identifier'}, 'relations': {'inputType': 'relation'}}
+        boolMap = {self.tr('Yes'):'true', self.tr('No'):'false', '':''}
         valuemaps = {
+            ':boolean': {'map': boolMap},
+            ':volInputUnit': {'map': {self.tr('ml'):'ml', self.tr('l'):'l', '':''}},
+            ':weightInputUnit': {'map': {self.tr('mg'):'mg', self.tr('g'):'g', self.tr('kg'):'kg', '':''}},
+            ':dimInputUnit': {'map': {self.tr('mm'):'mm', self.tr('cm'):'cm', self.tr('m'):'m', '':''}},
             'date': {
                 'isRange': {
-                    'map': {self.tr('Yes'):'true', self.tr('No'):'false', '':''},
-                    'inputType': 'dropdown'  # boolean
+                    'map': boolMap,
+                    'inputType': 'boolean'
                 },
             },
+            'dating': {
+                'begin': {'inputType': {'map': {self.tr('bce'): 'bce', self.tr('ce'): 'ce', self.tr('bp'): 'bp', '':''}}},
+                'type': {'map': {self.tr('range'):'range', self.tr('single'):'single', self.tr('before'):'before', self.tr('after'): 'after', self.tr('scientific'):'scientific', '':''}},
+                'isImprecise': {'map': boolMap},
+                'isUncertain': {'map': boolMap}
+            }
         }
 
         def recurse(data, result, seen=None, path='root'):
@@ -410,6 +472,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if 'name' in data and isinstance(data['name'], str):
                     fieldname = data['name']
                     inputType = data.get('inputType', '')
+                    dateConfiguration = data.get('dateConfiguration', '')
                     if fieldname != 'category':
                         if fieldname in seen:
                             print(f'Duplicate field "{fieldname}" found at {path}')
@@ -447,6 +510,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 'description': description,
                                 'inputType': inputType
                             })
+                            if dateConfiguration: comp[fieldname]['dateConfiguration'] = dateConfiguration
                             # collect subfields as nested entries
                             subfields = data.get('subfields', [])
                             if isinstance(subfields, list):
@@ -464,6 +528,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                         'description': sf_descr,
                                         'inputType': sf_inputType
                                     }
+                                    if dateConfiguration: comp[sf_name]['dateConfiguration'] = dateConfiguration
 
                                     if 'valuelist' in sf:
                                         vmap = {}
@@ -483,6 +548,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 'description': description,
                                 'inputType': inputType
                             }
+                            if dateConfiguration: result[fieldname]['dateConfiguration'] = dateConfiguration
 
                 # recurse into nested structures
                 for k, v in data.items():
@@ -536,12 +602,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         s.setValue(f'{pn}/import/format', self.radioFormatMemory.objectName() if self.radioFormatMemory.isChecked() else self.radioFormatGPKG.objectName())
         s.setValue(f'{pn}/import/setalias', self.chkSetAliases.isChecked())
         s.setValue(f'{pn}/import/combineHierarchicalRelations', self.chkCombineRel.isChecked())
+        s.setValue(f'{pn}/import/timezone', self.selectImportTz.currentText() if QTimeZone(self.selectImportTz.currentText().encode('utf-8')).isValid() and self.selectImportTz.currentText() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
         # export tab
         s.setValue(f'{pn}/export/mode', self.radioExGroup.objectName() if self.radioExGroup.isChecked() else self.radioExSelectedLayers.objectName())
         s.setValue(f'{pn}/export/quickExport', self.chkQuickExport.isChecked())
         s.setValue(f'{pn}/export/commitSave', self.chkCommitSave.isChecked())
         s.setValue(f'{pn}/export/permitDeletions', self.chkPermitDel.isChecked())
         s.setValue(f'{pn}/export/ignoreUnconfiguredFields', self.chkIgnoreUnconfFields.isChecked())
+        s.setValue(f'{pn}/export/timezone', self.selectExportTz.currentText() if QTimeZone(self.selectExportTz.currentText().encode('utf-8')).isValid() and self.selectExportTz.currentText() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
 
     def loadSettings(self):
         """Load user settings made in the ui"""
@@ -553,6 +621,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         next(rb.setChecked(True) for rb in (self.radioFormatMemory, self.radioFormatGPKG) if rb.objectName() == rbName)
         self.chkSetAliases.setChecked(s.value(f'{pn}/import/setalias', True, bool))
         self.chkCombineRel.setChecked(s.value(f'{pn}/import/combineHierarchicalRelations', True, bool))
+        tz_im_val = s.value(f'{pn}/import/timezone', type=str)
+        self.selectImportTz.setCurrentText(tz_im_val if QTimeZone(tz_im_val.encode('utf-8')).isValid() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
         # export tab
         exMode = s.value(f'{pn}/export/mode', 'radioExGroup')
         next(rb.setChecked(True) for rb in (self.radioExGroup, self.radioExSelectedLayers) if rb.objectName() == exMode)
@@ -560,6 +630,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.chkCommitSave.setChecked(s.value(f'{pn}/export/commitSave', True, bool))
         self.chkPermitDel.setChecked(s.value(f'{pn}/export/permitDeletions', False, bool))
         self.chkIgnoreUnconfFields.setChecked(s.value(f'{pn}/export/ignoreUnconfiguredFields', False, bool))
+        tz_ex_val = s.value(f'{pn}/export/timezone', type=str)
+        self.selectExportTz.setCurrentText(tz_ex_val if QTimeZone(tz_ex_val.encode('utf-8')).isValid() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+
+    def removeSettings(self):
+        pn = self.plugin_name.replace(' ', '').lower()
+        s = QgsSettings()
+        s.beginGroup(pn)
+        s.remove('')
+        s.endGroup()
 
     def setConnectionEnabled(self, onOff: bool):
         self.connected = onOff
@@ -571,6 +650,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnImport.setEnabled(onOff)
         self.chkSetAliases.setEnabled(onOff)
         self.chkCombineRel.setEnabled(onOff)
+        self.selectImportTz.setEnabled(onOff)
+        self.selectImportTzReset.setEnabled(onOff)
         # export tab
         self.selectExGroup.setEnabled(onOff)
         self.radioExGroup.setEnabled(onOff)
@@ -580,6 +661,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.chkPermitDel.setEnabled(onOff)
         self.chkIgnoreUnconfFields.setEnabled(onOff)
         self.btnExport.setEnabled(onOff)
+        self.selectExportTz.setEnabled(onOff)
+        self.selectExportTzReset.setEnabled(onOff)
         # on or off only
         if onOff:
             self.btnConnect.setText(self.tr('Disconnect'))
@@ -631,6 +714,20 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
         if not self.api.isConnectionActiveAndValid(self.activeProject): return
         self._import_running = True
+
+        # collect ui options
+        csv_ui_opts = {
+            'combineHierarchicalRelations': self.chkCombineRel.isChecked(),
+            'timezone': self.selectImportTz.currentText()
+        }
+
+        importTz = csv_ui_opts['timezone'].encode('utf-8')
+        if not importTz or not QTimeZone(importTz).isValid():
+            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=importTz)))
+            return
+        else:
+            dT = DateTimeTransformer(QTimeZone(b'UTC'), QTimeZone(importTz))
+
         self.progressBar.reset()
         self.showOrHideProgressBar()
         csv_export_project = None
@@ -638,10 +735,36 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         lNames = []
         lupLayerTemp = None
         processed_vmaps = []
-
-        # collect ui options
-        csv_ui_opts = {
-            'combineHierarchicalRelations': self.chkCombineRel.isChecked()
+        hardConstraint = QgsFieldConstraints.ConstraintStrengthHard
+        softConstraint = QgsFieldConstraints.ConstraintStrengthSoft
+        date_data_type_constraint = {
+            # specification of time:
+            'optional': softConstraint,
+            'dateTime': hardConstraint,
+            'date': hardConstraint
+        }
+        YEAR       = r'\\d{4}'
+        MONTHYEAR  = r'\\d{2}\\.\\d{4}'
+        DATE       = r'\\d{2}\\.\\d{2}\\.\\d{4}'
+        TIME       = r'\\d{2}:\\d{2}'
+        DATE_REGEXES = {
+            'optional': (
+                r'^$|'
+                rf'^{YEAR}$|'
+                rf'^{MONTHYEAR}$|'
+                rf'^{DATE}$|'
+                rf'^{DATE} {TIME}$'
+            ),
+            'date': (
+                r'^$|'
+                rf'^{YEAR}$|'
+                rf'^{MONTHYEAR}$|'
+                rf'^{DATE}$'
+            ),
+            'dateTime': (
+                r'^$|'
+                rf'^{DATE} {TIME}$'
+                ),
         }
 
         filename = None
@@ -678,6 +801,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.setMaximum(len(cats))
 
         if self.chkSetAliases.isChecked():
+            # todo: extract function
             # get fixed staff/campaigns lists from 'Project' csv export which are not available in the project config
             csv_export_project = self.getCategoryCsv('Project', csv_ui_opts['combineHierarchicalRelations'])
             # collect valuemaps from project csv export
@@ -722,10 +846,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             csv_header = csv_reader.fieldnames
             if self.chkSetAliases.isChecked():
                 # merge without overwriting nested items
-                csv_header_translations, valuemaps =  self.getCsvHeaderTranslations(cat)
-                csv_header_translations = deep_merge(csv_header_translations, self.trAttrs)
+                fieldInformations, valuemaps =  self.getFieldInformations(cat)
+                fieldInformations = deep_merge(fieldInformations, self.trAttrs)
                 valuemaps = deep_merge(valuemaps, prjMaps)
-                # print(f'csv_header_translations: {csv_header_translations}')
+                # print(f'fieldInformations: {fieldInformations}')
                 # print(f'valuemaps: {valuemaps}')
             csv_rows = {row['identifier']: row for row in csv_reader}
             # print(f'csv_rows: {csv_rows}')
@@ -733,35 +857,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # create fields here for reuse
             fields = QgsFields()
             for col in csv_header:
-                fields.append(QgsField(col, QVariant.String))
+                fields.append(QgsField(col, QMetaType.QString))
 
             # geom lookup
             geom_lookup = {safe_get(f['properties']['identifier']): f
                         for f in safe_get(geoJSON, 'features', default=[])}
 
-            features = defaultdict(list)
-            # iterate through csv
-            for id, row in csv_rows.items():
-                feat = QgsFeature(fields)
-                feat.setAttributes(list(row.values()))
-
-                # check if identifier is in geojson
-                gj_feat = safe_get(geom_lookup, id)
-                if gj_feat and safe_get(gj_feat, 'geometry'):
-                    geom_json = json.dumps(gj_feat['geometry'])
-                    geom = QgsJsonUtils.geometryFromGeoJson(geom_json)
-                    if geom and not geom.isEmpty():
-                        feat.setGeometry(geom)
-                        geom_type = gj_feat['geometry']['type']
-                    else:
-                        geom_type = 'NoGeometry'
-                else:
-                    geom_type = 'NoGeometry'
-
-                features[geom_type].append(feat)
-
-            # add empty list in case there are no features, to add a schema only layer anyway
-            if not features: features['NoGeometry'] = []
+            features = self.features_from_csv(
+                csv_rows=csv_rows,
+                fields=fields,
+                geom_lookup=geom_lookup,
+                dateTransformer=dT
+            )
 
             for gType, feats in features.items():
                 layType = GEOJSON_TO_QGIS.get(gType).name
@@ -784,38 +891,56 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         fname = field.name()
                         f_idx = layer.fields().indexFromName(fname)
                         split = fname.split('.')  # dating 0 begin inputType
-                        inputType = safe_get(csv_header_translations, split[0], 'inputType', default='')
+                        inputType = safe_get(fieldInformations, split[0], 'inputType', default='')
+                        # print(inputType)
+                        dateConfig = safe_get(fieldInformations, split[0], 'dateConfiguration', default={})
+                        dateConfigDataType = dateConfig.get('dataType', None)
+                        isComposite = ':' in split[0]  # ':' not allowed when creating composite fields and always used as separator (projectname:fieldname)
+                        # fieldType = field.type()  # unused for now
                         paths = []
                         parts = []
                         desc = ''
+                        setup = None
+
                         for idx, part in enumerate(split):
                             # skip numbers only
-                            if re.findall('^\d+$', part):
+                            if part.isdigit():
                                 parts.append(part)
                                 continue
 
-                            if len(part) == 2 and part in csv_header_translations:
-                                parts.append(safe_get(csv_header_translations, part, 'label', default=part))
+                            if len(part) == 2 and part in fieldInformations:
+                                parts.append(safe_get(fieldInformations, part, 'label', default=part))
                                 paths.append(part)
-                                continue
-
-                            # skip first two parts (dimensionLength.0)
-                            if (idx > 1) and inputType in ('dimension', 'volume', 'weight', 'dating', 'literature'):
-                                # get translation from {inputType} or measurement key, if available in self.trAttrs
-                                paths.append(part)
-                                parts.append(safe_get(csv_header_translations, inputType, *paths[1:], 'label', default=False) or safe_get(csv_header_translations, 'measurement', part, 'label', default=part))
                                 continue
 
                             # build path to look for a translation - dating, dating.begin, dating.begin.inputType etc.
                             paths.append(part)
-
-                            lookUp = safe_get(csv_header_translations, *paths, 'label', default=part)
-                            if lookUp: parts.append(lookUp)
+                            # skip first two parts (dimensionLength.0)
+                            if (idx > 1) and inputType in ('dimension', 'volume', 'weight', 'dating', 'literature'):
+                                # get translation from {inputType} or measurement key, if available in self.trAttrs
+                                parts.append(safe_get(fieldInformations, inputType, *paths[1:], 'label', default=False) or safe_get(fieldInformations, 'measurement', part, 'label', default=part))
+                            else:
+                                lookUp = safe_get(fieldInformations, *paths, 'label', default=part)
+                                if lookUp: parts.append(lookUp)
 
                             # set to latest description
-                            desc = safe_get(csv_header_translations, *paths, 'description', default=desc)
+                            new_desc = safe_get(fieldInformations, *paths, 'description', default=None)
+                            if new_desc is not None:
+                                desc = new_desc
 
-                        if desc: layer.setConstraintExpression(fIdx,'true', desc)
+                        # todo: refactor/split up
+                        if desc or dateConfig:
+                            constraintStrength = date_data_type_constraint.get(dateConfig.get('dataType', ''), softConstraint)
+                            exp = 'true'
+                            # set constraint expression for date fields to show format warnings
+                            if fname in ('date.value','date.endValue') or (dateConfig and isComposite and split[-1] in ('value', 'endValue')):
+                                if not desc: desc = self.tr('Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm')
+                                regex = DATE_REGEXES.get(dateConfigDataType, DATE_REGEXES['optional'])
+                                exp = f'regexp_match("{fname}", \'{regex}\')'
+
+                            layer.setConstraintExpression(fIdx, exp, desc)
+                            # apply constraint by dateConfiguration
+                            layer.setFieldConstraint(fIdx, QgsFieldConstraints.ConstraintExpression, constraintStrength)
 
                         layer.setFieldAlias(fIdx, ' '.join(parts))
 
@@ -880,9 +1005,39 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 setup = QgsEditorWidgetSetup('ValueMap', vmap_source)
                                 layer.setEditorWidgetSetup(fIdx, setup)
                                 continue
+                        # todo: extract function / refactor
+                        # setup = editor_setup_for_field(inputType, split, valuemaps)
                         # handle type dropdownRange which has the subfields value and endValue
                         elif inputType == 'dropdownRange':
                             setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
+                        elif inputType == 'boolean':
+                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+                        elif inputType == 'date' and any(s in ('isRange',) for s in split):
+                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+                        elif inputType == 'dating':
+                            if any(s in ('isImprecise','isUncertain',) for s in split):
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+                            elif 'inputType' in split and {'begin', 'end'} & set(split):
+                                setup = QgsEditorWidgetSetup('ValueMap', safe_get(valuemaps, 'dating', 'begin', 'inputType', default={}))
+                            elif 'type' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', safe_get(valuemaps, 'dating', 'type', default={}))
+                        elif inputType == 'volume':
+                            if 'inputUnit' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':volInputUnit'])
+                            elif 'isImprecise' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+                        elif inputType == 'weight':
+                            if 'inputUnit' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':weightInputUnit'])
+                            elif 'isImprecise' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+                        elif inputType == 'dimension':
+                            if 'inputUnit' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':dimInputUnit'])
+                            if 'isImprecise' in split:
+                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+
+                        if setup:
                             layer.setEditorWidgetSetup(fIdx, setup)
                             continue
 
@@ -907,7 +1062,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             if base in valuemaps and base in split and any(s in split for s in sub):
                                 setup = QgsEditorWidgetSetup('ValueMap', valuemaps[base])
                                 layer.setEditorWidgetSetup(fIdx, setup)
-                                break  # stop after first match
+                                break
 
                     # python 3.12+
                     # if valuemaps: print(f'unassigned vmaps:\n{',\n'.join([f'{k}: {v}' for k,v in valuemaps.items()])}')
@@ -1028,8 +1183,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'groupExport': self.radioExGroup.isChecked(),
             'selectedLayers': iface.layerTreeView().selectedLayers(),
             'quickExport': self.chkQuickExport.isChecked(),
-            'commitSave': self.chkCommitSave.isChecked()
+            'commitSave': self.chkCommitSave.isChecked(),
+            'timezone': self.selectExportTz.currentText()
         }
+
+        exportTz = opts['timezone'].encode('utf-8')
+        if not exportTz or not QTimeZone(exportTz).isValid():
+            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=exportTz)))
+            return
+        else:
+            dT = DateTimeTransformer(QTimeZone(exportTz), QTimeZone(b'UTC'))
+
         #! lowercase true/false important
         params = {
             'merge': 'false',
@@ -1173,9 +1337,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             idx = layer.fields().indexFromName(field_name)
                             setup = layer.editorWidgetSetup(idx)
 
+                            # todo: check if ValueRelation case still needed
                             if setup and setup.type() == 'ValueRelation':
-                                # config = setup.config()
                                 val = self.normalize_export_value(val)
+                            else:
+                                val = self.normalize_export_value(val, dT=dT)
+
                             row[field_name] = val
 
                         csv_exp_rows[category].append(row)
@@ -1196,6 +1363,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 for i, (cat, rows) in enumerate(csv_exp_rows.items(), start=1):
                     if not rows: continue
                     self.progressBar.setValue(i)
+                    # todo: get translated {cat}
                     self.progressBar.setFormat(self.tr('Exporting category {cat} %p%').format(cat=cat))
                     QApplication.processEvents()
 
@@ -1271,7 +1439,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         Disconnects from Field Desktop and disables settings if a request fails
         """
-        # disable import form, switch status led to red, hide connection info
+        # disable import/export form, switch status led to red, hide connection info
         self.setConnectionEnabled(False)
         self.setConnectionStatus()
         self.toggleFieldInfo()
@@ -1296,3 +1464,68 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             glow.setColor(QColor('red'))
 
         self.labelConnectStatus.setGraphicsEffect(glow)
+
+    def features_from_csv(self, csv_rows, fields, geom_lookup, dateTransformer):
+        features = defaultdict(list)
+
+        for row_id, row in csv_rows.items():
+            feat = QgsFeature(fields)
+
+            attrs = self.normalize_row_values(
+                row=row,
+                fields=fields,
+                dT=dateTransformer,
+            )
+            feat.setAttributes(attrs)
+
+            gj_feat = safe_get(geom_lookup, row_id)
+
+            if gj_feat and safe_get(gj_feat, 'geometry'):
+                geom_json = json.dumps(gj_feat['geometry'])
+                geom = QgsJsonUtils.geometryFromGeoJson(geom_json)
+
+                if geom and not geom.isEmpty():
+                    feat.setGeometry(geom)
+                    geom_type = gj_feat['geometry']['type']
+                else:
+                    geom_type = 'NoGeometry'
+            else:
+                geom_type = 'NoGeometry'
+
+            features[geom_type].append(feat)
+
+        # ensure schema-only layer can be created
+        if not features:
+            features['NoGeometry'] = []
+
+        return features
+
+    def normalize_row_values(self, row, fields, dT):
+        attrs = []
+
+        for field in fields:
+            fname = field.name()
+            raw = row.get(fname, '')
+
+            value = self.normalize_value(
+                raw_value=raw,
+                field=field,
+                dT=dT,
+            )
+
+            attrs.append(value)
+
+        return attrs
+
+    def normalize_value(self, raw_value, field, dT):
+        if raw_value is None:
+            return ''
+
+        raw_value = raw_value.strip()
+        if not raw_value:
+            return ''
+
+        if dT.can_transform(raw_value):
+            return dT.transform(raw_value)
+
+        return raw_value

@@ -10,13 +10,13 @@
     <x>0</x>
     <y>0</y>
     <width>361</width>
-    <height>730</height>
+    <height>808</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>361</width>
-    <height>730</height>
+    <height>808</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -354,14 +354,14 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="5" column="0">
+            <item row="6" column="0">
              <widget class="QLabel" name="label_2">
               <property name="text">
                <string>Options</string>
               </property>
              </widget>
             </item>
-            <item row="7" column="1">
+            <item row="8" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <property name="leftMargin">
                <number>0</number>
@@ -397,7 +397,7 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="8" column="1">
+            <item row="9" column="1">
              <spacer name="verticalSpacer_3">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
@@ -410,7 +410,7 @@ border: 1px solid #555;</string>
               </property>
              </spacer>
             </item>
-            <item row="9" column="1">
+            <item row="10" column="1">
              <layout class="QHBoxLayout" name="hzLay_import">
               <property name="topMargin">
                <number>0</number>
@@ -443,7 +443,7 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="6" column="1">
+            <item row="7" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_7">
               <property name="rightMargin">
                <number>0</number>
@@ -479,6 +479,64 @@ Might increase import time.</string>
                </spacer>
               </item>
              </layout>
+            </item>
+            <item row="4" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_11">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QComboBox" name="selectImportTz">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Timezone (IANA format, e.g. Europe/Berlin)</string>
+                </property>
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+                <property name="insertPolicy">
+                 <enum>QComboBox::NoInsert</enum>
+                </property>
+                <property name="placeholderText">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="selectImportTzReset">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Reset to system timezone</string>
+                </property>
+                <property name="text">
+                 <string>↺</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Timezone:</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -619,14 +677,14 @@ Might increase import time.</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
+            <item row="5" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
                <string>Options</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
+            <item row="6" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <property name="rightMargin">
                <number>0</number>
@@ -665,7 +723,7 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="5" column="1">
+            <item row="7" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_9">
               <property name="rightMargin">
                <number>0</number>
@@ -701,7 +759,7 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="6" column="1">
+            <item row="8" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <property name="rightMargin">
                <number>0</number>
@@ -734,7 +792,7 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="7" column="1">
+            <item row="9" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <property name="rightMargin">
                <number>0</number>
@@ -767,7 +825,7 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="9" column="1">
+            <item row="11" column="1">
              <spacer name="verticalSpacer_2">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
@@ -780,7 +838,7 @@ Might increase import time.</string>
               </property>
              </spacer>
             </item>
-            <item row="10" column="1">
+            <item row="12" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <property name="leftMargin">
                <number>0</number>
@@ -820,6 +878,61 @@ Might increase import time.</string>
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>Mode:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_12">
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QComboBox" name="selectExportTz">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Timezone (IANA format, e.g. Europe/Berlin)</string>
+                </property>
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="selectExportTzReset">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Reset to system timezone</string>
+                </property>
+                <property name="text">
+                 <string>↺</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Timezone:</string>
               </property>
              </widget>
             </item>
