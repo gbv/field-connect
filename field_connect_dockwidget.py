@@ -1147,7 +1147,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # add lookup layer
         if lupLayerTemp:
-            if not import_overwrite: self.project.addMapLayer(lupLayerTemp, True)
+            if not import_overwrite:
+                self.project.addMapLayer(lupLayerTemp, False)
+                self.project.layerTreeRoot().insertLayer(0, lupLayerTemp)
             if filename:
                 options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
                 options.layerName = lupLayerTemp.name()
