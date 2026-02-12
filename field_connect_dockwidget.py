@@ -743,10 +743,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'dateTime': hardConstraint,
             'date': hardConstraint
         }
-        YEAR       = r'\\d{4}'
-        MONTHYEAR  = r'\\d{2}\\.\\d{4}'
-        DATE       = r'\\d{2}\\.\\d{2}\\.\\d{4}'
-        TIME       = r'\\d{2}:\\d{2}'
+        YEAR  = r'\\d{4}'
+        MONTH = r'(?:0[1-9]|1[0-2])'
+        DAY   = r'(?:0[1-9]|[12]\\d|3[01])'
+        TIME  = r'(?:[01]\\d|2[0-3]):[0-5]\\d'
+        MONTHYEAR = rf'{MONTH}\\.{YEAR}'
+        DATE      = rf'{DAY}\\.{MONTH}\\.{YEAR}'
+
         DATE_REGEXES = {
             'optional': (
                 r'^$|'
@@ -764,7 +767,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'dateTime': (
                 r'^$|'
                 rf'^{DATE} {TIME}$'
-                ),
+            ),
         }
 
         filename = None
