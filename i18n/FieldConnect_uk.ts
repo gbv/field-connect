@@ -137,37 +137,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="718"/>
+        <location filename="../field_connect_dockwidget.py" line="724"/>
         <source>Choose categories and format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="788"/>
+        <location filename="../field_connect_dockwidget.py" line="794"/>
         <source>Save GeoPackage as...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1246"/>
+        <location filename="../field_connect_dockwidget.py" line="1252"/>
         <source>Coordinate transformation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1247"/>
+        <location filename="../field_connect_dockwidget.py" line="1253"/>
         <source>The layer CRS differs from the target CRS. Do you want to transform coordinates?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1250"/>
+        <location filename="../field_connect_dockwidget.py" line="1256"/>
         <source>Yes to all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1251"/>
+        <location filename="../field_connect_dockwidget.py" line="1257"/>
         <source>No to all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1252"/>
+        <location filename="../field_connect_dockwidget.py" line="1258"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -207,12 +207,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="678"/>
+        <location filename="../field_connect_dockwidget.py" line="684"/>
         <source>Disconnect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="681"/>
+        <location filename="../field_connect_dockwidget.py" line="687"/>
         <source>Connect</source>
         <translation type="unfinished"></translation>
     </message>
@@ -452,12 +452,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="857"/>
+        <location filename="../field_connect_dockwidget.py" line="863"/>
         <source>Importing category {label} %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1159"/>
+        <location filename="../field_connect_dockwidget.py" line="1165"/>
         <source>Style saved by the Field Connect plugin</source>
         <translation type="unfinished"></translation>
     </message>
@@ -472,12 +472,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1384"/>
+        <location filename="../field_connect_dockwidget.py" line="1390"/>
         <source>Exporting category {cat} %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1413"/>
+        <location filename="../field_connect_dockwidget.py" line="1419"/>
         <source>Exporting GeoJSON %p%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -487,7 +487,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1372"/>
+        <location filename="../field_connect_dockwidget.py" line="1378"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -572,37 +572,37 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="470"/>
+        <location filename="../field_connect_dockwidget.py" line="471"/>
         <source>range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="470"/>
+        <location filename="../field_connect_dockwidget.py" line="472"/>
         <source>single</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="470"/>
+        <location filename="../field_connect_dockwidget.py" line="473"/>
         <source>before</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="470"/>
+        <location filename="../field_connect_dockwidget.py" line="474"/>
         <source>after</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="470"/>
+        <location filename="../field_connect_dockwidget.py" line="475"/>
         <source>scientific</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1209"/>
+        <location filename="../field_connect_dockwidget.py" line="1215"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="952"/>
+        <location filename="../field_connect_dockwidget.py" line="958"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
         <translation type="unfinished"></translation>
     </message>
