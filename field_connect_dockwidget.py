@@ -770,6 +770,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             ),
         }
 
+        # update project config, in case changes have been made in field desktop
+        self.projectConfig = self.api.get(f'/configuration/{self.activeProject}').json()
+
         filename = None
         import_overwrite = False  # check if file path exists for handling/updating existing geopackages
         if self.radioFormatGPKG.isChecked():
