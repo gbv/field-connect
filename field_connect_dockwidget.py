@@ -723,7 +723,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         importTz = csv_ui_opts['timezone'].encode('utf-8')
         if not importTz or not QTimeZone(importTz).isValid():
-            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=importTz)))
+            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=importTz.decode('utf-8'))))
             return
         else:
             dT = DateTimeTransformer(QTimeZone(b'UTC'), QTimeZone(importTz))
@@ -1194,7 +1194,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         exportTz = opts['timezone'].encode('utf-8')
         if not exportTz or not QTimeZone(exportTz).isValid():
-            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=exportTz)))
+            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=exportTz.decode('utf-8'))))
             return
         else:
             dT = DateTimeTransformer(QTimeZone(exportTz), QTimeZone(b'UTC'))
