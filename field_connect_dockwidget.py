@@ -403,6 +403,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if not isinstance(node, dict): return
 
             item = node.get("item")
+            # exclude abstract categories
+            isAbstract = item.get("isAbstract")
+            if isAbstract: return
+
             if isinstance(item, dict) and "name" in item:
                 uLabel = item["name"]
                 tLabel = safe_get(item, "label", self.loc)
