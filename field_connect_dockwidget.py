@@ -94,7 +94,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'ACTIVE_PROJECT_CHANGED': self.tr('The active project in Field Desktop has changed! Disconnecting...'),
             'BAD_REQUEST': self.tr('Bad request'),
             'CONNECTION_LOST': self.tr('Connection lost!'),
-            'CONNECTION_UNAUTHORIZED': self.tr('Unauthorized'),
+            'CONNECTION_REFUSED': self.tr('Field Desktop is not running.'),
+            'CONNECTION_UNAUTHORIZED': self.tr('Incorrect password.'),
             'DESELECT_ALL': self.tr('Deselect all'),
             'FIELD_CONNECTED': self.tr('Connected to Field Desktop'),
             'IMPORT_FAILED': self.tr('Import failed!'),
@@ -712,7 +713,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.sB.showMessage(self.tr('Choose categories and format'))
             self.setConnectionStatus()
 
-    # todo: fix: when active layer is inside a group, another import's lookup layer will be inserted into the group
     def fieldImport(self):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage"""

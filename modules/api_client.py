@@ -29,6 +29,12 @@ class ApiClient:
             url = self.buildUrl(path, port)
             resp: Response = self.session.get(url, params=params)
             return self._handle_response(resp)
+        except exceptions.ConnectionError:
+            self.plugin.mB.pushCritical(self.plugin.plugin_name, self.plugin.labels['CONNECTION_REFUSED'])
+            return None
+        except exceptions.Timeout:
+            self.plugin.mB.pushCritical(self.plugin.plugin_name, self.plugin.labels['CONNECTION_REFUSED'])
+            return None
         except exceptions.RequestException as e:
             self.plugin.mB.pushCritical(self.plugin.plugin_name, str(e))
             return None
@@ -98,7 +104,7 @@ class ApiClient:
         elif r.status_code == 401:
             self.plugin.setConnectionEnabled(False)
             self.plugin.fieldDisconnect()
-            self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_UNAUTHORIZED'] + f': {r.reason}')
+            self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_UNAUTHORIZED'])
             return None
         else:
             self.plugin.setConnectionEnabled(False)
