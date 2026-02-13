@@ -23,6 +23,7 @@
 """
 
 import os, json, csv, io, re
+from io import StringIO
 from requests.models import Response
 from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
@@ -308,11 +309,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             inner = value[1:-1].strip()
             if not inner:
                 return ''
-            parts = [
-                p.strip().replace('"', '')
-                for p in inner.split(',')
-                if p.strip()
-            ]
+
+            reader = csv.reader(
+                StringIO(inner),
+                delimiter=',',
+                quotechar='"',
+                skipinitialspace=True
+            )
+
+            parts = next(reader, [])
             return ';'.join(parts)
 
         # datetime conversion
