@@ -979,12 +979,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # todo: check if input type valuelistMultiInput is always a checkbox
                             if vmap_input_type in ('checkboxes', 'valuelistMultiInput'):
                                 lup_entries = []
-                                # convert values to value relation compatible ones like "red;blue;green" to '{red,blue,green}'
+                                # convert values to value relation compatible ones like
+                                # "red;blue;green" → '{"red","blue","green"}'
                                 for feature in layer.getFeatures():
                                     val = feature[f_idx]
                                     if isinstance(val, str) and ';' in val:
                                         parts = [p.strip() for p in val.split(';') if p.strip()]
-                                        new_val = '{' + ','.join(parts) + '}'
+                                        # Escape embedded double quotes just in case
+                                        parts = [p.replace('"', r'\"') for p in parts]
+                                        new_val = '{' + ','.join(f'"{p}"' for p in parts) + '}'
                                         layer.dataProvider().changeAttributeValues({feature.id(): {f_idx: new_val}})
 
                                 if not lupLayerTemp: lupLayerTemp:QgsVectorLayer = self.createLookupLayerTemp()
