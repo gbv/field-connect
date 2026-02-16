@@ -295,12 +295,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         Normalize attribute values for CSV export.
 
-        - ValueRelation: {a,b,c} → a;b;c
+        - ValueRelation: {"a","b"} → a;b
         - datetime strings: apply timezone conversion
         - NULL → empty string
         """
 
-        # QGIS NULL → CSV empty
         if value == NULL or value is None:
             return ''
 
@@ -310,17 +309,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if not inner:
                 return ''
 
-            reader = csv.reader(
-                StringIO(inner),
+            parts = next(csv.reader(
+                [inner],
                 delimiter=',',
                 quotechar='"',
                 skipinitialspace=True
-            )
+            ), [])
 
-            parts = next(reader, [])
             return ';'.join(parts)
 
-        # datetime conversion
         if dT and isinstance(value, str) and dT.can_transform(value):
             return dT.transform(value)
 
