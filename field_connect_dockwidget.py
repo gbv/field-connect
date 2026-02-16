@@ -111,7 +111,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'REQUEST_FAILED': self.tr('Request failed'),
             'SELECT_ALL': self.tr('Select all'),
             'INFO_NO_LAYER_SELECTED': self.tr('No layer selected in the layer tree!'),
-            'INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS': self.tr('No unsaved layers for quick export available')
+            'INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS': self.tr('No unsaved layers available')
         }
 
         # manual attribute translations
@@ -464,8 +464,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 },
             },
             'dating': {
-                'begin': {'inputType': {'map': {self.tr('bce'): 'bce', self.tr('ce'): 'ce', self.tr('bp'): 'bp', '':''}}},
-                'type': {'map': {self.tr('range'):'range', self.tr('single'):'single', self.tr('before'):'before', self.tr('after'): 'after', self.tr('scientific'):'scientific', '':''}},
+                'begin': {'inputType': {'map': {self.tr('BCE'): 'bce', self.tr('CE'): 'ce', self.tr('BP'): 'bp', '':''}}},
+                'type': {'map': {self.tr('Period'):'range', self.tr('Single year'):'single', self.tr('Before'):'before', self.tr('After'): 'after', self.tr('Scientific'):'scientific', '':''}},
                 'isImprecise': {'map': boolMap},
                 'isUncertain': {'map': boolMap}
             }

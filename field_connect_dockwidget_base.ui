@@ -701,7 +701,7 @@ Might increase import time.</string>
                  <string/>
                 </property>
                 <property name="text">
-                 <string>Quick export</string>
+                 <string>Export only unsaved changes</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
@@ -734,10 +734,10 @@ Might increase import time.</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>Saves the layer during the export. Useful in combination with the quick export option</string>
+                 <string>Saves the layer during the export. Useful in combination with the option "Export only unsaved changes"</string>
                 </property>
                 <property name="text">
-                 <string>Commit and save</string>
+                 <string>Save unsaved changes</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
