@@ -499,62 +499,62 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="95"/>
         <source>The active project in Field Desktop has changed! Disconnecting...</source>
-        <translation type="unfinished"></translation>
+        <translation>Das aktive Projekt in Field Desktop wurde geändert! Verbindung wird getrennt...</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="214"/>
         <source>Type to filter...</source>
-        <translation type="unfinished"></translation>
+        <translation>Zum Filtern eingeben...</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="456"/>
         <source>Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>Ja</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="456"/>
         <source>No</source>
-        <translation type="unfinished"></translation>
+        <translation>Nein</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="459"/>
         <source>ml</source>
-        <translation type="unfinished"></translation>
+        <translation>ml</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="459"/>
         <source>l</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">l</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="460"/>
         <source>mg</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">mg</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="460"/>
         <source>g</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">g</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="460"/>
         <source>kg</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">kg</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="461"/>
         <source>mm</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">mm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="461"/>
         <source>cm</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">cm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="461"/>
         <source>m</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">m</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="469"/>
@@ -599,22 +599,22 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1209"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation type="unfinished"></translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="952"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
-        <translation type="unfinished"></translation>
+        <translation>Unterstützte Datumsformate: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="98"/>
         <source>Field Desktop is not running.</source>
-        <translation type="unfinished"></translation>
+        <translation>Field Desktop wird nicht ausgeführt.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="99"/>
         <source>Incorrect password.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungültiges Passwort.</translation>
     </message>
 </context>
 <context>
@@ -809,12 +809,12 @@ Dies kann die Importdauer verlängern.</translation>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="904"/>
         <source>Timezone (IANA format, e.g. Europe/Berlin)</source>
-        <translation type="unfinished"></translation>
+        <translation>Zeitzone (IANA-Format, z. B. Europe/Berlin)</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="923"/>
         <source>Reset to system timezone</source>
-        <translation type="unfinished"></translation>
+        <translation>Auf System-Zeitzone zurücksetzen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="926"/>
@@ -824,7 +824,7 @@ Dies kann die Importdauer verlängern.</translation>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="935"/>
         <source>Timezone:</source>
-        <translation type="unfinished"></translation>
+        <translation>Zeitzone:</translation>
     </message>
 </context>
 </TS>
