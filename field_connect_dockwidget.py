@@ -73,6 +73,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.labelServerAddress.hide()
         self.lineEditServerAddress.hide()
         self.progressBar.hide()
+        self.chkPermitDel.hide()  # hardcoded to 'true' in fieldExport()
 
         self.plugin_name = 'Field Connect'
         self.plugin_dir = plugin_dir
@@ -1217,7 +1218,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #! lowercase true/false important
         params = {
             'merge': 'false',
-            'permitDeletions': str(self.chkPermitDel.isChecked()).lower(),
+            'permitDeletions': 'true',  # str(self.chkPermitDel.isChecked()).lower(),
             'ignoreUnconfiguredFields': str(self.chkIgnoreUnconfFields.isChecked()).lower(),
             'categoryName': 'Project',  # default: Project, CSV only
             # 'operationIdentifier': '',  # default: unset - comboBox in gui? can only be activeProject anyway?
