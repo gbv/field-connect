@@ -1218,7 +1218,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #! lowercase true/false important
         params = {
             'merge': 'false',
-            'permitDeletions': 'true',  # str(self.chkPermitDel.isChecked()).lower(),
+            'permitDeletions': 'false',  # str(self.chkPermitDel.isChecked()).lower(),
             'ignoreUnconfiguredFields': str(self.chkIgnoreUnconfFields.isChecked()).lower(),
             'categoryName': 'Project',  # default: Project, CSV only
             # 'operationIdentifier': '',  # default: unset - comboBox in gui? can only be activeProject anyway?
@@ -1407,6 +1407,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     csvResp = \
                     self.api.post('/import/csv', params=params, headers=headers, data=data)
                     params['merge'] = 'true'
+                    params['permitDeletions'] = 'true'
                     # print(f'Exporting {cat} as csv with merge=true...')
                     csvRespMerge = \
                     self.api.post('/import/csv', params=params, headers=headers, data=data)
