@@ -807,18 +807,18 @@ Dies kann die Importdauer verlängern.</translation>
         <translation>Zeitzone:</translation>
     </message>
     <message>
+        <location filename="../field_connect_dockwidget_base.ui" line="740"/>
+        <source>Save unsaved changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../field_connect_dockwidget_base.ui" line="704"/>
-        <source>Export only unsaved changes</source>
+        <source>Export only unsaved features</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="737"/>
-        <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved changes&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="740"/>
-        <source>Save unsaved changes</source>
+        <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
