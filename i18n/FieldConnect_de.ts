@@ -519,42 +519,42 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="457"/>
         <source>l</source>
-        <translation type="unfinished">l</translation>
+        <translation>l</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="458"/>
         <source>mg</source>
-        <translation type="unfinished">mg</translation>
+        <translation>mg</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="458"/>
         <source>g</source>
-        <translation type="unfinished">g</translation>
+        <translation>g</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="458"/>
         <source>kg</source>
-        <translation type="unfinished">kg</translation>
+        <translation>kg</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="459"/>
         <source>mm</source>
-        <translation type="unfinished">mm</translation>
+        <translation>mm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="459"/>
         <source>cm</source>
-        <translation type="unfinished">cm</translation>
+        <translation>cm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="459"/>
         <source>m</source>
-        <translation type="unfinished">m</translation>
+        <translation>m</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1213"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="950"/>
@@ -574,42 +574,42 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="114"/>
         <source>No unsaved layers available</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine ungespeicherten Layer vorhanden</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="467"/>
         <source>BCE</source>
-        <translation type="unfinished"></translation>
+        <translation>v. Chr.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="467"/>
         <source>CE</source>
-        <translation type="unfinished"></translation>
+        <translation>n. Chr.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="467"/>
         <source>BP</source>
-        <translation type="unfinished"></translation>
+        <translation>BP</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="468"/>
         <source>Single year</source>
-        <translation type="unfinished"></translation>
+        <translation>Einzelnes Jahr</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="468"/>
         <source>Before</source>
-        <translation type="unfinished"></translation>
+        <translation>Vor</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="468"/>
         <source>After</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="468"/>
         <source>Scientific</source>
-        <translation type="unfinished"></translation>
+        <translation>Naturwissenschaftlich</translation>
     </message>
 </context>
 <context>
@@ -799,7 +799,7 @@ Dies kann die Importdauer verlängern.</translation>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="893"/>
         <source>↺</source>
-        <translation type="unfinished"></translation>
+        <translation>↺</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="902"/>
@@ -809,17 +809,17 @@ Dies kann die Importdauer verlängern.</translation>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="740"/>
         <source>Save unsaved changes</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungespeicherte Änderungen speichern</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="704"/>
         <source>Export only unsaved features</source>
-        <translation type="unfinished"></translation>
+        <translation>Nur ungespeicherte Objekte exportieren</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="737"/>
         <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Speichert den Layer beim Export. Nützlich in Kombination mit der Option &quot;Nur ungespeicherte Objekte exportieren&quot;</translation>
     </message>
 </context>
 </TS>
