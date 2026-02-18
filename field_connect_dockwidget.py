@@ -22,30 +22,35 @@
  ***************************************************************************/
 """
 
-import os, json, csv, io, re
-from io import StringIO
+import io
+import os
+import re
+import csv
+import json
+
 from requests.models import Response
 from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
-from qgis.core import Qgis, QgsMessageLog, QgsApplication, QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
-QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
-QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, QgsFieldConstraints, \
-QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, QgsTask, NULL
+from qgis.core import QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
+    QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
+    QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, QgsFieldConstraints, \
+    QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, NULL
 from qgis.PyQt import QtWidgets, uic
-from qgis.PyQt.QtCore import Qt, QVariant, QMetaType, QDateTime, QTimeZone, QTimer, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QMetaType, QTimeZone, QTimer, pyqtSignal
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QStatusBar, QSizePolicy, QGraphicsDropShadowEffect, \
-QMessageBox, QFormLayout, QLabel, QFileDialog, QApplication
+    QMessageBox, QFormLayout, QLabel, QFileDialog, QApplication
 
 from .modules.api_client import ApiClient
 from .modules.cldr_loader import CLDRLoader
 from .modules.datetime_transformer import DateTimeTransformer
 from .utils.constants import GEOJSON_TO_QGIS
-from .utils.helpers import *
-from .resources import *
+from .utils.helpers import deep_merge, safe_get
+# todo: try installing plugin without resources.py
+# from .resources import *
 from functools import partial
 
 
@@ -55,6 +60,7 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
+
     def __init__(self, plugin_dir, locale, parent=None):
         """Constructor."""
         super(FieldConnectDockWidget, self).__init__(parent)
@@ -91,9 +97,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._import_running = False
         self._export_running = False
 
-        # weblate/linguist translation labels - extraction with pylupdate5 -noobsolete field_connect.pro
+        # weblate/linguist translation labels
+        # extraction with pylupdate5 -noobsolete -verbose field_connect.pro
+        # compiling with lrelease field_connect.pro
         self.labels = {
-            'ACTIVE_PROJECT_CHANGED': self.tr('The active project in Field Desktop has changed! Disconnecting...'),
+            'ACTIVE_PROJECT_CHANGED': self.tr(
+                'The active project in Field Desktop has changed! Disconnecting...'
+                ),
             'BAD_REQUEST': self.tr('Bad request'),
             'CONNECTION_LOST': self.tr('Connection lost!'),
             'CONNECTION_REFUSED': self.tr('Field Desktop is not running.'),
@@ -106,7 +116,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'EXPORT_FAILED': self.tr('Export failed!'),
             'EXPORT_SUCCESS': self.tr('Export successful!'),
             'LAYER_VALIDATION_FAILED': self.tr('Layer validation failed!'),
-            'CAT_NAME_EXTRACTION_FAILED': self.tr('Could not extract category name. Please set the layer variable "field_category" manually'),
+            'CAT_NAME_EXTRACTION_FAILED': self.tr(
+                'Could not extract category name. Please set the layer variable "field_category" manually'
+                ),
             'NO_CATS_FOUND': self.tr('No categories found'),
             'REQUEST_FAILED': self.tr('Request failed'),
             'SELECT_ALL': self.tr('Select all'),
@@ -226,7 +238,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # todo: test loading/saving after object names change
         # load saved settings
-        try: self.loadSettings()
+        try:
+            self.loadSettings()
         except:
             print('Error loading settings')  # debug
             self.removeSettings()

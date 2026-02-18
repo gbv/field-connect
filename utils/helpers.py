@@ -1,5 +1,6 @@
 __all__ = ['deep_merge', 'safe_get']
 
+
 def deep_merge(a: dict, b: dict) -> dict:
     """
     Recursively merge dict b into dict a, preserving existing non-empty values.
@@ -20,6 +21,7 @@ def deep_merge(a: dict, b: dict) -> dict:
         else:
             result[key] = value
     return result
+
 
 def safe_get(d, *keys, default=None):
     """
