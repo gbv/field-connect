@@ -1662,7 +1662,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "ignoreUnconfiguredFields": str(self.chkIgnoreUnconfFields.isChecked()).lower(),
             "category": "Project",  # default: Project, CSV only
             "command": "add",  # add/start - use start as the last call to start the import to field
-            "importId": uuid.uuid4(),  # unique string required when using the add command
+            "importId": str(uuid.uuid4()),  # unique string required when using the add command
             # 'operationIdentifier': '',  # default: unset - comboBox in gui? can only be activeProject anyway?
             "separator": ",",  # default: ','
         }
