@@ -21,12 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.core import QgsSettings
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+
 # Initialize Qt resources from file resources.py
-from .resources import *
+from . import resources  # noqa:F401
 
 # Import the code for the DockWidget
 from .field_connect_dockwidget import FieldConnectDockWidget
@@ -51,12 +51,11 @@ class FieldConnect:
         self.plugin_dir = os.path.dirname(__file__)
 
         # initialize locale
-        self.locale = QSettings().value('locale/userLocale')[0:2]
+        self.locale = QSettings().value("locale/userLocale")[0:2]
         # print(locale)
         locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'FieldConnect_{}.qm'.format(self.locale))
+            self.plugin_dir, "i18n", "FieldConnect_{}.qm".format(self.locale)
+        )
 
         # print(locale_path)
 
@@ -67,17 +66,15 @@ class FieldConnect:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Field Connect')
+        self.menu = self.tr("&Field Connect")
         # self.toolbar = self.iface.addToolBar(u'FieldConnect')
         # self.toolbar.setObjectName(u'FieldConnect')
 
-        #print "** INITIALIZING FieldConnect"
+        # print "** INITIALIZING FieldConnect"
 
         self.pluginIsActive = False
         self.dockwidget = None
 
-
-    # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -89,9 +86,7 @@ class FieldConnect:
         :returns: Translated version of message.
         :rtype: QString
         """
-        # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('FieldConnect', message)
-
+        return QCoreApplication.translate("FieldConnect", message)
 
     def add_action(
         self,
@@ -103,7 +98,8 @@ class FieldConnect:
         add_to_toolbar=True,
         status_tip=None,
         whats_this=None,
-        parent=None):
+        parent=None,
+    ):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -159,36 +155,34 @@ class FieldConnect:
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(
-                self.menu,
-                action)
+            self.iface.addPluginToMenu(self.menu, action)
 
         self.actions.append(action)
 
         return action
 
-
-    def initGui(self):
+    def initGui(self):  # noqa: N802
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/field_connect/icon.png'
+        icon_path = ":/plugins/field_connect/icon.png"
         self.add_action(
             icon_path,
-            text=self.tr(u'Connect to Field Desktop'),
+            text=self.tr("Connect to Field Desktop"),
             callback=self.run,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow(),
+        )
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
-    def onClosePlugin(self):
+    def on_close_plugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING FieldConnect"
+        # print "** CLOSING FieldConnect"
 
-        self.dockwidget.saveSettings()
+        self.dockwidget.save_settings()
 
         # disconnects
-        self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
+        self.dockwidget.closing_plugin.disconnect(self.on_close_plugin)
 
         # remove this statement if dockwidget is to remain
         # for reuse if plugin is reopened
@@ -198,24 +192,20 @@ class FieldConnect:
 
         self.pluginIsActive = False
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
-        #print "** UNLOAD FieldConnect"
+        # print "** UNLOAD FieldConnect"
         if self.dockwidget:
-            s = QgsSettings()
-            self.dockwidget.saveSettings()
+            self.dockwidget.save_settings()
 
         for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&Field Connect'),
-                action)
+            self.iface.removePluginMenu(self.tr("&Field Connect"), action)
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         # del self.toolbar  # cant remove a toolbar if there is none
 
-    #--------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def run(self):
         """Run method that loads and starts the plugin"""
@@ -223,24 +213,24 @@ class FieldConnect:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING FieldConnect"
+            # print "** STARTING FieldConnect"
 
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
+            if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = FieldConnectDockWidget(self.plugin_dir, self.locale)
 
             # connect to provide cleanup on closing of dockwidget
-            self.dockwidget.closingPlugin.connect(self.onClosePlugin)
+            self.dockwidget.closing_plugin.connect(self.on_close_plugin)
 
             # show the dockwidget
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
         else:
             # save settings on toggle
-            self.dockwidget.saveSettings()
+            self.dockwidget.save_settings()
 
             self.pluginIsActive = False
             self.dockwidget.hide()

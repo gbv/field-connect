@@ -32,34 +32,60 @@ from requests.models import Response
 from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
-from qgis.core import QgsProject, QgsVectorLayer, QgsCoordinateReferenceSystem, \
-    QgsFields, QgsField, QgsGeometry, QgsJsonUtils, QgsFeature, QgsVectorFileWriter, QgsWkbTypes, \
-    QgsJsonExporter, QgsEditorWidgetSetup, QgsSettings, QgsDefaultValue, QgsFieldConstraints, \
-    QgsExpressionContextUtils, QgsMapLayer, QgsLayerTreeGroup, NULL
+from qgis.core import (
+    QgsProject,
+    QgsVectorLayer,
+    QgsCoordinateReferenceSystem,
+    QgsFields,
+    QgsField,
+    QgsGeometry,
+    QgsJsonUtils,
+    QgsFeature,
+    QgsVectorFileWriter,
+    QgsWkbTypes,
+    QgsJsonExporter,
+    QgsEditorWidgetSetup,
+    QgsSettings,
+    QgsDefaultValue,
+    QgsFieldConstraints,
+    QgsExpressionContextUtils,
+    QgsMapLayer,
+    QgsLayerTreeGroup,
+    NULL,
+)
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QMetaType, QTimeZone, QTimer, pyqtSignal
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QStatusBar, QSizePolicy, QGraphicsDropShadowEffect, \
-    QMessageBox, QFormLayout, QLabel, QFileDialog, QApplication
+from PyQt5.QtWidgets import (
+    QStatusBar,
+    QSizePolicy,
+    QGraphicsDropShadowEffect,
+    QMessageBox,
+    QFormLayout,
+    QLabel,
+    QFileDialog,
+    QApplication,
+)
 
 from .modules.api_client import ApiClient
 from .modules.cldr_loader import CLDRLoader
 from .modules.datetime_transformer import DateTimeTransformer
 from .utils.constants import GEOJSON_TO_QGIS
 from .utils.helpers import deep_merge, safe_get
-# todo: try installing plugin without resources.py
-# from .resources import *
+
+from . import resources  # noqa:F401
 from functools import partial
 
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'field_connect_dockwidget_base.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "field_connect_dockwidget_base.ui")
+)
 
 
 class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
-    closingPlugin = pyqtSignal()
+    closing_plugin = pyqtSignal()
 
     def __init__(self, plugin_dir, locale, parent=None):
         """Constructor."""
@@ -81,17 +107,19 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.hide()
         self.chkPermitDel.hide()  # hardcoded to 'true' in fieldExport()
 
-        self.plugin_name = 'Field Connect'
+        self.plugin_name = "Field Connect"
         self.plugin_dir = plugin_dir
         self.project = QgsProject.instance()
         self.treeRoot = self.project.layerTreeRoot()
-        self.projectConfig = {}  # /configuration/{project} :3000, not /{project}/configuration :3001
+        self.projectConfig = (
+            {}
+        )  # /configuration/{project} :3000, not /{project}/configuration :3001
         self.projectConfigCategories = {}
 
         # show field information after connecting
-        self.fieldUser = ''
-        self.fieldVersion = ''
-        self.activeProject = ''
+        self.fieldUser = ""
+        self.fieldVersion = ""
+        self.activeProject = ""
 
         self.connected = False
         self._import_running = False
@@ -101,132 +129,268 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # extraction with pylupdate5 -noobsolete -verbose field_connect.pro
         # compiling with lrelease field_connect.pro
         self.labels = {
-            'ACTIVE_PROJECT_CHANGED': self.tr(
-                'The active project in Field Desktop has changed! Disconnecting...'
-                ),
-            'BAD_REQUEST': self.tr('Bad request'),
-            'CONNECTION_LOST': self.tr('Connection lost!'),
-            'CONNECTION_REFUSED': self.tr('Field Desktop is not running.'),
-            'CONNECTION_UNAUTHORIZED': self.tr('Incorrect password.'),
-            'DESELECT_ALL': self.tr('Deselect all'),
-            'FIELD_CONNECTED': self.tr('Connected to Field Desktop'),
-            'IMPORT_FAILED': self.tr('Import failed!'),
-            'IMPORT_SUCCESS': self.tr('Import successful!'),
-            'EXPORT_ERRORS': self.tr('Export finished with errors!'),
-            'EXPORT_FAILED': self.tr('Export failed!'),
-            'EXPORT_SUCCESS': self.tr('Export successful!'),
-            'LAYER_VALIDATION_FAILED': self.tr('Layer validation failed!'),
-            'CAT_NAME_EXTRACTION_FAILED': self.tr(
+            "ACTIVE_PROJECT_CHANGED": self.tr(
+                "The active project in Field Desktop has changed! Disconnecting..."
+            ),
+            "BAD_REQUEST": self.tr("Bad request"),
+            "CONNECTION_LOST": self.tr("Connection lost!"),
+            "CONNECTION_REFUSED": self.tr("Field Desktop is not running."),
+            "CONNECTION_UNAUTHORIZED": self.tr("Incorrect password."),
+            "DESELECT_ALL": self.tr("Deselect all"),
+            "FIELD_CONNECTED": self.tr("Connected to Field Desktop"),
+            "IMPORT_FAILED": self.tr("Import failed!"),
+            "IMPORT_SUCCESS": self.tr("Import successful!"),
+            "EXPORT_ERRORS": self.tr("Export finished with errors!"),
+            "EXPORT_FAILED": self.tr("Export failed!"),
+            "EXPORT_SUCCESS": self.tr("Export successful!"),
+            "LAYER_VALIDATION_FAILED": self.tr("Layer validation failed!"),
+            "CAT_NAME_EXTRACTION_FAILED": self.tr(
                 'Could not extract category name. Please set the layer variable "field_category" manually'
-                ),
-            'NO_CATS_FOUND': self.tr('No categories found'),
-            'REQUEST_FAILED': self.tr('Request failed'),
-            'SELECT_ALL': self.tr('Select all'),
-            'INFO_NO_LAYER_SELECTED': self.tr('No layer selected in the layer tree!'),
-            'INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS': self.tr('No unsaved layers available')
+            ),
+            "NO_CATS_FOUND": self.tr("No categories found"),
+            "REQUEST_FAILED": self.tr("Request failed"),
+            "SELECT_ALL": self.tr("Select all"),
+            "INFO_NO_LAYER_SELECTED": self.tr("No layer selected in the layer tree!"),
+            "INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS": self.tr("No unsaved layers available"),
         }
 
         # manual attribute translations
         self.trAttrs = {
-            'identifier': {'label': self.tr('Identifier'), 'description': self.tr('The unique identifier of the resource')},
-            'date': {
-                'value': {'label': self.tr('Value'), 'description': self.tr('The date specification for a single date; the start date for a date range')},
-                'endValue': {'label': self.tr('End value'), 'description': self.tr('The end date for a date range')},
-                'isRange': {'label': self.tr('Is range?'), 'description': self.tr('Indicates whether the date is a date range. Possible values are: true (date range), false (single date).')}
+            "identifier": {
+                "label": self.tr("Identifier"),
+                "description": self.tr("The unique identifier of the resource"),
             },
-            'relations': {
-                'label': self.tr('Relation'),
-                'isChildOf': {'label': self.tr('Is child of'), 'description': self.tr('Specifies the direct parent resource in the hierarchy; remains empty for top-level resources.')},
-                'isRecordedIn': {'label': self.tr('Is recorded in'), 'description': self.tr('Specifies the operation in which the resource has been recorded; remains empty for top-level resources.')},
-                'liesWithin': {'label': self.tr('Lies within'), 'description': self.tr('Specifies the direct parent resource in the hierarchy; remains empty for top-level resources or if the direct parent resource is an operation.')},
-                'depicts': {'label': self.tr('Depicts'), 'description': self.tr('Links the image to one or more resources')},
-                'isDepictedIn': {'label': self.tr('Is depicted in'), 'description': self.tr('Links the resource to one or more images.')},
-                'isMapLayerOf': {'label': self.tr('Is map layer of'), 'description': self.tr('Adds the image as a map layer in the context of the resource specified as the target.')},
-                'hasMapLayer': {'label': self.tr('Has map layer'), 'description': self.tr('Adds one or more images as a map layer in the context of this resource.')},
-                'hasDefaultMapLayer': {'label': self.tr('Has default map layer'), 'description': self.tr('Specifies that the linked image is a default map layer in the context of this resource.')},
-                'isInstanceOf': {'label': self.tr('Typological classification')}
-            },
-            'dating': {
-                'type': {'label': self.tr('Type'), 'description': self.tr('The dating type. Possible values are: range (Period), single (Single year), before (Before), after (After), scientific (Scientific).')},
-                'begin': {
-                    'label': self.tr('Beginning:'),
-                    'description': self.tr('Year specification that is set for the dating type "after" and as the start date for the dating type "range".'),
-                    'inputType': {'label': self.tr('Dating system'), 'description': self.tr('The time scale. Possible values are: bce (BCE), ce (CE), bp (BP).')},
-                    'inputYear': {'label': self.tr('Year'), 'description': self.tr('The year.')}
+            "date": {
+                "value": {
+                    "label": self.tr("Value"),
+                    "description": self.tr(
+                        "The date specification for a single date; the start date for a date range"
+                    ),
                 },
-                'end': {'label': self.tr('End:'), 'description': self.tr('Year specification that is set for the dating types "single", "before" and "scientific" and as the end date for the dating type "range".'),},
-                'margin': {'label': self.tr('Margin'), 'description': self.tr('Tolerance margin in years for dating type "scientific".')},
-                'source': {'label': self.tr('Source'), 'description': self.tr('Source of the dating.')},
-                'isImprecise': {'label': self.tr('Is imprecise?'), 'description': self.tr('Specification "Imprecise". Cannot be set for dating type "scientific". Possible values are: true (yes), false (no).')},
-                'isUncertain': {'label': self.tr('Is uncertain?'), 'description': self.tr('Specification "Uncertain". Cannot be set for dating type "scientific". Possible values are: true (yes), false (no).')},
+                "endValue": {
+                    "label": self.tr("End value"),
+                    "description": self.tr("The end date for a date range"),
+                },
+                "isRange": {
+                    "label": self.tr("Is range?"),
+                    "description": self.tr(
+                        "Indicates whether the date is a date range. Possible values are: true (date range), false (single date)."
+                    ),
+                },
             },
-            'measurement': {
-                'inputValue': {'label': self.tr('Value'), 'description': self.tr('The measured numerical value.')},
-                'inputRangeEndValue': {'label': self.tr('End value'), 'description': self.tr('The second measured numerical value, if the dimension is a range.')},
-                'measurementComment': {'label': self.tr('Comment')},
-                'isImprecise': {'label': self.tr('Is imprecise?'), 'description': self.tr('Specification "Imprecise". Possible values are: true (yes), false (no).')},
+            "relations": {
+                "label": self.tr("Relation"),
+                "isChildOf": {
+                    "label": self.tr("Is child of"),
+                    "description": self.tr(
+                        "Specifies the direct parent resource in the hierarchy; remains empty for top-level resources."
+                    ),
+                },
+                "isRecordedIn": {
+                    "label": self.tr("Is recorded in"),
+                    "description": self.tr(
+                        "Specifies the operation in which the resource has been recorded; remains empty for top-level resources."
+                    ),
+                },
+                "liesWithin": {
+                    "label": self.tr("Lies within"),
+                    "description": self.tr(
+                        "Specifies the direct parent resource in the hierarchy; remains empty for top-level resources or if the direct parent resource is an operation."
+                    ),
+                },
+                "depicts": {
+                    "label": self.tr("Depicts"),
+                    "description": self.tr("Links the image to one or more resources"),
+                },
+                "isDepictedIn": {
+                    "label": self.tr("Is depicted in"),
+                    "description": self.tr("Links the resource to one or more images."),
+                },
+                "isMapLayerOf": {
+                    "label": self.tr("Is map layer of"),
+                    "description": self.tr(
+                        "Adds the image as a map layer in the context of the resource specified as the target."
+                    ),
+                },
+                "hasMapLayer": {
+                    "label": self.tr("Has map layer"),
+                    "description": self.tr(
+                        "Adds one or more images as a map layer in the context of this resource."
+                    ),
+                },
+                "hasDefaultMapLayer": {
+                    "label": self.tr("Has default map layer"),
+                    "description": self.tr(
+                        "Specifies that the linked image is a default map layer in the context of this resource."
+                    ),
+                },
+                "isInstanceOf": {"label": self.tr("Typological classification")},
             },
-            'dimension': {
-                'measurementPosition': {'label': self.tr('As measured by')},
-                'inputUnit': {'label': self.tr('Unit'), 'description': self.tr('The unit of measurement. Possible values: mm, cm, m.')}
+            "dating": {
+                "type": {
+                    "label": self.tr("Type"),
+                    "description": self.tr(
+                        "The dating type. Possible values are: range (Period), single (Single year), before (Before), after (After), scientific (Scientific)."
+                    ),
+                },
+                "begin": {
+                    "label": self.tr("Beginning:"),
+                    "description": self.tr(
+                        'Year specification that is set for the dating type "after" and as the start date for the dating type "range".'
+                    ),
+                    "inputType": {
+                        "label": self.tr("Dating system"),
+                        "description": self.tr(
+                            "The time scale. Possible values are: bce (BCE), ce (CE), bp (BP)."
+                        ),
+                    },
+                    "inputYear": {
+                        "label": self.tr("Year"),
+                        "description": self.tr("The year."),
+                    },
+                },
+                "end": {
+                    "label": self.tr("End:"),
+                    "description": self.tr(
+                        'Year specification that is set for the dating types "single", "before" and "scientific" and as the end date for the dating type "range".'
+                    ),
+                },
+                "margin": {
+                    "label": self.tr("Margin"),
+                    "description": self.tr(
+                        'Tolerance margin in years for dating type "scientific".'
+                    ),
+                },
+                "source": {
+                    "label": self.tr("Source"),
+                    "description": self.tr("Source of the dating."),
+                },
+                "isImprecise": {
+                    "label": self.tr("Is imprecise?"),
+                    "description": self.tr(
+                        'Specification "Imprecise". Cannot be set for dating type "scientific". Possible values are: true (yes), false (no).'
+                    ),
+                },
+                "isUncertain": {
+                    "label": self.tr("Is uncertain?"),
+                    "description": self.tr(
+                        'Specification "Uncertain". Cannot be set for dating type "scientific". Possible values are: true (yes), false (no).'
+                    ),
+                },
             },
-            'weight': {
-                'measurementDevice': {'label': self.tr('Measurement device')},
-                'inputUnit': {'label': self.tr('Unit'), 'description': self.tr('The unit of measurement. Possible values: mg, g, kg.')}
+            "measurement": {
+                "inputValue": {
+                    "label": self.tr("Value"),
+                    "description": self.tr("The measured numerical value."),
+                },
+                "inputRangeEndValue": {
+                    "label": self.tr("End value"),
+                    "description": self.tr(
+                        "The second measured numerical value, if the dimension is a range."
+                    ),
+                },
+                "measurementComment": {"label": self.tr("Comment")},
+                "isImprecise": {
+                    "label": self.tr("Is imprecise?"),
+                    "description": self.tr(
+                        'Specification "Imprecise". Possible values are: true (yes), false (no).'
+                    ),
+                },
             },
-            'volume': {
-                'measurementTechnique': {'label': self.tr('Measurement technique')},
-                'inputUnit': {'label': self.tr('Unit'), 'description': self.tr('The unit of measurement. Possible values: ml, l.')}
+            "dimension": {
+                "measurementPosition": {"label": self.tr("As measured by")},
+                "inputUnit": {
+                    "label": self.tr("Unit"),
+                    "description": self.tr("The unit of measurement. Possible values: mm, cm, m."),
+                },
             },
-            'literature': {
-                'quotation': {'label': self.tr('Literature quotation')},
-                'zenonId': {'label': self.tr('Zenon ID')},
-                'doi': {'label': self.tr('DOI')},
-                'page': {'label': self.tr('Page')},
-                'figure': {'label': self.tr('Figure')}
+            "weight": {
+                "measurementDevice": {"label": self.tr("Measurement device")},
+                "inputUnit": {
+                    "label": self.tr("Unit"),
+                    "description": self.tr("The unit of measurement. Possible values: mg, g, kg."),
+                },
             },
-            'period': {
-                'label': self.tr('Period'),
-                'value': {'label': self.tr('Value'), 'description': self.tr('The identifier of the selected value; if two values are selected, the first of the two values.')},
-                'endValue': {'label': self.tr('End value'), 'description': self.tr('The identifier of the second selected value if two values are selected.')}
-            }
+            "volume": {
+                "measurementTechnique": {"label": self.tr("Measurement technique")},
+                "inputUnit": {
+                    "label": self.tr("Unit"),
+                    "description": self.tr("The unit of measurement. Possible values: ml, l."),
+                },
+            },
+            "literature": {
+                "quotation": {"label": self.tr("Literature quotation")},
+                "zenonId": {"label": self.tr("Zenon ID")},
+                "doi": {"label": self.tr("DOI")},
+                "page": {"label": self.tr("Page")},
+                "figure": {"label": self.tr("Figure")},
+            },
+            "period": {
+                "label": self.tr("Period"),
+                "value": {
+                    "label": self.tr("Value"),
+                    "description": self.tr(
+                        "The identifier of the selected value; if two values are selected, the first of the two values."
+                    ),
+                },
+                "endValue": {
+                    "label": self.tr("End value"),
+                    "description": self.tr(
+                        "The identifier of the second selected value if two values are selected."
+                    ),
+                },
+            },
         }
         # link identical translations
-        self.trAttrs['dating']['end']['inputType'] = self.trAttrs['dating']['begin']['inputType']
-        self.trAttrs['dating']['end']['inputYear'] = self.trAttrs['dating']['begin']['inputYear']
-        self.trAttrs['dimension']['inputValue'] = self.trAttrs['measurement']['inputValue']
-        self.trAttrs['dimension']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
-        self.trAttrs['dimension']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
-        self.trAttrs['dimension']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
-        self.trAttrs['weight']['inputValue'] = self.trAttrs['measurement']['inputValue']
-        self.trAttrs['weight']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
-        self.trAttrs['weight']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
-        self.trAttrs['weight']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
-        self.trAttrs['volume']['inputValue'] = self.trAttrs['measurement']['inputValue']
-        self.trAttrs['volume']['inputRangeEndValue'] = self.trAttrs['measurement']['inputRangeEndValue']
-        self.trAttrs['volume']['measurementComment'] = self.trAttrs['measurement']['measurementComment']
-        self.trAttrs['volume']['isImprecise'] = self.trAttrs['measurement']['isImprecise']
+        # fmt: off
+        self.trAttrs["dating"]["end"]["inputType"] = self.trAttrs["dating"]["begin"]["inputType"]
+        self.trAttrs["dating"]["end"]["inputYear"] = self.trAttrs["dating"]["begin"]["inputYear"]
+        self.trAttrs["dimension"]["inputValue"] = self.trAttrs["measurement"]["inputValue"]
+        self.trAttrs["dimension"]["inputRangeEndValue"] = self.trAttrs["measurement"]["inputRangeEndValue"]
+        self.trAttrs["dimension"]["measurementComment"] = self.trAttrs["measurement"]["measurementComment"]
+        self.trAttrs["dimension"]["isImprecise"] = self.trAttrs["measurement"]["isImprecise"]
+        self.trAttrs["weight"]["inputValue"] = self.trAttrs["measurement"]["inputValue"]
+        self.trAttrs["weight"]["inputRangeEndValue"] = self.trAttrs["measurement"]["inputRangeEndValue"]
+        self.trAttrs["weight"]["measurementComment"] = self.trAttrs["measurement"]["measurementComment"]
+        self.trAttrs["weight"]["isImprecise"] = self.trAttrs["measurement"]["isImprecise"]
+        self.trAttrs["volume"]["inputValue"] = self.trAttrs["measurement"]["inputValue"]
+        self.trAttrs["volume"]["inputRangeEndValue"] = self.trAttrs["measurement"]["inputRangeEndValue"]
+        self.trAttrs["volume"]["measurementComment"] = self.trAttrs["measurement"]["measurementComment"]
+        self.trAttrs["volume"]["isImprecise"] = self.trAttrs["measurement"]["isImprecise"]
+        # fmt: on
 
         # merge self.trAttrs into cldr dict
-        if self.CLDRTranslations: self.trAttrs = deep_merge(self.CLDRTranslations, self.trAttrs)
+        if self.CLDRTranslations:
+            self.trAttrs = deep_merge(self.CLDRTranslations, self.trAttrs)
 
         # layout
-        self.toggleFieldInfo()
+        self.toggle_field_info()
         self.selectImportCrs.setCrs(self.project.crs())
         self.selectExportCrs.setCrs(self.project.crs())
-        self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.hzLineSettings)[0], QFormLayout.SpanningRole, self.hzLineSettings)
+        self.formLayout.setWidget(
+            self.formLayout.getWidgetPosition(self.hzLineSettings)[0],
+            QFormLayout.SpanningRole,
+            self.hzLineSettings,
+        )
         # add fullwidth for category selection
         # self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.selectCats)[0], QFormLayout.SpanningRole, self.selectCats)
 
         # timezone combobox
-        self.tz_ids = sorted(tz.data().decode('utf-8') for tz in QTimeZone.availableTimeZoneIds() if not tz.startsWith(b'UTC'))
-        tzObjs = (self.selectImportTz, self.selectExportTz,)
-        for cbox in tzObjs:
+        self.tz_ids = sorted(
+            tz.data().decode("utf-8")
+            for tz in QTimeZone.availableTimeZoneIds()
+            if not tz.startsWith(b"UTC")
+        )
+        tz_objs = (
+            self.selectImportTz,
+            self.selectExportTz,
+        )
+        for cbox in tz_objs:
             cbox.setCompleter(None)
             cbox.addItems(self.tz_ids)
-            cbox.lineEdit().setPlaceholderText(self.tr('Type to filter...'))
+            cbox.lineEdit().setPlaceholderText(self.tr("Type to filter..."))
 
-        self.setConnectionStatus()
+        self.set_connection_status()
         self.mB: QgsMessageBar = iface.messageBar()
         self.sB = QStatusBar()
         self.sB.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -234,78 +398,95 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.dockWidgetContents.layout().addWidget(self.sB)
         self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # export tab
-        self.exportUpdateLayerGroups()
+        self.export_update_layer_groups()
 
         # todo: test loading/saving after object names change
         # load saved settings
         try:
-            self.loadSettings()
-        except:
-            print('Error loading settings')  # debug
-            self.removeSettings()
-            self.saveSettings()
-            self.loadSettings()
+            self.load_settings()
+        except Exception:
+            print("Error loading settings")  # debug
+            self.remove_settings()
+            self.save_settings()
+            self.load_settings()
 
         # connections
-        self.selectImportTz.lineEdit().textChanged.connect(partial(self.onTimezoneTextChanged, self.selectImportTz))
-        self.selectImportTzReset.clicked.connect(partial(self.resetTimezone, self.selectImportTz))
-        self.selectExportTz.lineEdit().textChanged.connect(partial(self.onTimezoneTextChanged, self.selectExportTz))
-        self.selectExportTzReset.clicked.connect(partial(self.resetTimezone, self.selectExportTz))
-        self.btnConnect.clicked.connect(self.fieldConnect)
-        self.btnImport.clicked.connect(self.fieldImport)
-        self.btnExport.clicked.connect(self.fieldExport)
-        self.selectCats.model().itemChanged.connect(self.handleCats)
-        self.tabWidget.currentChanged.connect(self.saveTabIndex)
+        self.selectImportTz.lineEdit().textChanged.connect(
+            partial(self.on_timezone_text_changed, self.selectImportTz)
+        )
+        self.selectImportTzReset.clicked.connect(partial(self.reset_timezone, self.selectImportTz))
+        self.selectExportTz.lineEdit().textChanged.connect(
+            partial(self.on_timezone_text_changed, self.selectExportTz)
+        )
+        self.selectExportTzReset.clicked.connect(partial(self.reset_timezone, self.selectExportTz))
+        self.btnConnect.clicked.connect(self.field_connect)
+        self.btnImport.clicked.connect(self.field_import)
+        self.btnExport.clicked.connect(self.field_export)
+        self.selectCats.model().itemChanged.connect(self.handle_category_list)
+        self.tabWidget.currentChanged.connect(self.save_tab_index)
         # export
-        self.treeRoot.addedChildren.connect(self.exportUpdateLayerGroups)
-        self.treeRoot.removedChildren.connect(self.exportUpdateLayerGroups)
-        self.treeRoot.nameChanged.connect(self.exportUpdateLayerGroups)
+        self.treeRoot.addedChildren.connect(self.export_update_layer_groups)
+        self.treeRoot.removedChildren.connect(self.export_update_layer_groups)
+        self.treeRoot.nameChanged.connect(self.export_update_layer_groups)
 
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
+    def closeEvent(self, event):  # noqa: N802
+        self.closing_plugin.emit()
         event.accept()
 
-    def exportUpdateLayerGroups(self):
+    def export_update_layer_groups(self):
         self.selectExGroup.clear()
         gs = self.treeRoot.findGroups()
-        [self.selectExGroup.addItem(group.name(), group) for group in gs] if gs else self.selectExGroup.addItem(self.tr('No groups available'))
+        (
+            [self.selectExGroup.addItem(group.name(), group) for group in gs]
+            if gs
+            else self.selectExGroup.addItem(self.tr("No groups available"))
+        )
 
-    def resetTimezone(self, cbox):
+    def reset_timezone(self, cbox):
         """Resets the timezone value to the system timezone"""
-        cbox.setCurrentText(QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+        cbox.setCurrentText(QTimeZone.systemTimeZoneId().data().decode("utf-8"))
 
-    def onTimezoneTextChanged(self, cbox, text):
+    def on_timezone_text_changed(self, cbox, text):
         """Filter combobox values after input"""
-        # cbox.blockSignals(True)
         cbox.lineEdit().blockSignals(True)
         cbox.clear()
 
-        filtered = [tz for tz in self.tz_ids if text.lower() in tz.lower()] if text else self.tz_ids
+        filtered = (
+            [tz for tz in self.tz_ids if text.lower() in tz.lower()] if text else self.tz_ids
+        )
 
         cbox.addItems(filtered)
         cbox.setEditText(text)
 
         cbox.lineEdit().blockSignals(False)
-        # cbox.blockSignals(False)
 
-    def setProjectCrs(self):
+    def set_project_crs(self):
         """Sets the project crs when connecting to Field Desktop if available,
         or uses the one set in the QGIS Project"""
-        epsgId = safe_get(self.api.get(f'/{self.activeProject}/project', port=3001).json(), 'resource', 'epsgId')
-        crs = QgsCoordinateReferenceSystem(epsgId)
+        epsg_id = safe_get(
+            self.api.get(f"/{self.activeProject}/project", port=3001).json(),
+            "resource",
+            "epsgId",
+        )
+        crs = QgsCoordinateReferenceSystem(epsg_id)
 
         if crs.isValid():
             self.project.setCrs(crs)
             self.selectImportCrs.setCrs(crs)
             self.selectExportCrs.setCrs(crs)
         else:
-            projectCrs = self.project.crs()
-            self.selectExportCrs.setCrs(projectCrs)
-            self.selectExportCrs.setCrs(projectCrs)
-            self.selectExportCrs.setCrs(projectCrs)
-            self.mB.pushWarning(self.plugin_name, self.tr('Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS.').format(epsgId=epsgId))
+            project_crs = self.project.crs()
+            self.selectExportCrs.setCrs(project_crs)
+            self.selectExportCrs.setCrs(project_crs)
+            self.selectExportCrs.setCrs(project_crs)
+            self.mB.pushWarning(
+                self.plugin_name,
+                self.tr(
+                    "Invalid EPSG Code in Field Desktop: {epsgId}. Using QGIS project CRS."
+                ).format(epsgId=epsg_id),
+            )
 
-    def normalize_export_value(self, value, dT=None):
+    def normalize_export_value(self, value, dt=None):
         """
         Normalize attribute values for CSV export.
 
@@ -315,32 +496,34 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
 
         if value == NULL or value is None:
-            return ''
+            return ""
 
         # ValueRelation multiselect
-        if isinstance(value, str) and value.startswith('{') and value.endswith('}'):
+        if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
             inner = value[1:-1].strip()
             if not inner:
-                return ''
+                return ""
 
-            parts = next(csv.reader(
-                [inner],
-                delimiter=',',
-                quotechar='"',
-                skipinitialspace=True
-            ), [])
+            parts = next(
+                csv.reader([inner], delimiter=",", quotechar='"', skipinitialspace=True),
+                [],
+            )
 
-            return ';'.join(parts)
+            return ";".join(parts)
 
-        if dT and isinstance(value, str) and dT.can_transform(value):
-            return dT.transform(value)
+        if dt and isinstance(value, str) and dt.can_transform(value):
+            return dt.transform(value)
 
         return value
 
-    def toggleFieldInfo(self, user='', version='', activeProject=''):
+    def toggle_field_info(self, user="", version="", active_project=""):
         """Show user, version and active project when connected, hide if not"""
-        d = {self.labelFieldUser:user, self.labelFieldVersion:version, self.labelFieldProject:activeProject}
-        for k,v in d.items():
+        d = {
+            self.labelFieldUser: user,
+            self.labelFieldVersion: version,
+            self.labelFieldProject: active_project,
+        }
+        for k, v in d.items():
             row = self.formLayout.getWidgetPosition(k)[0]
             w = self.formLayout.itemAt(row, QFormLayout.FieldRole)
             if w:
@@ -356,7 +539,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 k.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
     # for de-/selecting items in the category field
-    def handleCats(self, item):
+    def handle_category_list(self, item):
         mdl = self.selectCats.model()
         mdl.blockSignals(True)
         row = mdl.indexFromItem(item).row()
@@ -365,49 +548,59 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             state = item.checkState()
             for i in range(1, self.selectCats.count()):
                 mdl.item(i).setCheckState(state)
-            item.setText(self.labels['DESELECT_ALL'] if state == Qt.Checked else self.labels['SELECT_ALL'])
+            item.setText(
+                self.labels["DESELECT_ALL"] if state == Qt.Checked else self.labels["SELECT_ALL"]
+            )
         else:
             # update the first item to reflect whether all other items are checked
-            all_checked = all(mdl.item(i).checkState() == Qt.Checked for i in range(1, self.selectCats.count()))
+            all_checked = all(
+                mdl.item(i).checkState() == Qt.Checked for i in range(1, self.selectCats.count())
+            )
             mdl.item(0).setCheckState(Qt.Checked if all_checked else Qt.Unchecked)
-            mdl.item(0).setText(self.labels['DESELECT_ALL'] if all_checked else self.labels['SELECT_ALL'])
+            mdl.item(0).setText(
+                self.labels["DESELECT_ALL"] if all_checked else self.labels["SELECT_ALL"]
+            )
         mdl.blockSignals(False)
 
-    def showOrHideProgressBar(self):
+    def show_or_hide_progress_bar(self):
         """Shows the progress bar if an import/export is actively running or hides it if not"""
-        self.progressBar.show() if (self._import_running or self._export_running) else self.progressBar.hide()
+        (
+            self.progressBar.show()
+            if (self._import_running or self._export_running)
+            else self.progressBar.hide()
+        )
 
-    def createLookupLayerTemp(self):
+    def create_lookup_layer_temp(self):
         """Create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'"""
         fields = QgsFields()
         # fields.append(QgsField('id', QMetaType.Int))
         # todo: QgsField constructor is deprecated
-        fields.append(QgsField('group_id', QMetaType.QString))
-        fields.append(QgsField('key', QMetaType.QString))
-        fields.append(QgsField('value', QMetaType.QString))
-        fields.append(QgsField('description', QMetaType.QString))
+        fields.append(QgsField("group_id", QMetaType.QString))
+        fields.append(QgsField("key", QMetaType.QString))
+        fields.append(QgsField("value", QMetaType.QString))
+        fields.append(QgsField("description", QMetaType.QString))
 
-        lupLayer = QgsVectorLayer(
-            'None',   # no geometry
-            f'{self.activeProject}_lookup',
-            "memory"
-        )
+        lup_layer = QgsVectorLayer("None", f"{self.activeProject}_lookup", "memory")  # no geometry
 
-        pr = lupLayer.dataProvider()
+        pr = lup_layer.dataProvider()
         pr.addAttributes(fields)
-        lupLayer.updateFields()
+        lup_layer.updateFields()
 
-        return lupLayer
+        return lup_layer
 
     # dataSourceUri: .gpkg|layername=.*_CategoryName'
-    def getCategoryNameForExport(self, layer: QgsVectorLayer):
+    def get_category_name_for_export(self, layer: QgsVectorLayer):
         """Extract the category name from the layer variable 'field_category' which is set on import, or
         try the dataSourceUri as fallback"""
-        catName = QgsExpressionContextUtils.layerScope(layer).variable('field_category') or layer.dataProvider().dataSourceUri().split('_')[-2] or ''
+        cat_name = (
+            QgsExpressionContextUtils.layerScope(layer).variable("field_category")
+            or layer.dataProvider().dataSourceUri().split("_")[-2]
+            or ""
+        )
 
-        return catName
+        return cat_name
 
-    def loadImportCategories(self):
+    def load_import_categories(self):
         """Loads available categories for import with translated labels
         and their original name as userData."""
         self.selectCats.clear()
@@ -417,17 +610,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             """
             Recursively collect categories from nested dict/list structures.
             """
-            if not isinstance(node, dict): return
+            if not isinstance(node, dict):
+                return
 
             item = node.get("item")
             # exclude abstract categories
-            isAbstract = item.get("isAbstract")
+            is_abstract = item.get("isAbstract")
 
             if isinstance(item, dict) and "name" in item:
-                uLabel = item["name"]
-                tLabel = safe_get(item, "label", self.loc)
-                if not isAbstract:
-                    cats.append((tLabel or uLabel, uLabel))
+                u_label = item["name"]
+                t_label = safe_get(item, "label", self.loc)
+                if not is_abstract:
+                    cats.append((t_label or u_label, u_label))
 
             # Recurse into subtrees
             trees = node.get("trees")
@@ -443,13 +637,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 collect_categories(cat)
 
         if cats:
-            self.selectCats.addItem(self.labels['SELECT_ALL'])
+            self.selectCats.addItem(self.labels["SELECT_ALL"])
             for label, name in cats:
                 self.selectCats.addItem(label, name)
         else:
             self.selectCats.model().blockSignals(True)
             self.selectCats.clear()
-            self.selectCats.addItem(self.labels['NO_CATS_FOUND'])
+            self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
             self.selectCats.setCurrentIndex(0)
             self.selectCats.setItemCheckState(0, Qt.Checked)
             self.selectCats.setEnabled(False)
@@ -457,252 +651,353 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
         self.selectCats.setEnabled(True)
 
-    def getFieldInformations(self, cat):  # 🐱
+    def collect_field_informations(self, cat):
         """Extract translations and relevant informations from the project config.
         Ignores the category field as it is not getting exported in a CSV export.
         Moves relation fields into a nested 'relations' dict.
         Moves composite fields into nested dicts keyed by their 'name'.
         Also collects value maps from valuelist properties for later assignment."""
-        translations = {'identifier': {'inputType': 'identifier'}, 'relations': {'inputType': 'relation'}}
-        boolMap = {self.tr('Yes'):'true', self.tr('No'):'false', '':''}
+        translations = {
+            "identifier": {"inputType": "identifier"},
+            "relations": {"inputType": "relation"},
+        }
+        bool_map = {self.tr("Yes"): "true", self.tr("No"): "false", "": ""}
         valuemaps = {
-            ':boolean': {'map': boolMap},
-            ':volInputUnit': {'map': {self.tr('ml'):'ml', self.tr('l'):'l', '':''}},
-            ':weightInputUnit': {'map': {self.tr('mg'):'mg', self.tr('g'):'g', self.tr('kg'):'kg', '':''}},
-            ':dimInputUnit': {'map': {self.tr('mm'):'mm', self.tr('cm'):'cm', self.tr('m'):'m', '':''}},
-            'date': {
-                'isRange': {
-                    'map': boolMap,
-                    'inputType': 'boolean'
-                },
+            ":boolean": {"map": bool_map},
+            ":volInputUnit": {"map": {self.tr("ml"): "ml", self.tr("l"): "l", "": ""}},
+            ":weightInputUnit": {
+                "map": {
+                    self.tr("mg"): "mg",
+                    self.tr("g"): "g",
+                    self.tr("kg"): "kg",
+                    "": "",
+                }
             },
-            'dating': {
-                'begin': {'inputType': {'map': {self.tr('BCE'): 'bce', self.tr('CE'): 'ce', self.tr('BP'): 'bp', '':''}}},
-                'type': {'map': {self.tr('Period'):'range', self.tr('Single year'):'single', self.tr('Before'):'before', self.tr('After'): 'after', self.tr('Scientific'):'scientific', '':''}},
-                'isImprecise': {'map': boolMap},
-                'isUncertain': {'map': boolMap}
-            }
+            ":dimInputUnit": {
+                "map": {
+                    self.tr("mm"): "mm",
+                    self.tr("cm"): "cm",
+                    self.tr("m"): "m",
+                    "": "",
+                }
+            },
+            "date": {
+                "isRange": {"map": bool_map, "inputType": "boolean"},
+            },
+            "dating": {
+                "begin": {
+                    "inputType": {
+                        "map": {
+                            self.tr("BCE"): "bce",
+                            self.tr("CE"): "ce",
+                            self.tr("BP"): "bp",
+                            "": "",
+                        }
+                    }
+                },
+                "type": {
+                    "map": {
+                        self.tr("Period"): "range",
+                        self.tr("Single year"): "single",
+                        self.tr("Before"): "before",
+                        self.tr("After"): "after",
+                        self.tr("Scientific"): "scientific",
+                        "": "",
+                    }
+                },
+                "isImprecise": {"map": bool_map},
+                "isUncertain": {"map": bool_map},
+            },
         }
 
-        def recurse(data, result, seen=None, path='root'):
+        def recurse(data, result, seen=None, path="root"):
             """Recursively collect field translations for the given locale."""
             if seen is None:
                 seen = set()
 
             if isinstance(data, dict):
-                if 'name' in data and isinstance(data['name'], str):
-                    fieldname = data['name']
-                    inputType = data.get('inputType', '')
-                    dateConfiguration = data.get('dateConfiguration', '')
-                    if fieldname != 'category':
+                if "name" in data and isinstance(data["name"], str):
+                    fieldname = data["name"]
+                    input_type = data.get("inputType", "")
+                    date_configuration = data.get("dateConfiguration", "")
+                    if fieldname != "category":
                         if fieldname in seen:
                             print(f'Duplicate field "{fieldname}" found at {path}')
                         seen.add(fieldname)
 
                         # try to get translated label for the current locale
-                        label = data.get('label', {}).get(self.loc, fieldname)
-                        description = data.get('description', {}).get(self.loc, '')
+                        label = data.get("label", {}).get(self.loc, fieldname)
+                        description = data.get("description", {}).get(self.loc, "")
                         if not description:
-                            description = data.get('description', {}).get('en', '')
+                            description = data.get("description", {}).get("en", "")
 
-                        if 'valuelist' in data:
+                        if "valuelist" in data:
                             vmap = {}
-                            values = data['valuelist'].get('values', {})
+                            values = data["valuelist"].get("values", {})
                             for key, vdef in values.items():
-                                vlabel = vdef.get('label', {}).get(self.loc, key)
-                                vmap[vlabel] = key  # vmaps need the format description:value, although the gui says value:description
+                                vlabel = vdef.get("label", {}).get(self.loc, key)
+                                vmap[vlabel] = (
+                                    key  # vmaps need the format description:value, although the gui says value:description
+                                )
                             if vmap:
                                 # add empty string option to clear selection
-                                if '' not in vmap and inputType != 'checkboxes': vmap[''] = ''
-                                valuemaps[fieldname] = {'map': vmap, 'inputType': inputType}
+                                if "" not in vmap and input_type != "checkboxes":
+                                    vmap[""] = ""
+                                valuemaps[fieldname] = {
+                                    "map": vmap,
+                                    "inputType": input_type,
+                                }
 
                         # handle relation fields
-                        if data.get('inputType') == 'relation':
-                            result.setdefault('relations', {})[fieldname] = {
-                                'label': label,
-                                'description': description,
-                                'inputType': inputType
+                        if data.get("inputType") == "relation":
+                            result.setdefault("relations", {})[fieldname] = {
+                                "label": label,
+                                "description": description,
+                                "inputType": input_type,
                             }
 
                         # handle composite fields
-                        elif data.get('inputType') == 'composite':
-                            comp = result.setdefault(fieldname, {
-                                'label': label,
-                                'description': description,
-                                'inputType': inputType
-                            })
-                            if dateConfiguration: comp[fieldname]['dateConfiguration'] = dateConfiguration
+                        elif data.get("inputType") == "composite":
+                            comp = result.setdefault(
+                                fieldname,
+                                {
+                                    "label": label,
+                                    "description": description,
+                                    "inputType": input_type,
+                                },
+                            )
+                            if date_configuration:
+                                comp[fieldname]["dateConfiguration"] = date_configuration
                             # collect subfields as nested entries
-                            subfields = data.get('subfields', [])
+                            subfields = data.get("subfields", [])
                             if isinstance(subfields, list):
                                 for sf in subfields:
-                                    sf_name = sf.get('name')
+                                    sf_name = sf.get("name")
                                     if not sf_name:
                                         continue
-                                    sf_label = sf.get('label', {}).get(self.loc, sf_name)
-                                    sf_descr = sf.get('description', {}).get(self.loc, '')
-                                    sf_inputType = sf.get('inputType', {})
+                                    sf_label = sf.get("label", {}).get(self.loc, sf_name)
+                                    sf_descr = sf.get("description", {}).get(self.loc, "")
+                                    sf_input_type = sf.get("inputType", {})
                                     if not sf_descr:
-                                        sf_descr = sf.get('description', {}).get('en', '')
+                                        sf_descr = sf.get("description", {}).get("en", "")
                                     comp[sf_name] = {
-                                        'label': sf_label,
-                                        'description': sf_descr,
-                                        'inputType': sf_inputType
+                                        "label": sf_label,
+                                        "description": sf_descr,
+                                        "inputType": sf_input_type,
                                     }
-                                    if dateConfiguration: comp[sf_name]['dateConfiguration'] = dateConfiguration
+                                    if date_configuration:
+                                        comp[sf_name]["dateConfiguration"] = date_configuration
 
-                                    if 'valuelist' in sf:
+                                    if "valuelist" in sf:
                                         vmap = {}
-                                        values = sf['valuelist'].get('values', {})
+                                        values = sf["valuelist"].get("values", {})
                                         for key, vdef in values.items():
-                                            vlabel = vdef.get('label', {}).get(self.loc, key)
+                                            vlabel = vdef.get("label", {}).get(self.loc, key)
                                             vmap[vlabel] = key
                                         if vmap:
-                                            if '' not in vmap and inputType != 'checkboxes': vmap[''] = ''
-                                            valuemaps[sf_name] = {'map': vmap, 'inputType': sf_inputType}
+                                            if "" not in vmap and input_type != "checkboxes":
+                                                vmap[""] = ""
+                                            valuemaps[sf_name] = {
+                                                "map": vmap,
+                                                "inputType": sf_input_type,
+                                            }
 
-                            data = {k: v for k, v in data.items() if k != 'subfields'}
+                            data = {k: v for k, v in data.items() if k != "subfields"}
                         # regular fields
                         else:
                             result[fieldname] = {
-                                'label': label,
-                                'description': description,
-                                'inputType': inputType
+                                "label": label,
+                                "description": description,
+                                "inputType": input_type,
                             }
-                            if dateConfiguration: result[fieldname]['dateConfiguration'] = dateConfiguration
+                            if date_configuration:
+                                result[fieldname]["dateConfiguration"] = date_configuration
 
                 # recurse into nested structures
                 for k, v in data.items():
-                    recurse(v, result, seen, f'{path}.{k}')
+                    recurse(v, result, seen, f"{path}.{k}")
 
             elif isinstance(data, list):
                 for i, item in enumerate(data):
-                    recurse(item, result, seen, f'{path}[{i}]')
+                    recurse(item, result, seen, f"{path}[{i}]")
 
             return result
 
-        fCat = None
-        for d in safe_get(self.projectConfig, 'categories', default=[]):
+        f_cat = None
+        for d in safe_get(self.projectConfig, "categories", default=[]):
             # check top-level category name
-            if safe_get(d, 'item', 'name') == cat:
-                fCat = d
+            if safe_get(d, "item", "name") == cat:
+                f_cat = d
                 break
 
             # check nested trees within category
-            for t in safe_get(d, 'trees', default=[]):
-                if safe_get(t, 'item', 'name') == cat:
-                    fCat = t
+            for t in safe_get(d, "trees", default=[]):
+                if safe_get(t, "item", "name") == cat:
+                    f_cat = t
                     break
-            if fCat:
+            if f_cat:
                 break
 
-        if fCat:
+        if f_cat:
             # recurse through the category to find all field definitions
-            fGroups = safe_get(fCat, 'item', 'groups')
-            if fGroups:
-                for group in fGroups:
+            f_groups = safe_get(f_cat, "item", "groups")
+            if f_groups:
+                for group in f_groups:
                     recurse(group, translations)
-            fTrees = safe_get(fCat, 'item')
-            if fTrees:
-                for group in fTrees:
+            f_trees = safe_get(f_cat, "item")
+            if f_trees:
+                for group in f_trees:
                     recurse(group, translations)
 
         return translations, valuemaps
 
-    def saveTabIndex(self, idx):
+    def save_tab_index(self, idx):
         """Save tab index separately as it resets to 0 when reloading the plugin"""
-        pn = self.plugin_name.replace(' ', '').lower()
+        pn = self.plugin_name.replace(" ", "").lower()
         s = QgsSettings()
-        s.setValue(f'{pn}/activeTabIndex', idx)
+        s.setValue(f"{pn}/activeTabIndex", idx)
 
-    def saveSettings(self):
+    def save_settings(self):
         """Save user settings made in the ui"""
-        pn = self.plugin_name.replace(' ', '').lower()
+        pn = self.plugin_name.replace(" ", "").lower()
         s = QgsSettings()
         # import tab
-        s.setValue(f'{pn}/import/format', self.radioFormatMemory.objectName() if self.radioFormatMemory.isChecked() else self.radioFormatGPKG.objectName())
-        s.setValue(f'{pn}/import/setalias', self.chkSetAliases.isChecked())
-        s.setValue(f'{pn}/import/combineHierarchicalRelations', self.chkCombineRel.isChecked())
-        s.setValue(f'{pn}/import/timezone', self.selectImportTz.currentText() if QTimeZone(self.selectImportTz.currentText().encode('utf-8')).isValid() and self.selectImportTz.currentText() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+        s.setValue(
+            f"{pn}/import/format",
+            (
+                self.radioFormatMemory.objectName()
+                if self.radioFormatMemory.isChecked()
+                else self.radioFormatGPKG.objectName()
+            ),
+        )
+        s.setValue(f"{pn}/import/setalias", self.chkSetAliases.isChecked())
+        s.setValue(f"{pn}/import/combineHierarchicalRelations", self.chkCombineRel.isChecked())
+        s.setValue(
+            f"{pn}/import/timezone",
+            (
+                self.selectImportTz.currentText()
+                if QTimeZone(self.selectImportTz.currentText().encode("utf-8")).isValid()
+                and self.selectImportTz.currentText()
+                else QTimeZone.systemTimeZoneId().data().decode("utf-8")
+            ),
+        )
         # export tab
-        s.setValue(f'{pn}/export/mode', self.radioExGroup.objectName() if self.radioExGroup.isChecked() else self.radioExSelectedLayers.objectName())
-        s.setValue(f'{pn}/export/quickExport', self.chkQuickExport.isChecked())
-        s.setValue(f'{pn}/export/commitSave', self.chkCommitSave.isChecked())
-        s.setValue(f'{pn}/export/permitDeletions', self.chkPermitDel.isChecked())
-        s.setValue(f'{pn}/export/ignoreUnconfiguredFields', self.chkIgnoreUnconfFields.isChecked())
-        s.setValue(f'{pn}/export/timezone', self.selectExportTz.currentText() if QTimeZone(self.selectExportTz.currentText().encode('utf-8')).isValid() and self.selectExportTz.currentText() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+        s.setValue(
+            f"{pn}/export/mode",
+            (
+                self.radioExGroup.objectName()
+                if self.radioExGroup.isChecked()
+                else self.radioExSelectedLayers.objectName()
+            ),
+        )
+        s.setValue(f"{pn}/export/quickExport", self.chkQuickExport.isChecked())
+        s.setValue(f"{pn}/export/commitSave", self.chkCommitSave.isChecked())
+        s.setValue(f"{pn}/export/permitDeletions", self.chkPermitDel.isChecked())
+        s.setValue(
+            f"{pn}/export/ignoreUnconfiguredFields",
+            self.chkIgnoreUnconfFields.isChecked(),
+        )
+        s.setValue(
+            f"{pn}/export/timezone",
+            (
+                self.selectExportTz.currentText()
+                if QTimeZone(self.selectExportTz.currentText().encode("utf-8")).isValid()
+                and self.selectExportTz.currentText()
+                else QTimeZone.systemTimeZoneId().data().decode("utf-8")
+            ),
+        )
 
-    def loadSettings(self):
+    def load_settings(self):
         """Load user settings made in the ui"""
-        pn = self.plugin_name.replace(' ', '').lower()
+        pn = self.plugin_name.replace(" ", "").lower()
         s = QgsSettings()
-        self.tabWidget.setCurrentIndex(s.value(f'{pn}/activeTabIndex', 0, int))
+        self.tabWidget.setCurrentIndex(s.value(f"{pn}/activeTabIndex", 0, int))
         # import tab
-        rbName = s.value(f'{pn}/import/format', 'radioFormatMemory')
-        next(rb.setChecked(True) for rb in (self.radioFormatMemory, self.radioFormatGPKG) if rb.objectName() == rbName)
-        self.chkSetAliases.setChecked(s.value(f'{pn}/import/setalias', True, bool))
-        self.chkCombineRel.setChecked(s.value(f'{pn}/import/combineHierarchicalRelations', True, bool))
-        tz_im_val = s.value(f'{pn}/import/timezone', type=str)
-        self.selectImportTz.setCurrentText(tz_im_val if QTimeZone(tz_im_val.encode('utf-8')).isValid() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+        rb_name = s.value(f"{pn}/import/format", "radioFormatMemory")
+        next(
+            rb.setChecked(True)
+            for rb in (self.radioFormatMemory, self.radioFormatGPKG)
+            if rb.objectName() == rb_name
+        )
+        self.chkSetAliases.setChecked(s.value(f"{pn}/import/setalias", True, bool))
+        self.chkCombineRel.setChecked(
+            s.value(f"{pn}/import/combineHierarchicalRelations", True, bool)
+        )
+        tz_im_val = s.value(f"{pn}/import/timezone", type=str)
+        self.selectImportTz.setCurrentText(
+            tz_im_val
+            if QTimeZone(tz_im_val.encode("utf-8")).isValid()
+            else QTimeZone.systemTimeZoneId().data().decode("utf-8")
+        )
         # export tab
-        exMode = s.value(f'{pn}/export/mode', 'radioExGroup')
-        next(rb.setChecked(True) for rb in (self.radioExGroup, self.radioExSelectedLayers) if rb.objectName() == exMode)
-        self.chkQuickExport.setChecked(s.value(f'{pn}/export/quickExport', False, bool))
-        self.chkCommitSave.setChecked(s.value(f'{pn}/export/commitSave', True, bool))
-        self.chkPermitDel.setChecked(s.value(f'{pn}/export/permitDeletions', False, bool))
-        self.chkIgnoreUnconfFields.setChecked(s.value(f'{pn}/export/ignoreUnconfiguredFields', False, bool))
-        tz_ex_val = s.value(f'{pn}/export/timezone', type=str)
-        self.selectExportTz.setCurrentText(tz_ex_val if QTimeZone(tz_ex_val.encode('utf-8')).isValid() else QTimeZone.systemTimeZoneId().data().decode('utf-8'))
+        ex_mode = s.value(f"{pn}/export/mode", "radioExGroup")
+        next(
+            rb.setChecked(True)
+            for rb in (self.radioExGroup, self.radioExSelectedLayers)
+            if rb.objectName() == ex_mode
+        )
+        self.chkQuickExport.setChecked(s.value(f"{pn}/export/quickExport", False, bool))
+        self.chkCommitSave.setChecked(s.value(f"{pn}/export/commitSave", True, bool))
+        self.chkPermitDel.setChecked(s.value(f"{pn}/export/permitDeletions", False, bool))
+        self.chkIgnoreUnconfFields.setChecked(
+            s.value(f"{pn}/export/ignoreUnconfiguredFields", False, bool)
+        )
+        tz_ex_val = s.value(f"{pn}/export/timezone", type=str)
+        self.selectExportTz.setCurrentText(
+            tz_ex_val
+            if QTimeZone(tz_ex_val.encode("utf-8")).isValid()
+            else QTimeZone.systemTimeZoneId().data().decode("utf-8")
+        )
 
-    def removeSettings(self):
-        pn = self.plugin_name.replace(' ', '').lower()
+    def remove_settings(self):
+        pn = self.plugin_name.replace(" ", "").lower()
         s = QgsSettings()
         s.beginGroup(pn)
-        s.remove('')
+        s.remove("")
         s.endGroup()
 
-    def setConnectionEnabled(self, onOff: bool):
-        self.connected = onOff
-        self.selectImportCrs.setEnabled(onOff)
-        self.selectExportCrs.setEnabled(onOff)
-        self.radioFormatGPKG.setEnabled(onOff)
-        self.radioFormatMemory.setEnabled(onOff)
+    def set_connection_enabled(self, on_off: bool):
+        self.connected = on_off
+        self.selectImportCrs.setEnabled(on_off)
+        self.selectExportCrs.setEnabled(on_off)
+        self.radioFormatGPKG.setEnabled(on_off)
+        self.radioFormatMemory.setEnabled(on_off)
         # import tab
-        self.btnImport.setEnabled(onOff)
-        self.chkSetAliases.setEnabled(onOff)
-        self.chkCombineRel.setEnabled(onOff)
-        self.selectImportTz.setEnabled(onOff)
-        self.selectImportTzReset.setEnabled(onOff)
+        self.btnImport.setEnabled(on_off)
+        self.chkSetAliases.setEnabled(on_off)
+        self.chkCombineRel.setEnabled(on_off)
+        self.selectImportTz.setEnabled(on_off)
+        self.selectImportTzReset.setEnabled(on_off)
         # export tab
-        self.selectExGroup.setEnabled(onOff)
-        self.radioExGroup.setEnabled(onOff)
-        self.radioExSelectedLayers.setEnabled(onOff)
-        self.chkQuickExport.setEnabled(onOff)
-        self.chkCommitSave.setEnabled(onOff)
-        self.chkPermitDel.setEnabled(onOff)
-        self.chkIgnoreUnconfFields.setEnabled(onOff)
-        self.btnExport.setEnabled(onOff)
-        self.selectExportTz.setEnabled(onOff)
-        self.selectExportTzReset.setEnabled(onOff)
+        self.selectExGroup.setEnabled(on_off)
+        self.radioExGroup.setEnabled(on_off)
+        self.radioExSelectedLayers.setEnabled(on_off)
+        self.chkQuickExport.setEnabled(on_off)
+        self.chkCommitSave.setEnabled(on_off)
+        self.chkPermitDel.setEnabled(on_off)
+        self.chkIgnoreUnconfFields.setEnabled(on_off)
+        self.btnExport.setEnabled(on_off)
+        self.selectExportTz.setEnabled(on_off)
+        self.selectExportTzReset.setEnabled(on_off)
         # on or off only
-        if onOff:
-            self.btnConnect.setText(self.tr('Disconnect'))
-            self.selectCats.setEnabled(onOff)
+        if on_off:
+            self.btnConnect.setText(self.tr("Disconnect"))
+            self.selectCats.setEnabled(on_off)
         else:
-            self.btnConnect.setText(self.tr('Connect'))
-            self.selectCats.setEnabled(onOff)
+            self.btnConnect.setText(self.tr("Connect"))
+            self.selectCats.setEnabled(on_off)
             self.projectConfig = {}
             self.projectConfigCategories = {}
-            self.fieldUser = ''
-            self.fieldVersion = ''
-            self.activeProject = ''
+            self.fieldUser = ""
+            self.fieldVersion = ""
+            self.activeProject = ""
             self._import_running = False
             self._export_running = False
 
-    def fieldConnect(self):
+    def field_connect(self):
         """Connects to field and enables import/export form if the request was successful"""
         if self.connected:
-            self.fieldDisconnect()
+            self.field_disconnect()
             return
         u: ParseResult = urlparse(self.lineEditServerAddress.text())
         # assign parsed parameters or use defaults if missing
@@ -711,173 +1006,194 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         port = u.port or self.port  # 3000
 
         # create session
-        self.api = ApiClient(u.password or self.lineEditPassword.text(), self, f'{scheme}://{hostname}:{port}')
-        projectInfo = self.api.get('/info')
-        if projectInfo:
-            self.setConnectionEnabled(True)
-            projectInfoJSON = projectInfo.json()
-            self.fieldUser, self.fieldVersion, self.activeProject = safe_get(projectInfoJSON, 'user'), safe_get(projectInfoJSON, 'version'), safe_get(projectInfoJSON, 'activeProject')
-            self.toggleFieldInfo(self.fieldUser, self.fieldVersion, self.activeProject)
-            self.setProjectCrs()
+        self.api = ApiClient(
+            u.password or self.lineEditPassword.text(),
+            self,
+            f"{scheme}://{hostname}:{port}",
+        )
+        project_info = self.api.get("/info")
+        if project_info:
+            self.set_connection_enabled(True)
+            project_info_json = project_info.json()
+            self.fieldUser, self.fieldVersion, self.activeProject = (
+                safe_get(project_info_json, "user"),
+                safe_get(project_info_json, "version"),
+                safe_get(project_info_json, "activeProject"),
+            )
+            self.toggle_field_info(self.fieldUser, self.fieldVersion, self.activeProject)
+            self.set_project_crs()
 
             # get config from active project as json
-            self.projectConfig = self.api.get(f'/configuration/{self.activeProject}').json()
-            self.projectConfigCategories = safe_get(self.projectConfig, 'categories')
-            self.loadImportCategories()
+            self.projectConfig = self.api.get(f"/configuration/{self.activeProject}").json()
+            self.projectConfigCategories = safe_get(self.projectConfig, "categories")
+            self.load_import_categories()
 
-            self.mB.pushSuccess(self.plugin_name, self.labels['FIELD_CONNECTED'])
-            self.sB.showMessage(self.tr('Choose categories and format'))
-            self.setConnectionStatus()
+            self.mB.pushSuccess(self.plugin_name, self.labels["FIELD_CONNECTED"])
+            self.sB.showMessage(self.tr("Choose categories and format"))
+            self.set_connection_status()
 
-    def fieldImport(self):
+    def field_import(self):
         """Imports data from the currently active project in Field Desktop
-        into QGIS, optionally as temporary layers or saved to disk into one geopackage"""
-        if not self.api.isConnectionActiveAndValid(self.activeProject): return
+        into QGIS, optionally as temporary layers or saved to disk into one geopackage
+        """
+        if not self.api.is_connection_active_and_valid(self.activeProject):
+            return
         self._import_running = True
 
         # collect ui options
         csv_ui_opts = {
-            'combineHierarchicalRelations': self.chkCombineRel.isChecked(),
-            'timezone': self.selectImportTz.currentText()
+            "combineHierarchicalRelations": self.chkCombineRel.isChecked(),
+            "timezone": self.selectImportTz.currentText(),
         }
 
-        importTz = csv_ui_opts['timezone'].encode('utf-8')
-        if not importTz or not QTimeZone(importTz).isValid():
-            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=importTz.decode('utf-8'))))
+        import_tz = csv_ui_opts["timezone"].encode("utf-8")
+        if not import_tz or not QTimeZone(import_tz).isValid():
+            self.mB.pushWarning(
+                self.plugin_name,
+                self.tr(
+                    "Selected timezone '{tz}' is invalid!".format(tz=import_tz.decode("utf-8"))
+                ),
+            )
             return
         else:
-            dT = DateTimeTransformer(QTimeZone(b'UTC'), QTimeZone(importTz))
+            dt = DateTimeTransformer(QTimeZone(b"UTC"), QTimeZone(import_tz))
 
         self.progressBar.reset()
-        self.showOrHideProgressBar()
+        self.show_or_hide_progress_bar()
         csv_export_project = None
-        activeGrp = None
-        lNames = []
-        lupLayerTemp = None
+        active_group = None
+        layer_names = []
+        lup_layer_temp = None
         processed_vmaps = []
-        hardConstraint = QgsFieldConstraints.ConstraintStrengthHard
-        softConstraint = QgsFieldConstraints.ConstraintStrengthSoft
+        hard_constraint = QgsFieldConstraints.ConstraintStrengthHard
+        soft_constraint = QgsFieldConstraints.ConstraintStrengthSoft
         date_data_type_constraint = {
             # specification of time:
-            'optional': softConstraint,
-            'dateTime': hardConstraint,
-            'date': hardConstraint
+            "optional": soft_constraint,
+            "dateTime": hard_constraint,
+            "date": hard_constraint,
         }
-        YEAR  = r'\\d{4}'
-        MONTH = r'(?:0[1-9]|1[0-2])'
-        DAY   = r'(?:0[1-9]|[12]\\d|3[01])'
-        TIME  = r'(?:[01]\\d|2[0-3]):[0-5]\\d'
-        MONTHYEAR = rf'{MONTH}\\.{YEAR}'
-        DATE      = rf'{DAY}\\.{MONTH}\\.{YEAR}'
+        year = r"\\d{4}"
+        month = r"(?:0[1-9]|1[0-2])"
+        day = r"(?:0[1-9]|[12]\\d|3[01])"
+        time = r"(?:[01]\\d|2[0-3]):[0-5]\\d"
+        monthyear = rf"{month}\\.{year}"
+        date = rf"{day}\\.{month}\\.{year}"
 
-        DATE_REGEXES = {
-            'optional': (
-                r'^$|'
-                rf'^{YEAR}$|'
-                rf'^{MONTHYEAR}$|'
-                rf'^{DATE}$|'
-                rf'^{DATE} {TIME}$'
+        date_regexes = {
+            "optional": (
+                r"^$|" rf"^{year}$|" rf"^{monthyear}$|" rf"^{date}$|" rf"^{date} {time}$"
             ),
-            'date': (
-                r'^$|'
-                rf'^{YEAR}$|'
-                rf'^{MONTHYEAR}$|'
-                rf'^{DATE}$'
-            ),
-            'dateTime': (
-                r'^$|'
-                rf'^{DATE} {TIME}$'
-            ),
+            "date": (r"^$|" rf"^{year}$|" rf"^{monthyear}$|" rf"^{date}$"),
+            "dateTime": (r"^$|" rf"^{date} {time}$"),
         }
 
         # update project config, in case changes have been made in field desktop
-        self.projectConfig = self.api.get(f'/configuration/{self.activeProject}').json()
+        self.projectConfig = self.api.get(f"/configuration/{self.activeProject}").json()
 
         filename = None
-        import_overwrite = False  # check if file path exists for handling/updating existing geopackages
+        import_overwrite = (
+            False  # check if file path exists for handling/updating existing geopackages
+        )
         if self.radioFormatGPKG.isChecked():
             filename, filter = QFileDialog.getSaveFileName(
                 self,
-                self.tr('Save GeoPackage as...'),
+                self.tr("Save GeoPackage as..."),
                 self.project.homePath(),
-                'GeoPackage (*.gpkg)'
+                "GeoPackage (*.gpkg)",
             )
             if not filename:
                 self._import_running = False
-                self.showOrHideProgressBar()
+                self.show_or_hide_progress_bar()
                 return
             elif os.path.exists(filename):
                 import_overwrite = True
 
         if import_overwrite:
             # takes the first group from the top if there are multiple with the same name
-            activeGrp = self.project.layerTreeRoot().findGroup(self.activeProject)
-            lNames = [l.name() for l in activeGrp.findLayers()]
+            active_group = self.project.layerTreeRoot().findGroup(self.activeProject)
+            layer_names = [layer.name() for layer in active_group.findLayers()]
         else:
             # create group at the bottom for inserting layers
-            group_ref = self.treeRoot.insertGroup(-1, f'{self.activeProject}')
+            group_ref = self.treeRoot.insertGroup(-1, f"{self.activeProject}")
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
-        rGeo: Response = self.api.get(f'/export/geojson?context=project&formatted=true')
-        geoJSON = json.loads(rGeo.text)
+        r_geo: Response = self.api.get("/export/geojson?context=project&formatted=true")
+        geo_json = json.loads(r_geo.text)
 
-        cats = dict(zip([d for d in self.selectCats.checkedItemsData() if d], [i for i in self.selectCats.checkedItems() if i != self.labels['DESELECT_ALL']]))  # untranslated: translated
+        cats = dict(
+            zip(
+                [d for d in self.selectCats.checkedItemsData() if d],
+                [i for i in self.selectCats.checkedItems() if i != self.labels["DESELECT_ALL"]],
+            )
+        )  # untranslated: translated
 
         self.progressBar.setMaximum(len(cats))
 
         if self.chkSetAliases.isChecked():
             # todo: extract function
             # get fixed staff/campaigns lists from 'Project' csv export which are not available in the project config
-            csv_export_project = self.getCategoryCsv('Project', csv_ui_opts['combineHierarchicalRelations'])
+            csv_export_project = self.get_category_csv(
+                "Project", csv_ui_opts["combineHierarchicalRelations"]
+            )
             # collect valuemaps from project csv export
-            prjMaps = {
-                'staff': {
-                    'map': {},
-                    'inputType': 'checkboxes',
+            prj_maps = {
+                "staff": {
+                    "map": {},
+                    "inputType": "checkboxes",
                 },
-                'campaigns': {
-                    'map': {},
-                    'inputType': 'checkboxes',
+                "campaigns": {
+                    "map": {},
+                    "inputType": "checkboxes",
                 },
             }
 
             for row in csv_export_project:
-                for key in prjMaps:
+                for key in prj_maps:
                     cell = row.get(key)
                     if not cell:
                         continue
 
-                    for val in cell.split(';'):
+                    for val in cell.split(";"):
                         val = val.strip()
                         if val:
-                            prjMaps[key]['map'][val] = val
+                            prj_maps[key]["map"][val] = val
 
-            FIELD_ALIASES = {
-                'staff': ('processor', 'supervisor',),
-                'campaigns': ('campaign',),
+            field_aliases = {
+                "staff": (
+                    "processor",
+                    "supervisor",
+                ),
+                "campaigns": ("campaign",),
             }
 
-            for src_key, targets in FIELD_ALIASES.items():
+            for src_key, targets in field_aliases.items():
                 for field in targets:
-                    prjMaps[field] = prjMaps[src_key]
+                    prj_maps[field] = prj_maps[src_key]
             # print(prjMaps)
 
         for i, (cat, label) in enumerate(cats.items()):
             self.progressBar.setValue(i)
-            self.progressBar.setFormat(self.tr('Importing category {label} %p%').format(label=label))
+            self.progressBar.setFormat(
+                self.tr("Importing category {label} %p%").format(label=label)
+            )
             QApplication.processEvents()
 
-            csv_reader = csv_export_project if cat == 'Project' and csv_export_project else self.getCategoryCsv(cat, csv_ui_opts['combineHierarchicalRelations'])
+            csv_reader = (
+                csv_export_project
+                if cat == "Project" and csv_export_project
+                else self.get_category_csv(cat, csv_ui_opts["combineHierarchicalRelations"])
+            )
             csv_header = csv_reader.fieldnames
             if self.chkSetAliases.isChecked():
                 # merge without overwriting nested items
-                fieldInformations, valuemaps =  self.getFieldInformations(cat)
-                fieldInformations = deep_merge(fieldInformations, self.trAttrs)
-                valuemaps = deep_merge(valuemaps, prjMaps)
+                field_informations, valuemaps = self.collect_field_informations(cat)
+                field_informations = deep_merge(field_informations, self.trAttrs)
+                valuemaps = deep_merge(valuemaps, prj_maps)
                 # print(f'fieldInformations: {fieldInformations}')
                 # print(f'valuemaps: {valuemaps}')
-            csv_rows = {row['identifier']: row for row in csv_reader}
+            csv_rows = {row["identifier"]: row for row in csv_reader}
             # print(f'csv_rows: {csv_rows}')
 
             # create fields here for reuse
@@ -886,21 +1202,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 fields.append(QgsField(col, QMetaType.QString))
 
             # geom lookup
-            geom_lookup = {safe_get(f['properties']['identifier']): f
-                        for f in safe_get(geoJSON, 'features', default=[])}
+            geom_lookup = {
+                safe_get(f["properties"]["identifier"]): f
+                for f in safe_get(geo_json, "features", default=[])
+            }
 
             features = self.features_from_csv(
                 csv_rows=csv_rows,
                 fields=fields,
                 geom_lookup=geom_lookup,
-                dateTransformer=dT
+                date_transformer=dt,
             )
 
-            for gType, feats in features.items():
-                layType = GEOJSON_TO_QGIS.get(gType).name
-                layNameSource = f'{self.activeProject}_{cat}_{gType}'
-                layName = re.sub(r'\s+', '_', f'{self.activeProject}_{label}_{gType}')
-                layer = QgsVectorLayer(layType, layName, 'memory')
+            for geom_type, feats in features.items():
+                lay_type = GEOJSON_TO_QGIS.get(geom_type).name
+                lay_name_source = f"{self.activeProject}_{cat}_{geom_type}"
+                lay_name = re.sub(r"\s+", "_", f"{self.activeProject}_{label}_{geom_type}")
+                layer = QgsVectorLayer(lay_type, lay_name, "memory")
                 pr = layer.dataProvider()
                 layer.setCrs(crs)
                 pr.addAttributes(fields)
@@ -910,22 +1228,26 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 layer.updateExtents()
 
                 if self.chkSetAliases.isChecked():
-                    layerFields = layer.fields()
+                    layer_fields = layer.fields()
 
                     # iterate through each field, split on dot and handle/translate
-                    for fIdx, field in enumerate(layerFields):
+                    for f_idx, field in enumerate(layer_fields):
                         fname = field.name()
                         f_idx = layer.fields().indexFromName(fname)
-                        split = fname.split('.')  # dating 0 begin inputType
-                        inputType = safe_get(fieldInformations, split[0], 'inputType', default='')
+                        split = fname.split(".")  # dating 0 begin inputType
+                        input_type = safe_get(field_informations, split[0], "inputType", default="")
                         # print(inputType)
-                        dateConfig = safe_get(fieldInformations, split[0], 'dateConfiguration', default={})
-                        dateConfigDataType = dateConfig.get('dataType', None)
-                        isComposite = ':' in split[0]  # ':' not allowed when creating composite fields and always used as separator (projectname:fieldname)
+                        date_config = safe_get(
+                            field_informations, split[0], "dateConfiguration", default={}
+                        )
+                        date_config_data_type = date_config.get("dataType", None)
+                        is_composite = (
+                            ":" in split[0]
+                        )  # ':' not allowed when creating composite fields and always used as separator (projectname:fieldname)
                         # fieldType = field.type()  # unused for now
                         paths = []
                         parts = []
-                        desc = ''
+                        desc = ""
                         setup = None
 
                         for idx, part in enumerate(split):
@@ -934,53 +1256,94 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 parts.append(part)
                                 continue
 
-                            if len(part) == 2 and part in fieldInformations:
-                                parts.append(safe_get(fieldInformations, part, 'label', default=part))
+                            if len(part) == 2 and part in field_informations:
+                                parts.append(
+                                    safe_get(field_informations, part, "label", default=part)
+                                )
                                 paths.append(part)
                                 continue
 
                             # build path to look for a translation - dating, dating.begin, dating.begin.inputType etc.
                             paths.append(part)
                             # skip first two parts (dimensionLength.0)
-                            if (idx > 1) and inputType in ('dimension', 'volume', 'weight', 'dating', 'literature'):
+                            if (idx > 1) and input_type in (
+                                "dimension",
+                                "volume",
+                                "weight",
+                                "dating",
+                                "literature",
+                            ):
                                 # get translation from {inputType} or measurement key, if available in self.trAttrs
-                                parts.append(safe_get(fieldInformations, inputType, *paths[1:], 'label', default=False) or safe_get(fieldInformations, 'measurement', part, 'label', default=part))
+                                parts.append(
+                                    safe_get(
+                                        field_informations,
+                                        input_type,
+                                        *paths[1:],
+                                        "label",
+                                        default=False,
+                                    )
+                                    or safe_get(
+                                        field_informations,
+                                        "measurement",
+                                        part,
+                                        "label",
+                                        default=part,
+                                    )
+                                )
                             else:
-                                lookUp = safe_get(fieldInformations, *paths, 'label', default=part)
-                                if lookUp: parts.append(lookUp)
+                                look_up = safe_get(field_informations, *paths, "label", default=part)
+                                if look_up:
+                                    parts.append(look_up)
 
                             # set to latest description
-                            new_desc = safe_get(fieldInformations, *paths, 'description', default=None)
+                            new_desc = safe_get(
+                                field_informations, *paths, "description", default=None
+                            )
                             if new_desc is not None:
                                 desc = new_desc
 
                         # todo: refactor/split up
-                        if desc or dateConfig:
-                            constraintStrength = date_data_type_constraint.get(dateConfig.get('dataType', ''), softConstraint)
-                            exp = 'true'
+                        if desc or date_config:
+                            constraint_strength = date_data_type_constraint.get(
+                                date_config.get("dataType", ""), soft_constraint
+                            )
+                            exp = "true"
                             # set constraint expression for date fields to show format warnings
-                            if fname in ('date.value','date.endValue') or (dateConfig and isComposite and split[-1] in ('value', 'endValue')):
-                                if not desc: desc = self.tr('Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm')
-                                regex = DATE_REGEXES.get(dateConfigDataType, DATE_REGEXES['optional'])
-                                exp = f'regexp_match("{fname}", \'{regex}\')'
+                            if fname in ("date.value", "date.endValue") or (
+                                date_config and is_composite and split[-1] in ("value", "endValue")
+                            ):
+                                if not desc:
+                                    desc = self.tr(
+                                        "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
+                                    )
+                                regex = date_regexes.get(
+                                    date_config_data_type, date_regexes["optional"]
+                                )
+                                exp = f"regexp_match(\"{fname}\", '{regex}')"
 
-                            layer.setConstraintExpression(fIdx, exp, desc)
+                            layer.setConstraintExpression(f_idx, exp, desc)
                             # apply constraint by dateConfiguration
-                            layer.setFieldConstraint(fIdx, QgsFieldConstraints.ConstraintExpression, constraintStrength)
+                            layer.setFieldConstraint(
+                                f_idx,
+                                QgsFieldConstraints.ConstraintExpression,
+                                constraint_strength,
+                            )
 
-                        layer.setFieldAlias(fIdx, ' '.join(parts))
+                        layer.setFieldAlias(f_idx, " ".join(parts))
 
                         # determine field type (composite subfield, nested or field itself) and get the value map
-                        if inputType == 'composite' and split[-1] in valuemaps:
+                        if input_type == "composite" and split[-1] in valuemaps:
                             vmap_source = valuemaps.get(split[-1], {})  # composite subfield
-                            vmap_input_type = vmap_source.get('inputType', inputType)
+                            vmap_input_type = vmap_source.get("inputType", input_type)
                         # get manually added nested map
                         elif safe_get(valuemaps, *paths, default=False):
                             vmap_source = safe_get(valuemaps, *paths, default={})
-                            vmap_input_type = safe_get(valuemaps, *paths, 'inputType', default=inputType)
+                            vmap_input_type = safe_get(
+                                valuemaps, *paths, "inputType", default=input_type
+                            )
                         else:
                             vmap_source = valuemaps.get(fname, {})  # regular field
-                            vmap_input_type = inputType
+                            vmap_input_type = input_type
                         # print(vmap_input_type)
 
                         # assign value map
@@ -988,112 +1351,145 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # print(vmap_source)
                             # handle checkboxes here
                             # todo: check if input type valuelistMultiInput is always a checkbox
-                            if vmap_input_type in ('checkboxes', 'valuelistMultiInput'):
+                            if vmap_input_type in ("checkboxes", "valuelistMultiInput"):
                                 lup_entries = []
                                 updates = {}
                                 # convert values to value relation compatible ones like
                                 # "red;blue;green" → '{"red","blue","green"}'
                                 for feature in layer.getFeatures():
                                     val = feature[f_idx]
-                                    parts = [p.strip() for p in val.split(';') if p.strip()]
+                                    parts = [p.strip() for p in val.split(";") if p.strip()]
                                     # Escape embedded double quotes just in case
-                                    parts = [p.replace('"', r'\"') for p in parts]
-                                    new_val = '{' + ','.join(f'"{p}"' for p in parts) + '}'
+                                    parts = [p.replace('"', r"\"") for p in parts]
+                                    new_val = "{" + ",".join(f'"{p}"' for p in parts) + "}"
                                     updates[feature.id()] = {f_idx: new_val}
 
                                 if updates:
                                     layer.dataProvider().changeAttributeValues(updates)
 
-                                if not lupLayerTemp: lupLayerTemp:QgsVectorLayer = self.createLookupLayerTemp()
-                                group_id = f'{cat}_{fname}'
+                                if not lup_layer_temp:
+                                    lup_layer_temp: QgsVectorLayer = self.create_lookup_layer_temp()
+                                group_id = f"{cat}_{fname}"
                                 if group_id not in processed_vmaps:
                                     processed_vmaps.append(group_id)
-                                    for k, v in vmap_source.get('map', {}).items():
+                                    for k, v in vmap_source.get("map", {}).items():
                                         # group_id, key, value, description
                                         f = QgsFeature()
-                                        f.setFields(lupLayerTemp.fields())
-                                        f['group_id'] = group_id
-                                        f['key'] = k
-                                        f['value'] = v
-                                        f['description'] = ''
+                                        f.setFields(lup_layer_temp.fields())
+                                        f["group_id"] = group_id
+                                        f["key"] = k
+                                        f["value"] = v
+                                        f["description"] = ""
                                         # print(f'isValid: {f.isValid()}, {k}, {v}, {group_id}')
                                         # todo: show warning if not .isValid()
                                         lup_entries.append(f)
-                                    lupLayerTemp.dataProvider().addFeatures(lup_entries)
-                                    lupLayerTemp.updateFields()
-                                    lupLayerTemp.updateExtents()
+                                    lup_layer_temp.dataProvider().addFeatures(lup_entries)
+                                    lup_layer_temp.updateFields()
+                                    lup_layer_temp.updateExtents()
                                 # create value relation
-                                vRelConfig = {
-                                    'Layer': lupLayerTemp.id(),
-                                    'Key': 'key',
-                                    'Value': 'value',
-                                    'FilterExpression': f'"group_id" = \'{group_id}\'',
-                                    'AllowMulti': True,
-                                    'UseCompleter': False,
+                                vrel_config = {
+                                    "Layer": lup_layer_temp.id(),
+                                    "Key": "key",
+                                    "Value": "value",
+                                    "FilterExpression": f"\"group_id\" = '{group_id}'",
+                                    "AllowMulti": True,
+                                    "UseCompleter": False,
                                 }
-                                layer.setEditorWidgetSetup(fIdx, QgsEditorWidgetSetup('ValueRelation', vRelConfig))
+                                layer.setEditorWidgetSetup(
+                                    f_idx,
+                                    QgsEditorWidgetSetup("ValueRelation", vrel_config),
+                                )
                                 continue
                             else:
-                                setup = QgsEditorWidgetSetup('ValueMap', vmap_source)
-                                layer.setEditorWidgetSetup(fIdx, setup)
+                                setup = QgsEditorWidgetSetup("ValueMap", vmap_source)
+                                layer.setEditorWidgetSetup(f_idx, setup)
                                 continue
                         # todo: extract function / refactor
                         # setup = editor_setup_for_field(inputType, split, valuemaps)
                         # handle type dropdownRange which has the subfields value and endValue
-                        elif inputType == 'dropdownRange':
-                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[split[0]])
-                        elif inputType == 'boolean':
-                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
-                        elif inputType == 'date' and any(s in ('isRange',) for s in split):
-                            setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
-                        elif inputType == 'dating':
-                            if any(s in ('isImprecise','isUncertain',) for s in split):
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
-                            elif 'inputType' in split and {'begin', 'end'} & set(split):
-                                setup = QgsEditorWidgetSetup('ValueMap', safe_get(valuemaps, 'dating', 'begin', 'inputType', default={}))
-                            elif 'type' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', safe_get(valuemaps, 'dating', 'type', default={}))
-                        elif inputType == 'volume':
-                            if 'inputUnit' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':volInputUnit'])
-                            elif 'isImprecise' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
-                        elif inputType == 'weight':
-                            if 'inputUnit' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':weightInputUnit'])
-                            elif 'isImprecise' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
-                        elif inputType == 'dimension':
-                            if 'inputUnit' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':dimInputUnit'])
-                            if 'isImprecise' in split:
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[':boolean'])
+                        elif input_type == "dropdownRange":
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[split[0]])
+                        elif input_type == "boolean":
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "date" and any(s in ("isRange",) for s in split):
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "dating":
+                            if any(
+                                s
+                                in (
+                                    "isImprecise",
+                                    "isUncertain",
+                                )
+                                for s in split
+                            ):
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                            elif "inputType" in split and {"begin", "end"} & set(split):
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap",
+                                    safe_get(
+                                        valuemaps,
+                                        "dating",
+                                        "begin",
+                                        "inputType",
+                                        default={},
+                                    ),
+                                )
+                            elif "type" in split:
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap",
+                                    safe_get(valuemaps, "dating", "type", default={}),
+                                )
+                        elif input_type == "volume":
+                            if "inputUnit" in split:
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap", valuemaps[":volInputUnit"]
+                                )
+                            elif "isImprecise" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "weight":
+                            if "inputUnit" in split:
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap", valuemaps[":weightInputUnit"]
+                                )
+                            elif "isImprecise" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "dimension":
+                            if "inputUnit" in split:
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap", valuemaps[":dimInputUnit"]
+                                )
+                            if "isImprecise" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
 
                         if setup:
-                            layer.setEditorWidgetSetup(fIdx, setup)
+                            layer.setEditorWidgetSetup(f_idx, setup)
                             continue
 
                         # lookups for vmaps
                         lup = {
                             # assign the valuemap with the key volume to the subfield measurementTechnique - info not in project config?
-                            'volume': ['measurementTechnique'],
+                            "volume": ["measurementTechnique"],
                             # 'period': ['value', 'endValue'],  # assigned in inputType dropdownRange
-                            'weight': ['measurementDevice'],
-                            'dimensionOther': ['measurementPosition'],
-                            'dimensionHeight': ['measurementPosition'],
-                            'dimensionDiameter': ['measurementPosition'],
-                            'dimensionWidth': ['measurementPosition'],
-                            'dimensionLength': ['measurementPosition'],
-                            'dimensionVerticalExtent': ['measurementPosition'],
-                            'dimensionThickness': ['measurementPosition'],
-                            'dimensionDepth': ['measurementPosition'],
-                            'dimensionPerimeter': ['measurementPosition'],
+                            "weight": ["measurementDevice"],
+                            "dimensionOther": ["measurementPosition"],
+                            "dimensionHeight": ["measurementPosition"],
+                            "dimensionDiameter": ["measurementPosition"],
+                            "dimensionWidth": ["measurementPosition"],
+                            "dimensionLength": ["measurementPosition"],
+                            "dimensionVerticalExtent": ["measurementPosition"],
+                            "dimensionThickness": ["measurementPosition"],
+                            "dimensionDepth": ["measurementPosition"],
+                            "dimensionPerimeter": ["measurementPosition"],
                         }
 
                         for base, sub in lup.items():
-                            if base in valuemaps and base in split and any(s in split for s in sub):
-                                setup = QgsEditorWidgetSetup('ValueMap', valuemaps[base])
-                                layer.setEditorWidgetSetup(fIdx, setup)
+                            if (
+                                base in valuemaps
+                                and base in split
+                                and any(s in split for s in sub)
+                            ):
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[base])
+                                layer.setEditorWidgetSetup(f_idx, setup)
                                 break
 
                     # python 3.12+
@@ -1104,8 +1500,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     #     print(f'unassigned vmaps:\n{joined}')
 
                 # write category to layer variables
-                #! gets lost outside a saved project
-                QgsExpressionContextUtils.setLayerVariable(layer, 'field_category', cat)
+                # !gets lost outside a saved project
+                QgsExpressionContextUtils.setLayerVariable(layer, "field_category", cat)
 
                 # set layer definition to avoid writing NULL values which field rejects
                 for j in range(len(fields)):
@@ -1121,29 +1517,34 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         filename += ".gpkg"
                     # print(filename)
                     options = QgsVectorFileWriter.SaveVectorOptions()
-                    options.driverName = 'gpkg'
-                    options.layerName = f'{layNameSource}'
-                    options.fileEncoding = 'UTF-8'
+                    options.driverName = "gpkg"
+                    options.layerName = f"{lay_name_source}"
+                    options.fileEncoding = "UTF-8"
                     # primary key field needs to be of type integer
                     # options.layerOptions = ['FID=identifier']  # sets the primary key field for gpkg to prevent default fid field
 
-                    transformContext = self.project.transformContext()
+                    transform_context = self.project.transformContext()
 
                     # CreateOrOverwriteFile needed first, after that CreateOrOverwriteLayer works
-                    if not os.path.exists(filename): options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
-                    else: options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                    if not os.path.exists(filename):
+                        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+                    else:
+                        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
 
-                    error_code, error_message, new_filename, new_layer = \
-                    QgsVectorFileWriter.writeAsVectorFormatV3(
-                        layer,
-                        filename,
-                        transformContext,
-                        options
+                    error_code, error_message, new_filename, new_layer = (
+                        QgsVectorFileWriter.writeAsVectorFormatV3(
+                            layer, filename, transform_context, options
+                        )
                     )
                     # make layer persistent
-                    if layName not in lNames:
-                        layer.setDataSource(f'{filename}|layername={layNameSource}', layNameSource, 'ogr', False)
-                        layer.setName(layName)
+                    if lay_name not in layer_names:
+                        layer.setDataSource(
+                            f"{filename}|layername={lay_name_source}",
+                            lay_name_source,
+                            "ogr",
+                            False,
+                        )
+                        layer.setName(lay_name)
 
                     # print('error_code:', error_code, 'error_message:', error_message, 'new_filename:', new_filename, 'new_layer:', new_layer)
                     # python 3.10+
@@ -1157,38 +1558,57 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if error_code == 0:
                         pass
                     else:
-                        self.mB.pushCritical(self.plugin_name, self.labels['IMPORT_FAILED'] + f': {error_message}')
-                        self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
+                        self.mB.pushCritical(
+                            self.plugin_name,
+                            self.labels["IMPORT_FAILED"] + f": {error_message}",
+                        )
+                        self.sB.showMessage(self.labels["IMPORT_FAILED"], 10000)
                         return
 
                 if not import_overwrite:
                     # add layer to group_ref
                     self.project.addMapLayer(layer, False)
                     group_ref.insertLayer(-1, layer)
-                elif activeGrp:
+                elif active_group:
                     # only add layers that are not in the self.activeProject group
-                    if layName not in lNames:
+                    if lay_name not in layer_names:
                         self.project.addMapLayer(layer, False)
-                        activeGrp.insertLayer(-1, layer)
+                        active_group.insertLayer(-1, layer)
 
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
-            if filename and not import_overwrite: layer.saveStyleToDatabaseV2(f'{cat}', self.tr('Style saved by the Field Connect plugin'), True, None, QgsMapLayer.AllStyleCategories)
-            self.progressBar.setValue(i+1)
+            if filename and not import_overwrite:
+                layer.saveStyleToDatabaseV2(
+                    f"{cat}",
+                    self.tr("Style saved by the Field Connect plugin"),
+                    True,
+                    None,
+                    QgsMapLayer.AllStyleCategories,
+                )
+            self.progressBar.setValue(i + 1)
             QApplication.processEvents()
 
         # add lookup layer
-        if lupLayerTemp:
+        if lup_layer_temp:
             if not import_overwrite:
-                self.project.addMapLayer(lupLayerTemp, False)
-                self.project.layerTreeRoot().insertLayer(0, lupLayerTemp)
+                self.project.addMapLayer(lup_layer_temp, False)
+                self.project.layerTreeRoot().insertLayer(0, lup_layer_temp)
             if filename:
                 options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                options.layerName = lupLayerTemp.name()
-                QgsVectorFileWriter.writeAsVectorFormatV3(lupLayerTemp, filename, transformContext, options)
-                if not import_overwrite: lupLayerTemp.setDataSource(f'{filename}|layername={options.layerName}', options.layerName, 'ogr', False)
+                options.layerName = lup_layer_temp.name()
+                QgsVectorFileWriter.writeAsVectorFormatV3(
+                    lup_layer_temp, filename, transform_context, options
+                )
+                if not import_overwrite:
+                    lup_layer_temp.setDataSource(
+                        f"{filename}|layername={options.layerName}",
+                        options.layerName,
+                        "ogr",
+                        False,
+                    )
         # save qgis project to geopackage to keep value relations and layer variables - overwrites existing project
-        if filename: self.project.write(f'geopackage:{filename}?projectName={self.activeProject}')
+        if filename:
+            self.project.write(f"geopackage:{filename}?projectName={self.activeProject}")
 
         # refresh layers after overwriting data
         if import_overwrite:
@@ -1197,71 +1617,90 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # and iface.mapCanvas().refresh() didnt work at all
             QgsProject.instance().reloadAllLayers()
 
-        self.mB.pushSuccess(self.plugin_name, self.labels['IMPORT_SUCCESS'])
-        self.sB.showMessage(self.labels['IMPORT_SUCCESS'], 10000)
+        self.mB.pushSuccess(self.plugin_name, self.labels["IMPORT_SUCCESS"])
+        self.sB.showMessage(self.labels["IMPORT_SUCCESS"], 10000)
         self._import_running = False
-        QTimer.singleShot(2000, self.showOrHideProgressBar)
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
-    def fieldExport(self):
+    def field_export(self):
         """Export group of layers back to Field Desktop using POST /import/{format}"""
-        if not self.api.isConnectionActiveAndValid(self.activeProject): return
+        if not self.api.is_connection_active_and_valid(self.activeProject):
+            return
         self.progressBar.reset()
         self._export_running = True
         _export_unsaved_layers = None
         _export_errors = False
-        self.showOrHideProgressBar()
+        self.show_or_hide_progress_bar()
 
         opts = {
-            'coordinateTransform': None,
-            'targetCrs': self.selectExportCrs.crs(),
-            'groupExport': self.radioExGroup.isChecked(),
-            'selectedLayers': iface.layerTreeView().selectedLayers(),
-            'quickExport': self.chkQuickExport.isChecked(),
-            'commitSave': self.chkCommitSave.isChecked(),
-            'timezone': self.selectExportTz.currentText()
+            "coordinateTransform": None,
+            "targetCrs": self.selectExportCrs.crs(),
+            "groupExport": self.radioExGroup.isChecked(),
+            "selectedLayers": iface.layerTreeView().selectedLayers(),
+            "quickExport": self.chkQuickExport.isChecked(),
+            "commitSave": self.chkCommitSave.isChecked(),
+            "timezone": self.selectExportTz.currentText(),
         }
 
-        exportTz = opts['timezone'].encode('utf-8')
-        if not exportTz or not QTimeZone(exportTz).isValid():
-            self.mB.pushWarning(self.plugin_name, self.tr('Selected timezone \'{tz}\' is invalid!'.format(tz=exportTz.decode('utf-8'))))
+        export_tz = opts["timezone"].encode("utf-8")
+        if not export_tz or not QTimeZone(export_tz).isValid():
+            self.mB.pushWarning(
+                self.plugin_name,
+                self.tr(
+                    "Selected timezone '{tz}' is invalid!".format(tz=export_tz.decode("utf-8"))
+                ),
+            )
             return
         else:
-            dT = DateTimeTransformer(QTimeZone(exportTz), QTimeZone(b'UTC'))
+            dt = DateTimeTransformer(QTimeZone(export_tz), QTimeZone(b"UTC"))
 
-        #! lowercase true/false important
+        # !lowercase true/false important
         params = {
-            'merge': 'false',
-            'permitDeletions': 'false',  # str(self.chkPermitDel.isChecked()).lower(),
-            'ignoreUnconfiguredFields': str(self.chkIgnoreUnconfFields.isChecked()).lower(),
-            'categoryName': 'Project',  # default: Project, CSV only
+            "merge": "false",
+            "permitDeletions": "false",  # str(self.chkPermitDel.isChecked()).lower(),
+            "ignoreUnconfiguredFields": str(self.chkIgnoreUnconfFields.isChecked()).lower(),
+            "categoryName": "Project",  # default: Project, CSV only
             # 'operationIdentifier': '',  # default: unset - comboBox in gui? can only be activeProject anyway?
-            'separator': ','  # default: ','
+            "separator": ",",  # default: ','
         }
 
-        validGeomTypes = ('Polygon', 'Line', 'Point', 'No geometry')  # Other possible values: Unknown geometry, Invalid geometry
+        valid_geom_types = (
+            "Polygon",
+            "Line",
+            "Point",
+            "No geometry",
+        )  # Other possible values: Unknown geometry, Invalid geometry
         # use layer group or create group with currently active layer
-        if opts['groupExport']:
-            cData = self.selectExGroup.currentData()
-        elif opts['selectedLayers']:
-            tGroup = QgsLayerTreeGroup('temp')
-            for lay in opts['selectedLayers']:
-                tGroup.addLayer(lay)
-            cData = tGroup
+        if opts["groupExport"]:
+            current_data = self.selectExGroup.currentData()
+        elif opts["selectedLayers"]:
+            tree_group = QgsLayerTreeGroup("temp")
+            for lay in opts["selectedLayers"]:
+                tree_group.addLayer(lay)
+            current_data = tree_group
         else:
-            self.mB.pushInfo(self.plugin_name, self.labels['INFO_NO_LAYER_SELECTED'])
-            cData = None
-        if cData:
+            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
+            current_data = None
+        if current_data:
             # create dict with category and list of layers - cat:[*QgsVectorLayer]
             # todo?: get count for progress bar here?
-            catLayers = defaultdict(list)
-            for lTl in cData.findLayers():
-                layer: QgsVectorLayer = lTl.layer()
-                layerCrs: QgsCoordinateReferenceSystem = layer.crs()
+            cat_layers = defaultdict(list)
+            for layer_tree_layer in current_data.findLayers():
+                layer: QgsVectorLayer = layer_tree_layer.layer()
+                layer_crs: QgsCoordinateReferenceSystem = layer.crs()
                 # ask for coordinate transformation once
-                if layerCrs.isValid() and layerCrs.authid() != opts['targetCrs'].authid() and opts['coordinateTransform'] is None:
+                if (
+                    layer_crs.isValid()
+                    and layer_crs.authid() != opts["targetCrs"].authid()
+                    and opts["coordinateTransform"] is None
+                ):
                     msg = QMessageBox(self)
                     msg.setWindowTitle(self.tr("Coordinate transformation"))
-                    msg.setText(self.tr("The layer CRS differs from the target CRS. Do you want to transform coordinates?"))
+                    msg.setText(
+                        self.tr(
+                            "The layer CRS differs from the target CRS. Do you want to transform coordinates?"
+                        )
+                    )
                     msg.setIcon(QMessageBox.Question)
 
                     yes_button = msg.addButton(self.tr("Yes to all"), QMessageBox.YesRole)
@@ -1272,58 +1711,64 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     clicked = msg.clickedButton()
 
                     if clicked == yes_button:
-                        opts['coordinateTransform'] = True
+                        opts["coordinateTransform"] = True
                     elif clicked == no_button:
-                        opts['coordinateTransform'] = False
+                        opts["coordinateTransform"] = False
                     elif clicked == cancel_button:
                         self._export_running = False
-                        self.showOrHideProgressBar()
+                        self.show_or_hide_progress_bar()
                         return
 
                 # abort if layer smells fishy
-                if QgsWkbTypes.geometryDisplayString(layer.geometryType()) in validGeomTypes and layer.isValid():
-                    cat = self.getCategoryNameForExport(layer)
+                if (
+                    QgsWkbTypes.geometryDisplayString(layer.geometryType()) in valid_geom_types
+                    and layer.isValid()
+                ):
+                    cat = self.get_category_name_for_export(layer)
                     if not cat:
-                        self.mB.pushWarning(self.plugin_name, self.labels['CAT_NAME_EXTRACTION_FAILED'])
+                        self.mB.pushWarning(
+                            self.plugin_name, self.labels["CAT_NAME_EXTRACTION_FAILED"]
+                        )
                         return
                     # check if cat is in Field Desktop, throw error and abort if not
                     # todo: self.getCategoryList()
-                    catLayers[cat].append(layer)
+                    cat_layers[cat].append(layer)
                 else:
-                    self.mB.pushWarning(self.plugin_name, self.labels['LAYER_VALIDATION_FAILED'])
+                    self.mB.pushWarning(self.plugin_name, self.labels["LAYER_VALIDATION_FAILED"])
                     return
             # print(f'catLayers: {catLayers}')
 
             csv_exp_rows, gj_exp_geoms = defaultdict(list), defaultdict(list)
             # set geojson base structure
-            gj_exp_geoms['type'] = 'FeatureCollection'
-            gj_exp_geoms['features'] = []
+            gj_exp_geoms["type"] = "FeatureCollection"
+            gj_exp_geoms["features"] = []
 
-            total_cats = len(catLayers)
+            total_cats = len(cat_layers)
             self.progressBar.setMaximum(total_cats + 1)  # + 1 GeoJSON
 
             # iterate through each catLayers type
-            for category, layers in catLayers.items():
+            for category, layers in cat_layers.items():
                 # print(f'cat: {category}, layers: {layers}')
                 for layer in layers:
-                    if opts['quickExport'] and not layer.isModified():
+                    if opts["quickExport"] and not layer.isModified():
                         continue
                     # todo?: precision as ui param?
                     exporter = QgsJsonExporter(layer, precision=6)
                     exporter.setTransformGeometries(False)  # transforms to EPSG:4326 by default
                     exporter.setVectorLayer(layer)
 
-                    unwanted = ('fid',)
+                    unwanted = ("fid",)
                     fields = [f.name() for f in layer.fields() if f.name() not in unwanted]
                     # print(f'fields: {fields}')
 
                     # feed all features or only features in the edit buffer here
-                    if opts['quickExport']:
+                    if opts["quickExport"]:
                         # theres also .editBuffer().changedAttributeValues() and .editBuffer().changedGeometries()
                         if layer.isEditable():
                             fids = layer.editBuffer().allAddedOrEditedFeatures()
                             features = (layer.getFeature(fid) for fid in fids)
-                            if fids and not _export_unsaved_layers: _export_unsaved_layers = True
+                            if fids and not _export_unsaved_layers:
+                                _export_unsaved_layers = True
                         else:
                             # print(f'Quick Export: Skipping layer {layer.name()}')
                             continue
@@ -1334,34 +1779,39 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         geom: QgsGeometry = f.geometry()
                         if not geom.isEmpty():
                             # todo: add selectExportCrs to top of method
-                            if opts['coordinateTransform']:
+                            if opts["coordinateTransform"]:
                                 exporter.setTransformGeometries(True)
-                                exporter.setDestinationCrs(opts['targetCrs'])
+                                exporter.setDestinationCrs(opts["targetCrs"])
 
                             # todo: refactor
                             gj_feature = exporter.exportFeature(f)  # returns dict-like JSON
-                            gj_obj = json.loads(gj_feature)  # for removing unwanted fields like fid
+                            gj_obj = json.loads(
+                                gj_feature
+                            )  # for removing unwanted fields like fid
                             # print(gj_obj['properties'].items())
                             # only keep identifier, category and shortDescription.xx properties
-                            wanted = ('identifier', 'category', 'shortDescription')
-                            filtered = {'properties': {}}
-                            sd = {'shortDescription': {}}  # split shortDescription.xx into nested properties
+                            wanted = ("identifier", "category", "shortDescription")
+                            filtered = {"properties": {}}
+                            sd = {
+                                "shortDescription": {}
+                            }  # split shortDescription.xx into nested properties
                             # print(gj_obj['properties'])
-                            for k,v in gj_obj['properties'].items():
+                            for k, v in gj_obj["properties"].items():
                                 # filters out shortDescriptionAddendum
-                                if any(k==w or k.startswith(w + '.') for w in wanted):
-                                    if k.startswith('shortDescription.'):
-                                        lang = k.split('.')[-1]
-                                        sd['shortDescription'][lang] = v
+                                if any(k == w or k.startswith(w + ".") for w in wanted):
+                                    if k.startswith("shortDescription."):
+                                        lang = k.split(".")[-1]
+                                        sd["shortDescription"][lang] = v
                                     else:
                                         # filtered['properties'] = {k: gj_obj['properties'][k]}
-                                        filtered['properties'][k] = v
-                            gj_obj['properties'] = filtered['properties']
-                            sd_inner = sd.get('shortDescription')
-                            if sd_inner: gj_obj['properties']['shortDescription'] = sd_inner
+                                        filtered["properties"][k] = v
+                            gj_obj["properties"] = filtered["properties"]
+                            sd_inner = sd.get("shortDescription")
+                            if sd_inner:
+                                gj_obj["properties"]["shortDescription"] = sd_inner
                             # add category property from layer name
-                            gj_obj['properties']['category'] = category
-                            gj_exp_geoms['features'].append(gj_obj)
+                            gj_obj["properties"]["category"] = category
+                            gj_exp_geoms["features"].append(gj_obj)
 
                         # --- CSV row ---
                         # row = {field: f[field] for field in fields}
@@ -1372,37 +1822,49 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             setup = layer.editorWidgetSetup(idx)
 
                             # todo: check if ValueRelation case still needed
-                            if setup and setup.type() == 'ValueRelation':
+                            if setup and setup.type() == "ValueRelation":
                                 val = self.normalize_export_value(val)
                             else:
-                                val = self.normalize_export_value(val, dT=dT)
+                                val = self.normalize_export_value(val, dt=dt)
 
                             row[field_name] = val
 
                         csv_exp_rows[category].append(row)
                     # print(csv_exp_rows[category])
 
-                    if opts['commitSave']:
+                    if opts["commitSave"]:
                         if layer.isEditable():
                             if not layer.commitChanges():
                                 errors = "; ".join(layer.commitErrors())
-                                self.mB.pushWarning(self.plugin_name, self.tr('Could not save layer {layer}: {errors}').format(layer=layer.name(), errors=errors))
+                                self.mB.pushWarning(
+                                    self.plugin_name,
+                                    self.tr("Could not save layer {layer}: {errors}").format(
+                                        layer=layer.name(), errors=errors
+                                    ),
+                                )
 
-            if opts['quickExport'] and not _export_unsaved_layers:
-                self.mB.pushInfo(self.plugin_name, self.labels['INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS'])
-                self.sB.showMessage(self.labels['INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS'], 10000)
+            if opts["quickExport"] and not _export_unsaved_layers:
+                self.mB.pushInfo(
+                    self.plugin_name, self.labels["INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS"]
+                )
+                self.sB.showMessage(self.labels["INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS"], 10000)
             else:
                 # upload csv here, after all data has been collected
-                headers = {'Content-Type': 'text/csv; charset=utf-8'}
+                headers = {"Content-Type": "text/csv; charset=utf-8"}
                 for i, (cat, rows) in enumerate(csv_exp_rows.items(), start=1):
-                    if not rows: continue
+                    if not rows:
+                        continue
                     self.progressBar.setValue(i)
                     # todo: get translated {cat}
-                    self.progressBar.setFormat(self.tr('Exporting category {cat} %p%').format(cat=cat))
+                    self.progressBar.setFormat(
+                        self.tr("Exporting category {cat} %p%").format(cat=cat)
+                    )
                     QApplication.processEvents()
 
                     seen = set()
-                    fieldnames = [k for row in rows for k in row.keys() if not (k in seen or seen.add(k))]
+                    fieldnames = [
+                        k for row in rows for k in row.keys() if not (k in seen or seen.add(k))
+                    ]
                     # print(f'fieldnames: {fieldnames}')
 
                     csv_buffer = io.StringIO()
@@ -1413,94 +1875,109 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     csv_content = csv_buffer.getvalue()  # POST data
                     csv_buffer.close()
 
-                    params['category'] = cat
-                    data = csv_content.encode('utf-8')
-                    params['merge'] = 'false'
+                    params["category"] = cat
+                    data = csv_content.encode("utf-8")
+                    params["merge"] = "false"
                     # print(f'Exporting {cat} as csv with merge=false...')
-                    csvResp = \
-                    self.api.post('/import/csv', params=params, headers=headers, data=data)
-                    params['merge'] = 'true'
-                    params['permitDeletions'] = 'true'
+                    csv_resp = self.api.post(
+                        "/import/csv", params=params, headers=headers, data=data
+                    )
+                    params["merge"] = "true"
+                    params["permitDeletions"] = "true"
                     # print(f'Exporting {cat} as csv with merge=true...')
-                    csvRespMerge = \
-                    self.api.post('/import/csv', params=params, headers=headers, data=data)
+                    csv_resp_merge = self.api.post(
+                        "/import/csv", params=params, headers=headers, data=data
+                    )
                     QApplication.processEvents()
-                    if not all([csvResp, csvRespMerge]): _export_errors = True
+                    if not all([csv_resp, csv_resp_merge]):
+                        _export_errors = True
 
                 self.progressBar.setValue(total_cats)
-                self.progressBar.setFormat(self.tr(f'Exporting GeoJSON %p%'))
+                self.progressBar.setFormat(self.tr("Exporting GeoJSON %p%"))
                 QApplication.processEvents()
                 # todo?: always the same params as csv export?
                 # upload geojson here
-                headers = {'Content-Type': 'application/geo+json'}
+                headers = {"Content-Type": "application/geo+json"}
                 data = json.dumps(gj_exp_geoms)
-                params['merge'] = 'false'
+                params["merge"] = "false"
                 # print('Exporting GeoJSON with merge=false...')
-                geoResp = \
-                self.api.post('/import/geojson', params=params, headers=headers, data=data)
-                params['merge'] = 'true'
+                geo_json_resp = self.api.post(
+                    "/import/geojson", params=params, headers=headers, data=data
+                )
+                params["merge"] = "true"
                 # print('Exporting GeoJSON with merge=true...')
-                geoRespMerge = \
-                self.api.post('/import/geojson', params=params, headers=headers, data=data)
+                geo_json_resp_merge = self.api.post(
+                    "/import/geojson", params=params, headers=headers, data=data
+                )
                 self.progressBar.setValue(total_cats + 1)
                 QApplication.processEvents()
                 # print(csv_exp_rows)
                 # print(gj_exp_geoms)
-                if not all([geoResp, geoRespMerge]): _export_errors = True
+                if not all([geo_json_resp, geo_json_resp_merge]):
+                    _export_errors = True
 
                 if _export_errors:
-                    self.sB.showMessage(self.labels['EXPORT_ERRORS'], 10000)
+                    self.sB.showMessage(self.labels["EXPORT_ERRORS"], 10000)
                 else:
-                    self.mB.pushSuccess(self.plugin_name, self.labels['EXPORT_SUCCESS'])
-                    self.sB.showMessage(self.labels['EXPORT_SUCCESS'], 10000)
+                    self.mB.pushSuccess(self.plugin_name, self.labels["EXPORT_SUCCESS"])
+                    self.sB.showMessage(self.labels["EXPORT_SUCCESS"], 10000)
         self._export_running = False
-        QTimer.singleShot(2000, self.showOrHideProgressBar)
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
     # todo: use this in loadImportCategories - old?
-    def getCategoryList(self):
-        if self.api.isConnectionActiveAndValid(self.activeProject):
-            return safe_get(self.api.get(f'/{self.activeProject}/configuration', 3001).json(), 'resource', 'order')
-        else: return []
+    def get_category_list(self):
+        if self.api.is_connection_active_and_valid(self.activeProject):
+            return safe_get(
+                self.api.get(f"/{self.activeProject}/configuration", 3001).json(),
+                "resource",
+                "order",
+            )
+        else:
+            return []
 
     # todo?: add context parameter?
-    def getCategoryCsv(self, cat, cRelations=True):
-        csv_opts = f'&schemaOnly=false&context=project&separator=,&combineHierarchicalRelations={str(cRelations).lower()}'
-        rCsv = self.api.get(f'/export/csv?category={cat}{csv_opts}')
-        rCsv.encoding = 'utf-8'
+    def get_category_csv(self, cat, combine_relations=True):
+        csv_opts = f"&schemaOnly=false&context=project&separator=,&combineHierarchicalRelations={str(combine_relations).lower()}"
+        response = self.api.get(f"/export/csv?category={cat}{csv_opts}")
+        response.encoding = "utf-8"
 
-        return csv.DictReader(io.StringIO(rCsv.text))
+        return csv.DictReader(io.StringIO(response.text))
 
-    def fieldDisconnect(self):
+    def field_disconnect(self):
         """
         Disconnects from Field Desktop and disables settings if a request fails
         """
         # disable import/export form, switch status led to red, hide connection info
-        self.setConnectionEnabled(False)
-        self.setConnectionStatus()
-        self.toggleFieldInfo()
+        self.set_connection_enabled(False)
+        self.set_connection_status()
+        self.toggle_field_info()
 
-    def setConnectionStatus(self):
+    def set_connection_status(self):
         glow = QGraphicsDropShadowEffect(self.labelConnectStatus)
         glow.setBlurRadius(15)
         glow.setOffset(0, 0)
         if self.connected:
-            self.labelConnectStatus.setStyleSheet(f"""
+            self.labelConnectStatus.setStyleSheet(
+                """
                     background-color: green;
                     border-radius: 6px;
                     border: 1px solid #555;
-                """)
-            glow.setColor(QColor('green'))
+                """
+            )
+            glow.setColor(QColor("green"))
         else:
-            self.labelConnectStatus.setStyleSheet(f"""
+            self.labelConnectStatus.setStyleSheet(
+                """
                     background-color: red;
                     border-radius: 6px;
                     border: 1px solid #555;
-                """)
-            glow.setColor(QColor('red'))
+                """
+            )
+            glow.setColor(QColor("red"))
 
         self.labelConnectStatus.setGraphicsEffect(glow)
 
-    def features_from_csv(self, csv_rows, fields, geom_lookup, dateTransformer):
+    def features_from_csv(self, csv_rows, fields, geom_lookup, date_transformer):
         features = defaultdict(list)
 
         for row_id, row in csv_rows.items():
@@ -1509,58 +1986,58 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             attrs = self.normalize_row_values(
                 row=row,
                 fields=fields,
-                dT=dateTransformer,
+                date_transformer=date_transformer,
             )
             feat.setAttributes(attrs)
 
             gj_feat = safe_get(geom_lookup, row_id)
 
-            if gj_feat and safe_get(gj_feat, 'geometry'):
-                geom_json = json.dumps(gj_feat['geometry'])
+            if gj_feat and safe_get(gj_feat, "geometry"):
+                geom_json = json.dumps(gj_feat["geometry"])
                 geom = QgsJsonUtils.geometryFromGeoJson(geom_json)
 
                 if geom and not geom.isEmpty():
                     feat.setGeometry(geom)
-                    geom_type = gj_feat['geometry']['type']
+                    geom_type = gj_feat["geometry"]["type"]
                 else:
-                    geom_type = 'NoGeometry'
+                    geom_type = "NoGeometry"
             else:
-                geom_type = 'NoGeometry'
+                geom_type = "NoGeometry"
 
             features[geom_type].append(feat)
 
         # ensure schema-only layer can be created
         if not features:
-            features['NoGeometry'] = []
+            features["NoGeometry"] = []
 
         return features
 
-    def normalize_row_values(self, row, fields, dT):
+    def normalize_row_values(self, row, fields, date_transformer):
         attrs = []
 
         for field in fields:
             fname = field.name()
-            raw = row.get(fname, '')
+            raw = row.get(fname, "")
 
             value = self.normalize_value(
                 raw_value=raw,
                 field=field,
-                dT=dT,
+                date_transformer=date_transformer,
             )
 
             attrs.append(value)
 
         return attrs
 
-    def normalize_value(self, raw_value, field, dT):
+    def normalize_value(self, raw_value, field, date_transformer):
         if raw_value is None:
-            return ''
+            return ""
 
         raw_value = raw_value.strip()
         if not raw_value:
-            return ''
+            return ""
 
-        if dT.can_transform(raw_value):
-            return dT.transform(raw_value)
+        if date_transformer.can_transform(raw_value):
+            return date_transformer.transform(raw_value)
 
         return raw_value

@@ -1,10 +1,11 @@
 import re
-from qgis.PyQt.QtCore import QTimeZone, QDateTime
+from qgis.PyQt.QtCore import QDateTime
+
 
 class DateTimeTransformer:
-    FORMAT = 'dd.MM.yyyy HH:mm'
+    FORMAT = "dd.MM.yyyy HH:mm"
 
-    _re = re.compile(r'^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$')
+    _re = re.compile(r"^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$")
 
     def __init__(self, source_tz, target_tz):
         self.source_tz = source_tz
@@ -21,5 +22,4 @@ class DateTimeTransformer:
         dt.setTimeZone(self.source_tz)
         dt = dt.toTimeZone(self.target_tz)
 
-        # print(dt.toString(self.FORMAT))
         return dt.toString(self.FORMAT)

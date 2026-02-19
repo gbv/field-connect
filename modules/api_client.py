@@ -9,24 +9,25 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..field_connect_dockwidget import FieldConnectDockWidget
 
+
 class ApiClient:
-    def __init__(self, password, plugin: "FieldConnectDockWidget", baseUrl='http://localhost:3000'):
+    def __init__(self, password, plugin: "FieldConnectDockWidget", base_url='http://localhost:3000'):
         self.plugin = plugin
         self.session = Session()
         self.session.auth = ('', password)
-        self.baseUrl = baseUrl.rstrip('/')
+        self.baseUrl = base_url.rstrip('/')
         self.connected = False
 
-    def buildUrl(self, path, port):
+    def build_url(self, path, port):
         parsed = urlparse(f'{self.baseUrl}{path}')
         netloc = f'{parsed.hostname}:{port}'
         # append port to hostname since _replace doesnt support port replacement
-        newParsed = parsed._replace(netloc=netloc)
-        return urlunparse(newParsed)
+        new_parsed = parsed._replace(netloc=netloc)
+        return urlunparse(new_parsed)
 
     def get(self, path='', params={}, port=3000):
         try:
-            url = self.buildUrl(path, port)
+            url = self.build_url(path, port)
             resp: Response = self.session.get(url, params=params)
             return self._handle_response(resp)
         except exceptions.ConnectionError:
@@ -41,33 +42,33 @@ class ApiClient:
 
     def post(self, path='', params={}, port=3000, headers={}, data={}):
         try:
-            url = self.buildUrl(path, port)
+            url = self.build_url(path, port)
             resp: Response = self.session.post(url, params=params, headers=headers, data=data)
             return self._handle_response(resp)
         except exceptions.RequestException as e:
             self.plugin.mB.pushCritical(self.plugin.plugin_name, str(e))
             return None
 
-    def setConnected(self, connected: bool):
+    def set_connected(self, connected: bool):
         self.connected = connected
 
     def disconnect(self):
         self.session = Session()
-        self.setConnected(False)
+        self.set_connected(False)
 
-    def isConnectionActiveAndValid(self, activeProject):
+    def is_connection_active_and_valid(self, active_project):
         """
         Check if connection is still active and the project has not changed
         """
         r = self.get('/info')
         if not r:
-            self.plugin.setConnectionEnabled(False)
-            self.plugin.fieldDisconnect()
+            self.plugin.set_connection_enabled(False)
+            self.plugin.field_disconnect()
             self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_LOST'])
             return False
-        if activeProject != safe_get(r.json(), 'activeProject', default=False):
-            self.plugin.setConnectionEnabled(False)
-            self.plugin.fieldDisconnect()
+        if active_project != safe_get(r.json(), 'activeProject', default=False):
+            self.plugin.set_connection_enabled(False)
+            self.plugin.field_disconnect()
             self.plugin.mB.pushCritical(self.plugin.plugin_name, self.plugin.labels['ACTIVE_PROJECT_CHANGED'])
             return False
         return True
@@ -98,16 +99,16 @@ class ApiClient:
         elif r.status_code == 400:
             r = r.json()
             error = safe_get(r, 'error')
-            importErrors = safe_get(r, 'importErrors')
-            self.plugin.mB.pushWarning(self.plugin.plugin_name, error + (': ' + '; '.join(str(e) for e in importErrors) if importErrors else ""))
+            import_errors = safe_get(r, 'importErrors')
+            self.plugin.mB.pushWarning(self.plugin.plugin_name, error + (': ' + '; '.join(str(e) for e in import_errors) if import_errors else ""))
             return None
         elif r.status_code == 401:
-            self.plugin.setConnectionEnabled(False)
-            self.plugin.fieldDisconnect()
+            self.plugin.set_connection_enabled(False)
+            self.plugin.field_disconnect()
             self.plugin.mB.pushWarning(self.plugin.plugin_name, self.plugin.labels['CONNECTION_UNAUTHORIZED'])
             return None
         else:
-            self.plugin.setConnectionEnabled(False)
-            self.plugin.fieldDisconnect()
+            self.plugin.set_connection_enabled(False)
+            self.plugin.field_disconnect()
             self.plugin.mB.pushMessage(': '.join([self.plugin.plugin_name, self.plugin.labels['REQUEST_FAILED'], r.reason]), Qgis.Warning, 5)
             return None
