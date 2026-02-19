@@ -27,6 +27,7 @@ import os
 import re
 import csv
 import json
+import uuid
 
 from requests.models import Response
 from urllib.parse import urlparse, ParseResult
@@ -1659,7 +1660,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "merge": "false",
             "permitDeletions": "false",  # str(self.chkPermitDel.isChecked()).lower(),
             "ignoreUnconfiguredFields": str(self.chkIgnoreUnconfFields.isChecked()).lower(),
-            "categoryName": "Project",  # default: Project, CSV only
+            "category": "Project",  # default: Project, CSV only
+            "command": "add",  # add/start - use start as the last call to start the import to field
+            "importId": uuid.uuid4(),  # unique string required when using the add command
             # 'operationIdentifier': '',  # default: unset - comboBox in gui? can only be activeProject anyway?
             "separator": ",",  # default: ','
         }
@@ -1851,7 +1854,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 # upload csv here, after all data has been collected
                 headers = {"Content-Type": "text/csv; charset=utf-8"}
-                for i, (cat, rows) in enumerate(csv_exp_rows.items(), start=1):
+                csv_exp_rows_items = list(csv_exp_rows.items())
+                csv_exp_rows_count = len(csv_exp_rows_items)
+                for i, (cat, rows) in enumerate(csv_exp_rows_items, start=1):
                     if not rows:
                         continue
                     self.progressBar.setValue(i)
@@ -1884,6 +1889,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     )
                     params["merge"] = "true"
                     params["permitDeletions"] = "true"
+                    # send start command for last csv import
+                    if i == csv_exp_rows_count:
+                        params["command"] = "start"
                     # print(f'Exporting {cat} as csv with merge=true...')
                     csv_resp_merge = self.api.post(
                         "/import/csv", params=params, headers=headers, data=data
@@ -1892,6 +1900,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if not all([csv_resp, csv_resp_merge]):
                         _export_errors = True
 
+                params.pop("importId", None)
+                params.pop("command", None)
                 self.progressBar.setValue(total_cats)
                 self.progressBar.setFormat(self.tr("Exporting GeoJSON %p%"))
                 QApplication.processEvents()
