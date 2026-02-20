@@ -1236,7 +1236,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         fname = field.name()
                         f_idx = layer.fields().indexFromName(fname)
                         split = fname.split(".")  # dating 0 begin inputType
-                        input_type = safe_get(field_informations, split[0], "inputType", default="")
+                        input_type = safe_get(
+                            field_informations, split[0], "inputType", default=""
+                        )
                         # print(inputType)
                         date_config = safe_get(
                             field_informations, split[0], "dateConfiguration", default={}
@@ -1292,7 +1294,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     )
                                 )
                             else:
-                                look_up = safe_get(field_informations, *paths, "label", default=part)
+                                look_up = safe_get(
+                                    field_informations, *paths, "label", default=part
+                                )
                                 if look_up:
                                     parts.append(look_up)
 
@@ -1369,7 +1373,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     layer.dataProvider().changeAttributeValues(updates)
 
                                 if not lup_layer_temp:
-                                    lup_layer_temp: QgsVectorLayer = self.create_lookup_layer_temp()
+                                    lup_layer_temp: QgsVectorLayer = (
+                                        self.create_lookup_layer_temp()
+                                    )
                                 group_id = f"{cat}_{fname}"
                                 if group_id not in processed_vmaps:
                                     processed_vmaps.append(group_id)
@@ -1746,9 +1752,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             gj_exp_geoms["type"] = "FeatureCollection"
             gj_exp_geoms["features"] = []
 
-            total_cats = len(cat_layers)
-            self.progressBar.setMaximum(total_cats + 1)  # + 1 GeoJSON
-
             # iterate through each catLayers type
             for category, layers in cat_layers.items():
                 # print(f'cat: {category}, layers: {layers}')
@@ -1854,58 +1857,97 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 # upload csv here, after all data has been collected
                 headers = {"Content-Type": "text/csv; charset=utf-8"}
-                csv_exp_rows_items = list(csv_exp_rows.items())
+                csv_exp_rows_items = [(cat, rows) for cat, rows in csv_exp_rows.items() if rows]
                 csv_exp_rows_count = len(csv_exp_rows_items)
+                progress_bar_total_steps = (
+                    csv_exp_rows_count * 2
+                ) + 2  # + 2 geojson merge false/true
+                self.progressBar.setMaximum((progress_bar_total_steps))
+                step = 0
+
+                # todo: extract function
+                # merge = false
                 for i, (cat, rows) in enumerate(csv_exp_rows_items, start=1):
-                    if not rows:
-                        continue
-                    self.progressBar.setValue(i)
-                    # todo: get translated {cat}
+                    # todo: extract function for progressing the bar
+                    step += 1
+                    self.progressBar.setValue(step)
                     self.progressBar.setFormat(
-                        self.tr("Exporting category {cat} %p%").format(cat=cat)
+                        self.tr("Exporting category {cat} (1/2) %p%").format(cat=cat)
                     )
                     QApplication.processEvents()
 
-                    seen = set()
-                    fieldnames = [
-                        k for row in rows for k in row.keys() if not (k in seen or seen.add(k))
-                    ]
-                    # print(f'fieldnames: {fieldnames}')
+                    # seen = set()
+                    # fieldnames = [
+                    #     k for row in rows for k in row.keys() if not (k in seen or seen.add(k))
+                    # ]
 
                     csv_buffer = io.StringIO()
-                    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+                    writer = csv.DictWriter(csv_buffer, fieldnames=rows[0].keys())
                     writer.writeheader()
                     writer.writerows(rows)
 
-                    csv_content = csv_buffer.getvalue()  # POST data
+                    data = csv_buffer.getvalue().encode("utf-8")
                     csv_buffer.close()
 
-                    params["category"] = cat
-                    data = csv_content.encode("utf-8")
-                    params["merge"] = "false"
-                    # print(f'Exporting {cat} as csv with merge=false...')
+                    # create fresh params per request
+                    req_params = params.copy()
+                    req_params["category"] = cat
+                    req_params["merge"] = "false"
+                    req_params["permitDeletions"] = "false"
+                    req_params["command"] = "start" if i == csv_exp_rows_count else "add"
+
+                    # print(f"Exporting {cat} with merge=false and params {req_params}")
+
                     csv_resp = self.api.post(
-                        "/import/csv", params=params, headers=headers, data=data
+                        "/import/csv", params=req_params, headers=headers, data=data
                     )
-                    params["merge"] = "true"
-                    params["permitDeletions"] = "true"
-                    # send start command for last csv import
-                    if i == csv_exp_rows_count:
-                        params["command"] = "start"
-                    # print(f'Exporting {cat} as csv with merge=true...')
-                    csv_resp_merge = self.api.post(
-                        "/import/csv", params=params, headers=headers, data=data
-                    )
-                    QApplication.processEvents()
-                    if not all([csv_resp, csv_resp_merge]):
+
+                    if not csv_resp:
                         _export_errors = True
 
-                params.pop("importId", None)
-                params.pop("command", None)
-                self.progressBar.setValue(total_cats)
-                self.progressBar.setFormat(self.tr("Exporting GeoJSON %p%"))
+                # merge = true
+                for i, (cat, rows) in enumerate(csv_exp_rows_items, start=1):
+                    step += 1
+                    self.progressBar.setValue(step)
+                    self.progressBar.setFormat(
+                        self.tr("Exporting category {cat} (2/2) %p%").format(cat=cat)
+                    )
+                    QApplication.processEvents()
+
+                    # unnecessary deduplication?
+                    # seen = set()
+                    # fieldnames = [
+                    #     k for row in rows for k in row.keys() if not (k in seen or seen.add(k))
+                    # ]
+
+                    csv_buffer = io.StringIO()
+                    writer = csv.DictWriter(csv_buffer, fieldnames=rows[0].keys())
+                    writer.writeheader()
+                    writer.writerows(rows)
+
+                    data = csv_buffer.getvalue().encode("utf-8")
+                    csv_buffer.close()
+
+                    req_params = params.copy()
+                    req_params["category"] = cat
+                    req_params["merge"] = "true"
+                    req_params["permitDeletions"] = "true"
+
+                    # explicitly remove import-related params
+                    req_params.pop("command", None)
+                    req_params.pop("importId", None)
+
+                    # print(f"Exporting {cat} with merge=true and params {req_params}")
+
+                    csv_resp_merge = self.api.post(
+                        "/import/csv", params=req_params, headers=headers, data=data
+                    )
+
+                    if not csv_resp_merge:
+                        _export_errors = True
+
+                self.progressBar.setFormat(self.tr("Exporting GeoJSON (1/2) %p%"))
                 QApplication.processEvents()
-                # todo?: always the same params as csv export?
                 # upload geojson here
                 headers = {"Content-Type": "application/geo+json"}
                 data = json.dumps(gj_exp_geoms)
@@ -1914,13 +1956,22 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 geo_json_resp = self.api.post(
                     "/import/geojson", params=params, headers=headers, data=data
                 )
+
+                step += 1
+                self.progressBar.setValue(step)
+                self.progressBar.setFormat(self.tr("Exporting GeoJSON (2/2) %p%"))
+                QApplication.processEvents()
+
                 params["merge"] = "true"
                 # print('Exporting GeoJSON with merge=true...')
                 geo_json_resp_merge = self.api.post(
                     "/import/geojson", params=params, headers=headers, data=data
                 )
-                self.progressBar.setValue(total_cats + 1)
+
+                step += 1
+                self.progressBar.setValue(step)
                 QApplication.processEvents()
+
                 # print(csv_exp_rows)
                 # print(gj_exp_geoms)
                 if not all([geo_json_resp, geo_json_resp_merge]):
