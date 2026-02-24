@@ -34,24 +34,25 @@ from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
 from qgis.core import (
-    QgsProject,
-    QgsVectorLayer,
     QgsCoordinateReferenceSystem,
-    QgsFields,
-    QgsField,
-    QgsGeometry,
-    QgsJsonUtils,
-    QgsFeature,
-    QgsVectorFileWriter,
-    QgsWkbTypes,
-    QgsJsonExporter,
-    QgsEditorWidgetSetup,
-    QgsSettings,
     QgsDefaultValue,
-    QgsFieldConstraints,
+    QgsEditorWidgetSetup,
     QgsExpressionContextUtils,
-    QgsMapLayer,
+    QgsFeature,
+    QgsFeatureRequest,
+    QgsField,
+    QgsFieldConstraints,
+    QgsFields,
+    QgsGeometry,
+    QgsJsonExporter,
+    QgsJsonUtils,
     QgsLayerTreeGroup,
+    QgsMapLayer,
+    QgsProject,
+    QgsSettings,
+    QgsVectorFileWriter,
+    QgsVectorLayer,
+    QgsWkbTypes,
     NULL,
 )
 from qgis.PyQt import QtWidgets, uic
@@ -60,14 +61,14 @@ from qgis.gui import QgsMessageBar
 from qgis.utils import iface
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
-    QStatusBar,
-    QSizePolicy,
-    QGraphicsDropShadowEffect,
-    QMessageBox,
-    QFormLayout,
-    QLabel,
-    QFileDialog,
     QApplication,
+    QFileDialog,
+    QFormLayout,
+    QGraphicsDropShadowEffect,
+    QLabel,
+    QMessageBox,
+    QSizePolicy,
+    QStatusBar,
 )
 
 from .modules.api_client import ApiClient
@@ -118,9 +119,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.projectConfigCategories = {}
 
         # show field information after connecting
-        self.fieldUser = ""
-        self.fieldVersion = ""
-        self.activeProject = ""
+        self.field_user = ""
+        self.field_version = ""
+        self.active_project = ""
 
         self.connected = False
         self._import_running = False
@@ -465,7 +466,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Sets the project crs when connecting to Field Desktop if available,
         or uses the one set in the QGIS Project"""
         epsg_id = safe_get(
-            self.api.get(f"/{self.activeProject}/project", port=3001).json(),
+            self.api.get(f"/{self.active_project}/project", port=3001).json(),
             "resource",
             "epsgId",
         )
@@ -571,23 +572,32 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else self.progressBar.hide()
         )
 
-    def create_lookup_layer_temp(self):
-        """Create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'"""
-        fields = QgsFields()
-        # fields.append(QgsField('id', QMetaType.Int))
-        # todo: QgsField constructor is deprecated
-        fields.append(QgsField("group_id", QMetaType.QString))
-        fields.append(QgsField("key", QMetaType.QString))
-        fields.append(QgsField("value", QMetaType.QString))
-        fields.append(QgsField("description", QMetaType.QString))
+    def get_or_create_lookup_layer_temp(self):
+        """Get existing lookup layer with the format {project_name}_lookup or
+        create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'
+        """
 
-        lup_layer = QgsVectorLayer("None", f"{self.activeProject}_lookup", "memory")  # no geometry
+        lookup_layers = self.project.mapLayersByName(f"{self.active_project}_lookup")
+        if len(lookup_layers):
+            # todo?: additional checks?
+            return lookup_layers[0]
+        else:
+            fields = QgsFields()
+            # fields.append(QgsField('id', QMetaType.Int))
+            fields.append(QgsField("group_id", QMetaType.QString))
+            fields.append(QgsField("key", QMetaType.QString))
+            fields.append(QgsField("value", QMetaType.QString))
+            fields.append(QgsField("description", QMetaType.QString))
 
-        pr = lup_layer.dataProvider()
-        pr.addAttributes(fields)
-        lup_layer.updateFields()
+            lup_layer = QgsVectorLayer(
+                "None", f"{self.active_project}_lookup", "memory"
+            )  # no geometry
 
-        return lup_layer
+            pr = lup_layer.dataProvider()
+            pr.addAttributes(fields)
+            lup_layer.updateFields()
+
+            return lup_layer
 
     # dataSourceUri: .gpkg|layername=.*_CategoryName'
     def get_category_name_for_export(self, layer: QgsVectorLayer):
@@ -989,9 +999,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectCats.setEnabled(on_off)
             self.projectConfig = {}
             self.projectConfigCategories = {}
-            self.fieldUser = ""
-            self.fieldVersion = ""
-            self.activeProject = ""
+            self.field_user = ""
+            self.field_version = ""
+            self.active_project = ""
             self._import_running = False
             self._export_running = False
 
@@ -1016,16 +1026,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if project_info:
             self.set_connection_enabled(True)
             project_info_json = project_info.json()
-            self.fieldUser, self.fieldVersion, self.activeProject = (
+            self.field_user, self.field_version, self.active_project = (
                 safe_get(project_info_json, "user"),
                 safe_get(project_info_json, "version"),
                 safe_get(project_info_json, "activeProject"),
             )
-            self.toggle_field_info(self.fieldUser, self.fieldVersion, self.activeProject)
+            self.toggle_field_info(self.field_user, self.field_version, self.active_project)
             self.set_project_crs()
 
             # get config from active project as json
-            self.projectConfig = self.api.get(f"/configuration/{self.activeProject}").json()
+            self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
             self.projectConfigCategories = safe_get(self.projectConfig, "categories")
             self.load_import_categories()
 
@@ -1037,7 +1047,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage
         """
-        if not self.api.is_connection_active_and_valid(self.activeProject):
+        if not self.api.is_connection_active_and_valid(self.active_project):
             return
         self._import_running = True
 
@@ -1090,7 +1100,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         }
 
         # update project config, in case changes have been made in field desktop
-        self.projectConfig = self.api.get(f"/configuration/{self.activeProject}").json()
+        self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
 
         filename = None
         import_overwrite = (
@@ -1112,11 +1122,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         if import_overwrite:
             # takes the first group from the top if there are multiple with the same name
-            active_group = self.project.layerTreeRoot().findGroup(self.activeProject)
+            active_group = self.treeRoot.findGroup(
+                self.active_project
+            ) or self.treeRoot.insertGroup(-1, f"{self.active_project}")
             layer_names = [layer.name() for layer in active_group.findLayers()]
         else:
             # create group at the bottom for inserting layers
-            group_ref = self.treeRoot.insertGroup(-1, f"{self.activeProject}")
+            group_ref = self.treeRoot.insertGroup(-1, f"{self.active_project}")
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
@@ -1217,8 +1229,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             for geom_type, feats in features.items():
                 lay_type = GEOJSON_TO_QGIS.get(geom_type).name
-                lay_name_source = f"{self.activeProject}_{cat}_{geom_type}"
-                lay_name = re.sub(r"\s+", "_", f"{self.activeProject}_{label}_{geom_type}")
+                lay_name_source = f"{self.active_project}_{cat}_{geom_type}"
+                lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
                 layer = QgsVectorLayer(lay_type, lay_name, "memory")
                 pr = layer.dataProvider()
                 layer.setCrs(crs)
@@ -1364,7 +1376,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 for feature in layer.getFeatures():
                                     val = feature[f_idx]
                                     parts = [p.strip() for p in val.split(";") if p.strip()]
-                                    # Escape embedded double quotes just in case
+                                    # escape embedded double quotes just in case
                                     parts = [p.replace('"', r"\"") for p in parts]
                                     new_val = "{" + ",".join(f'"{p}"' for p in parts) + "}"
                                     updates[feature.id()] = {f_idx: new_val}
@@ -1374,24 +1386,34 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                                 if not lup_layer_temp:
                                     lup_layer_temp: QgsVectorLayer = (
-                                        self.create_lookup_layer_temp()
+                                        self.get_or_create_lookup_layer_temp()
                                     )
+
                                 group_id = f"{cat}_{fname}"
-                                if group_id not in processed_vmaps:
+
+                                # check if group already exists
+                                request = (
+                                    QgsFeatureRequest()
+                                    .setSubsetOfAttributes(["group_id"], lup_layer_temp.fields())
+                                    .setFilterExpression(f"\"group_id\" = '{group_id}'")
+                                )
+                                group_exists = any(lup_layer_temp.getFeatures(request))
+
+                                if group_id not in processed_vmaps and not group_exists:
                                     processed_vmaps.append(group_id)
+
+                                    lup_entries = []
+
                                     for k, v in vmap_source.get("map", {}).items():
-                                        # group_id, key, value, description
                                         f = QgsFeature()
                                         f.setFields(lup_layer_temp.fields())
                                         f["group_id"] = group_id
                                         f["key"] = k
                                         f["value"] = v
                                         f["description"] = ""
-                                        # print(f'isValid: {f.isValid()}, {k}, {v}, {group_id}')
-                                        # todo: show warning if not .isValid()
                                         lup_entries.append(f)
+
                                     lup_layer_temp.dataProvider().addFeatures(lup_entries)
-                                    lup_layer_temp.updateFields()
                                     lup_layer_temp.updateExtents()
                                 # create value relation
                                 vrel_config = {
@@ -1573,6 +1595,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         return
 
                 if not import_overwrite:
+                    # todo? imports of existing temporary layers are not overwritten but added again in a new group
                     # add layer to group_ref
                     self.project.addMapLayer(layer, False)
                     group_ref.insertLayer(-1, layer)
@@ -1597,12 +1620,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # add lookup layer
         if lup_layer_temp:
-            if not import_overwrite:
+            lup_layer_name = lup_layer_temp.name()
+            existing_lup_layer = self.project.mapLayersByName(lup_layer_name)
+            if not import_overwrite and not existing_lup_layer:
                 self.project.addMapLayer(lup_layer_temp, False)
-                self.project.layerTreeRoot().insertLayer(0, lup_layer_temp)
-            if filename:
+                self.treeRoot.insertLayer(0, lup_layer_temp)
+            if filename and not existing_lup_layer:
                 options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                options.layerName = lup_layer_temp.name()
+                options.layerName = lup_layer_name
                 QgsVectorFileWriter.writeAsVectorFormatV3(
                     lup_layer_temp, filename, transform_context, options
                 )
@@ -1615,14 +1640,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     )
         # save qgis project to geopackage to keep value relations and layer variables - overwrites existing project
         if filename:
-            self.project.write(f"geopackage:{filename}?projectName={self.activeProject}")
+            self.project.write(f"geopackage:{filename}?projectName={self.active_project}")
 
         # refresh layers after overwriting data
         if import_overwrite:
             # todo: find a better way to refresh layers
             # layer.dataProvider().forceReload() and layer.triggerRepaint() only worked in console
             # and iface.mapCanvas().refresh() didnt work at all
-            QgsProject.instance().reloadAllLayers()
+            self.project.reloadAllLayers()
 
         self.mB.pushSuccess(self.plugin_name, self.labels["IMPORT_SUCCESS"])
         self.sB.showMessage(self.labels["IMPORT_SUCCESS"], 10000)
@@ -1631,7 +1656,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def field_export(self):
         """Export group of layers back to Field Desktop using POST /import/{format}"""
-        if not self.api.is_connection_active_and_valid(self.activeProject):
+        if not self.api.is_connection_active_and_valid(self.active_project):
             return
         self.progressBar.reset()
         self._export_running = True
@@ -1987,9 +2012,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     # todo: use this in loadImportCategories - old?
     def get_category_list(self):
-        if self.api.is_connection_active_and_valid(self.activeProject):
+        if self.api.is_connection_active_and_valid(self.active_project):
             return safe_get(
-                self.api.get(f"/{self.activeProject}/configuration", 3001).json(),
+                self.api.get(f"/{self.active_project}/configuration", 3001).json(),
                 "resource",
                 "order",
             )
