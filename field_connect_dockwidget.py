@@ -1975,11 +1975,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QApplication.processEvents()
                 # upload geojson here
                 headers = {"Content-Type": "application/geo+json"}
+
+                req_params = params.copy()
+                req_params.pop("category", None)
+                req_params.pop("command", None)
+                req_params.pop("importId", None)
+
                 data = json.dumps(gj_exp_geoms)
-                params["merge"] = "false"
-                # print('Exporting GeoJSON with merge=false...')
+                req_params["merge"] = "false"
+                # print(f'Exporting GeoJSON with merge=false and params {req_params}')
                 geo_json_resp = self.api.post(
-                    "/import/geojson", params=params, headers=headers, data=data
+                    "/import/geojson", params=req_params, headers=headers, data=data
                 )
 
                 step += 1
@@ -1987,10 +1993,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.progressBar.setFormat(self.tr("Exporting GeoJSON (2/2) %p%"))
                 QApplication.processEvents()
 
-                params["merge"] = "true"
-                # print('Exporting GeoJSON with merge=true...')
+                req_params["merge"] = "true"
+                req_params["permitDeletions"] = "true"
+                # print(f'Exporting GeoJSON with merge=true and params {req_params}')
                 geo_json_resp_merge = self.api.post(
-                    "/import/geojson", params=params, headers=headers, data=data
+                    "/import/geojson", params=req_params, headers=headers, data=data
                 )
 
                 step += 1
