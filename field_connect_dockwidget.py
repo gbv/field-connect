@@ -1971,34 +1971,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if not csv_resp_merge:
                         _export_errors = True
 
-                self.progressBar.setFormat(self.tr("Exporting GeoJSON (1/2) %p%"))
+                self.progressBar.setFormat(self.tr("Exporting GeoJSON %p%"))
                 QApplication.processEvents()
                 # upload geojson here
                 headers = {"Content-Type": "application/geo+json"}
 
-                req_params = params.copy()
-                req_params.pop("category", None)
-                req_params.pop("command", None)
-                req_params.pop("importId", None)
-
                 data = json.dumps(gj_exp_geoms)
-                req_params["merge"] = "false"
-                # print(f'Exporting GeoJSON with merge=false and params {req_params}')
-                geo_json_resp = self.api.post(
-                    "/import/geojson", params=req_params, headers=headers, data=data
-                )
-
-                step += 1
-                self.progressBar.setValue(step)
-                self.progressBar.setFormat(self.tr("Exporting GeoJSON (2/2) %p%"))
-                QApplication.processEvents()
-
-                req_params["merge"] = "true"
-                req_params["permitDeletions"] = "true"
-                # print(f'Exporting GeoJSON with merge=true and params {req_params}')
-                geo_json_resp_merge = self.api.post(
-                    "/import/geojson", params=req_params, headers=headers, data=data
-                )
+                geo_json_resp = self.api.post("/import/geojson", headers=headers, data=data)
 
                 step += 1
                 self.progressBar.setValue(step)
@@ -2006,7 +1985,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                 # print(csv_exp_rows)
                 # print(gj_exp_geoms)
-                if not all([geo_json_resp, geo_json_resp_merge]):
+                if not geo_json_resp:
                     _export_errors = True
 
                 if _export_errors:
