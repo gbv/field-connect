@@ -482,7 +482,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.mB.pushWarning(
                 self.plugin_name,
                 self.tr(
-                    "Invalid EPSG Code in project properties: {epsgId}. Using QGIS project CRS."
+                    "Invalid EPSG code in project properties: {epsgId}. Using QGIS project CRS."
                 ).format(epsgId=epsg_id),
             )
 
