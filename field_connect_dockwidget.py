@@ -2155,12 +2155,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     features[storage_key].append(feat)
 
-                    continue  # done with this feature
+                    continue
 
-            # no geometry case
-            if not geometry_supported:
-                # only create NoGeometry features if geometry is not supported at all
-                features["NoGeometry"].append(feat)
+            # fallback: feature has no usable geometry
+            features["NoGeometry"].append(feat)
 
         return features
 
