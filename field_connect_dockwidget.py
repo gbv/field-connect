@@ -106,7 +106,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.labelServerAddress.hide()
         self.lineEditServerAddress.hide()
         self.progressBar.hide()
-        self.chkPermitDel.hide()  # hardcoded to 'true' in fieldExport()
 
         self.plugin_name = "Field Connect"
         self.plugin_dir = plugin_dir
@@ -1750,7 +1749,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # !lowercase true/false important
         params = {
             "merge": "false",
-            "permitDeletions": "false",  # str(self.chkPermitDel.isChecked()).lower(),
+            "permitDeletions": str(self.chkPermitDel.isChecked()).lower(),
             "ignoreUnconfiguredFields": str(self.chkIgnoreUnconfFields.isChecked()).lower(),
             "category": "Project",  # default: Project, CSV only
             "command": "add",  # add/start - use start as the last call to start the import to field
@@ -1977,8 +1976,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     req_params = params.copy()
                     req_params["category"] = cat
                     req_params["merge"] = "false"
-                    req_params["permitDeletions"] = "false"
                     req_params["command"] = "start" if i == csv_exp_rows_count else "add"
+
+                    req_params.pop("permitDeletions", None)
 
                     # print(f"Exporting {cat} with merge=false and params {req_params}")
 
@@ -2015,7 +2015,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     req_params = params.copy()
                     req_params["category"] = cat
                     req_params["merge"] = "true"
-                    req_params["permitDeletions"] = "true"
 
                     # explicitly remove import-related params
                     req_params.pop("command", None)
