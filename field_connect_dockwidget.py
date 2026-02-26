@@ -1156,6 +1156,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
         )  # untranslated: translated
 
+        # todo: abort if no categories have been selected
+
+        # todo: remove
         self.progressBar.setMaximum(len(cats))
 
         if self.chkSetAliases.isChecked():
@@ -1678,6 +1681,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.progressBar.setValue(i + 1)
             QApplication.processEvents()
 
+        # todo: even gets added with zero features/entries
         # add lookup layer
         if lup_layer_temp:
             lup_layer_name = lup_layer_temp.name()
@@ -1843,6 +1847,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 for layer in layers:
                     if opts["quickExport"] and not layer.isModified():
                         continue
+
+                    if opts["commitSave"] and not opts["quickExport"]:
+                        if layer.isEditable():
+                            if not layer.commitChanges():
+                                errors = "; ".join(layer.commitErrors())
+                                self.mB.pushWarning(
+                                    self.plugin_name,
+                                    self.tr("Could not save layer {layer}: {errors}").format(
+                                        layer=layer.name(), errors=errors
+                                    ),
+                                )
+
                     # todo?: precision as ui param?
                     exporter = QgsJsonExporter(layer, precision=6)
                     exporter.setTransformGeometries(False)  # transforms to EPSG:4326 by default
@@ -1864,7 +1880,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # print(f'Quick Export: Skipping layer {layer.name()}')
                             continue
                     else:
-                        features = layer.getFeatures()
+                        # features = layer.getFeatures()  # features + edit buffer
+                        features = layer.dataProvider().getFeatures()  # saved features only
                     for f in features:
                         # --- GeoJSON feature ---
                         geom: QgsGeometry = f.geometry()
@@ -1922,17 +1939,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         csv_exp_rows[category].append(row)
                     # print(csv_exp_rows[category])
-
-                    if opts["commitSave"]:
-                        if layer.isEditable():
-                            if not layer.commitChanges():
-                                errors = "; ".join(layer.commitErrors())
-                                self.mB.pushWarning(
-                                    self.plugin_name,
-                                    self.tr("Could not save layer {layer}: {errors}").format(
-                                        layer=layer.name(), errors=errors
-                                    ),
-                                )
 
             if opts["quickExport"] and not _export_unsaved_layers:
                 self.mB.pushInfo(
