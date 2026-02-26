@@ -74,7 +74,6 @@ from PyQt5.QtWidgets import (
 from .modules.api_client import ApiClient
 from .modules.cldr_loader import CLDRLoader
 from .modules.datetime_transformer import DateTimeTransformer
-from .utils.constants import GEOJSON_TO_QGIS
 from .utils.helpers import deep_merge, safe_get
 
 from . import resources  # noqa:F401
@@ -666,7 +665,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """Extract translations and relevant informations from the project config.
         Ignores the category field as it is not getting exported in a CSV export.
         Moves relation fields into a nested 'relations' dict.
-        Moves composite fields into nested dicts keyed by their 'name'.
+        Moves composite fields into nested dicts keyed by their {name}.
         Also collects value maps from valuelist properties for later assignment."""
         translations = {
             "identifier": {"inputType": "identifier"},
@@ -731,6 +730,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     fieldname = data["name"]
                     input_type = data.get("inputType", "")
                     date_configuration = data.get("dateConfiguration", "")
+                    geometry_types = data.get("geometryTypes", None)
                     if fieldname != "category":
                         if fieldname in seen:
                             print(f'Duplicate field "{fieldname}" found at {path}')
@@ -779,6 +779,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             )
                             if date_configuration:
                                 comp[fieldname]["dateConfiguration"] = date_configuration
+                            if geometry_types:
+                                comp[fieldname]["geometryTypes"] = geometry_types
                             # collect subfields as nested entries
                             subfields = data.get("subfields", [])
                             if isinstance(subfields, list):
@@ -798,6 +800,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     }
                                     if date_configuration:
                                         comp[sf_name]["dateConfiguration"] = date_configuration
+                                    if geometry_types:
+                                        comp[sf_name]["geometryTypes"] = geometry_types
 
                                     if "valuelist" in sf:
                                         vmap = {}
@@ -823,6 +827,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             }
                             if date_configuration:
                                 result[fieldname]["dateConfiguration"] = date_configuration
+                            if geometry_types:
+                                result[fieldname]["geometryTypes"] = geometry_types
 
                 # recurse into nested structures
                 for k, v in data.items():
@@ -884,6 +890,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         s.setValue(f"{pn}/import/setalias", self.chkSetAliases.isChecked())
         s.setValue(f"{pn}/import/combineHierarchicalRelations", self.chkCombineRel.isChecked())
         s.setValue(
+            f"{pn}/import/createLayersForAllGeomTypes",
+            self.chk_layers_for_all_geom_types.isChecked(),
+        )
+        s.setValue(
             f"{pn}/import/timezone",
             (
                 self.selectImportTz.currentText()
@@ -934,6 +944,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.chkCombineRel.setChecked(
             s.value(f"{pn}/import/combineHierarchicalRelations", True, bool)
         )
+        self.chk_layers_for_all_geom_types.setChecked(
+            s.value(f"{pn}/import/createLayersForAllGeomTypes", True, bool)
+        )
         tz_im_val = s.value(f"{pn}/import/timezone", type=str)
         self.selectImportTz.setCurrentText(
             tz_im_val
@@ -977,6 +990,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnImport.setEnabled(on_off)
         self.chkSetAliases.setEnabled(on_off)
         self.chkCombineRel.setEnabled(on_off)
+        self.chk_layers_for_all_geom_types.setEnabled(on_off)
         self.selectImportTz.setEnabled(on_off)
         self.selectImportTzReset.setEnabled(on_off)
         # export tab
@@ -1052,6 +1066,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._import_running = True
 
         # collect ui options
+        create_all_layers = self.chk_layers_for_all_geom_types.isChecked()
         csv_ui_opts = {
             "combineHierarchicalRelations": self.chkCombineRel.isChecked(),
             "timezone": self.selectImportTz.currentText(),
@@ -1103,9 +1118,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
 
         filename = None
-        import_overwrite = (
-            False  # check if file path exists for handling/updating existing geopackages
-        )
+        # check if file path exists for handling/updating existing geopackages
+        import_overwrite = False
+
         if self.radioFormatGPKG.isChecked():
             filename, filter = QFileDialog.getSaveFileName(
                 self,
@@ -1204,7 +1219,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 field_informations, valuemaps = self.collect_field_informations(cat)
                 field_informations = deep_merge(field_informations, self.trAttrs)
                 valuemaps = deep_merge(valuemaps, prj_maps)
-                # print(f'fieldInformations: {fieldInformations}')
+                # print(f"fieldInformations: {field_informations}")
                 # print(f'valuemaps: {valuemaps}')
             csv_rows = {row["identifier"]: row for row in csv_reader}
             # print(f'csv_rows: {csv_rows}')
@@ -1213,6 +1228,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             fields = QgsFields()
             for col in csv_header:
                 fields.append(QgsField(col, QMetaType.QString))
+
+            geometry_info = field_informations.get("geometry")
+
+            geometry_supported = geometry_info is not None
+            geometry_types = geometry_info.get("geometryTypes", []) if geometry_supported else None
 
             # geom lookup
             geom_lookup = {
@@ -1225,10 +1245,51 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 fields=fields,
                 geom_lookup=geom_lookup,
                 date_transformer=dt,
+                geometry_types=geometry_types,
             )
 
+            if not geometry_supported:
+                # no geometry property at all
+                if create_all_layers:
+                    features = {"NoGeometry": features.get("NoGeometry", [])}
+                else:
+                    # only create layer if there are actual features
+                    if not features:
+                        features = {}
+
+            else:
+                # geometry is supported
+                if not geometry_types:
+                    # geometry property exists but geometryTypes is empty
+                    if create_all_layers:
+                        # create default Multi layers even if empty
+                        default_multi_types = ["MultiPolygon", "MultiLineString", "MultiPoint"]
+                        for key in default_multi_types:
+                            features.setdefault(key, [])
+                    else:
+                        # only create layers that actually contain features
+                        features = {k: v for k, v in features.items() if v}
+                else:
+                    # explicit geometryTypes declared by API
+                    if create_all_layers:
+                        # ensure all declared geometry layers exist
+                        required_storage_keys = set()
+
+                        for geom_type in geometry_types:
+                            resolved = self._resolve_wkb_type(geom_type, geometry_types)
+                            flat = QgsWkbTypes.flatType(resolved)
+                            storage_key = QgsWkbTypes.displayString(flat)
+                            required_storage_keys.add(storage_key)
+
+                        for key in required_storage_keys:
+                            features.setdefault(key, [])
+                    else:
+                        # only create layers that contain features
+                        features = {k: v for k, v in features.items() if v}
+
             for geom_type, feats in features.items():
-                lay_type = GEOJSON_TO_QGIS.get(geom_type).name
+                resolved = self._resolve_wkb_type(geom_type, geometry_types)
+                lay_type = resolved.name
                 lay_name_source = f"{self.active_project}_{cat}_{geom_type}"
                 lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
                 layer = QgsVectorLayer(lay_type, lay_name, "memory")
@@ -1884,9 +1945,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 headers = {"Content-Type": "text/csv; charset=utf-8"}
                 csv_exp_rows_items = [(cat, rows) for cat, rows in csv_exp_rows.items() if rows]
                 csv_exp_rows_count = len(csv_exp_rows_items)
-                progress_bar_total_steps = (
-                    csv_exp_rows_count * 2
-                ) + 2  # + 2 geojson merge false/true
+                progress_bar_total_steps = (csv_exp_rows_count * 2) + 1  # + 1 geojson
                 self.progressBar.setMaximum((progress_bar_total_steps))
                 step = 0
 
@@ -2049,8 +2108,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.labelConnectStatus.setGraphicsEffect(glow)
 
-    def features_from_csv(self, csv_rows, fields, geom_lookup, date_transformer):
+    def features_from_csv(
+        self,
+        csv_rows,
+        fields,
+        geom_lookup,
+        date_transformer,
+        geometry_types,
+    ):
         features = defaultdict(list)
+
+        geometry_supported = geometry_types is not None
 
         for row_id, row in csv_rows.items():
             feat = QgsFeature(fields)
@@ -2064,23 +2132,36 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             gj_feat = safe_get(geom_lookup, row_id)
 
-            if gj_feat and safe_get(gj_feat, "geometry"):
+            if geometry_supported and gj_feat and safe_get(gj_feat, "geometry"):
+
                 geom_json = json.dumps(gj_feat["geometry"])
                 geom = QgsJsonUtils.geometryFromGeoJson(geom_json)
 
                 if geom and not geom.isEmpty():
-                    feat.setGeometry(geom)
+
                     geom_type = gj_feat["geometry"]["type"]
-                else:
-                    geom_type = "NoGeometry"
-            else:
-                geom_type = "NoGeometry"
 
-            features[geom_type].append(feat)
+                    resolved_wkb = self._resolve_wkb_type(
+                        geom_type,
+                        geometry_types,
+                    )
 
-        # ensure schema-only layer can be created
-        if not features:
-            features["NoGeometry"] = []
+                    if QgsWkbTypes.isMultiType(resolved_wkb) and not geom.isMultipart():
+                        geom.convertToMultiType()
+
+                    feat.setGeometry(geom)
+
+                    flat_type = QgsWkbTypes.flatType(resolved_wkb)
+                    storage_key = QgsWkbTypes.displayString(flat_type)
+
+                    features[storage_key].append(feat)
+
+                    continue  # done with this feature
+
+            # no geometry case
+            if not geometry_supported:
+                # only create NoGeometry features if geometry is not supported at all
+                features["NoGeometry"].append(feat)
 
         return features
 
@@ -2113,3 +2194,34 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return date_transformer.transform(raw_value)
 
         return raw_value
+
+    def _resolve_wkb_type(self, geom_type, geometry_types):
+        """
+        Returns the correct QgsWkbType (Z dimension hardwired)
+        based on the GeoJSON geometry type and the API configuration.
+        """
+
+        if geom_type == "NoGeometry":
+            return QgsWkbTypes.NoGeometry
+
+        if geom_type.startswith("Multi"):
+            base = geom_type[5:]
+        else:
+            base = geom_type
+
+        multi_variant = f"Multi{base}"
+
+        # no geometry support
+        if geometry_types is None:
+            return QgsWkbTypes.NoGeometry
+
+        # explicit schema
+        if geometry_types:
+            target = multi_variant if multi_variant in geometry_types else base
+        else:
+            # default to Multi
+            target = multi_variant
+
+        enum_name = f"{target}Z"
+
+        return getattr(QgsWkbTypes, enum_name)

@@ -9,13 +9,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>361</width>
+    <width>439</width>
     <height>808</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>361</width>
+    <width>439</width>
     <height>808</height>
    </size>
   </property>
@@ -215,7 +215,7 @@ border: 1px solid #555;</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabImport">
        <attribute name="title">
@@ -354,131 +354,12 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="label_2">
+            <item row="4" column="0">
+             <widget class="QLabel" name="label">
               <property name="text">
-               <string>Options</string>
+               <string>Timezone:</string>
               </property>
              </widget>
-            </item>
-            <item row="8" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QCheckBox" name="chkCombineRel">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="toolTip">
-                 <string>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</string>
-                </property>
-                <property name="text">
-                 <string>Combine hierarchical relations</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_6">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="9" column="1">
-             <spacer name="verticalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="10" column="1">
-             <layout class="QHBoxLayout" name="hzLay_import">
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <spacer name="hzSpacer_import">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnImport">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Import</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="7" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QCheckBox" name="chkSetAliases">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="toolTip">
-                 <string>If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.
-Might increase import time.</string>
-                </property>
-                <property name="text">
-                 <string>Load labels and descriptions</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
             </item>
             <item row="4" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_11">
@@ -531,12 +412,167 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label">
+            <item row="6" column="0">
+             <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Timezone:</string>
+               <string>Options</string>
               </property>
              </widget>
+            </item>
+            <item row="8" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chkSetAliases">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.
+Might increase import time.</string>
+                </property>
+                <property name="text">
+                 <string>Load labels and descriptions</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="9" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chkCombineRel">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</string>
+                </property>
+                <property name="text">
+                 <string>Combine hierarchical relations</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="10" column="1">
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="11" column="1">
+             <layout class="QHBoxLayout" name="hzLay_import">
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <spacer name="hzSpacer_import">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnImport">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Import</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="7" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chk_layers_for_all_geom_types">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</string>
+                </property>
+                <property name="text">
+                 <string>Create layers for all configured geometry types</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_13">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
@@ -579,6 +615,13 @@ Might increase import time.</string>
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Mode:</string>
               </property>
              </widget>
             </item>
@@ -677,6 +720,61 @@ Might increase import time.</string>
               </property>
              </widget>
             </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Timezone:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_12">
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QComboBox" name="selectExportTz">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Timezone (IANA format, e.g. Europe/Berlin)</string>
+                </property>
+                <property name="editable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="selectExportTzReset">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Reset to system timezone</string>
+                </property>
+                <property name="text">
+                 <string>↺</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
             <item row="5" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
@@ -734,7 +832,7 @@ Might increase import time.</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>Saves the layer during the export. Useful in combination with the option "Export only unsaved features"</string>
+                 <string>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</string>
                 </property>
                 <property name="text">
                  <string>Save unsaved changes</string>
@@ -779,6 +877,39 @@ Might increase import time.</string>
               </item>
               <item>
                <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="10" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chkPermitDel">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>If this option is enabled, fields can not only be changed but also be deleted. Any fields (including relations) for which the corresponding field in the attribute table is empty will be deleted. Fields not listed in the attribute table remain unchanged.</string>
+                </property>
+                <property name="text">
+                 <string>Permit field deletions</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_4">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -838,101 +969,6 @@ Might increase import time.</string>
                  <string>Export</string>
                 </property>
                </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Mode:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_12">
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QComboBox" name="selectExportTz">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="toolTip">
-                 <string>Timezone (IANA format, e.g. Europe/Berlin)</string>
-                </property>
-                <property name="editable">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="selectExportTzReset">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>30</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Reset to system timezone</string>
-                </property>
-                <property name="text">
-                 <string>↺</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>Timezone:</string>
-              </property>
-             </widget>
-            </item>
-            <item row="10" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QCheckBox" name="chkPermitDel">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="toolTip">
-                 <string>If this option is enabled, fields can not only be changed but also be deleted. Any fields (including relations) for which the corresponding field in the attribute table is empty will be deleted. Fields not listed in the attribute table remain unchanged.</string>
-                </property>
-                <property name="text">
-                 <string>Permit field deletions</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </item>
