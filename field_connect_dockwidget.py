@@ -2035,7 +2035,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if not csv_resp_merge:
                         _export_errors = True
 
-                self.progressBar.setFormat(self.tr("Exporting GeoJSON %p%"))
+                self.progressBar.setFormat(self.tr("Exporting geodata %p%"))
                 QApplication.processEvents()
                 # upload geojson here
                 headers = {"Content-Type": "application/geo+json"}

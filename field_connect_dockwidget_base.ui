@@ -415,7 +415,7 @@ border: 1px solid #555;</string>
             <item row="6" column="0">
              <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Options</string>
+               <string>Options:</string>
               </property>
              </widget>
             </item>
@@ -778,7 +778,7 @@ Might increase import time.</string>
             <item row="5" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>Options</string>
+               <string>Options:</string>
               </property>
              </widget>
             </item>
