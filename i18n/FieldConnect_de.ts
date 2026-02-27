@@ -539,7 +539,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1753"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1406"/>
@@ -599,27 +599,27 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1973"/>
         <source>Exporting category {cat} (1/2) %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Kategorie {cat} (1/2) %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2012"/>
         <source>Exporting category {cat} (2/2) %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Kategorie {cat} (2/2) %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="483"/>
         <source>Missing EPSG code in project properties. Using QGIS project CRS.</source>
-        <translation type="unfinished"></translation>
+        <translation>In den Projekteigenschaften ist kein EPSG-Code eingetragen. Das CRS des QGIS-Projekts wird verwendet.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="492"/>
         <source>Invalid EPSG code in project properties: {epsgId}. Using QGIS project CRS.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungültiger EPSG-Code in den Projekteigenschaften: {epsgId}. Das CRS des QGIS-Projekts wird verwendet.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2048"/>
         <source>Exporting geodata %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Geodaten %p%</translation>
     </message>
 </context>
 <context>
@@ -747,7 +747,7 @@
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="796"/>
         <source>Only export added or edited features in the edit buffer. Layers need to be in edit mode and unsaved.</source>
-        <translation>Ausschließlich neu hinzugefügte oder bearbeitete Features exportieren. Dazu müssen sich die Layer im Editierungsmodus befinden und die Änderungen noch nicht gespeichert worden sein.</translation>
+        <translation>Ausschließlich neu hinzugefügte oder bearbeitete Objekte exportieren. Dazu müssen sich die Layer im Editierungsmodus befinden und die Änderungen noch nicht gespeichert worden sein.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="907"/>
@@ -829,17 +829,17 @@ Dies kann die Importdauer verlängern.</translation>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="552"/>
         <source>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn diese Option aktiviert ist, werden Layer für sämtliche Geometrietypen, die für die entsprechende Kategorie konfiguriert sind, angelegt, unabhängig davon ob sie Objekte enthalten oder nicht.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="555"/>
         <source>Create layers for all configured geometry types</source>
-        <translation type="unfinished"></translation>
+        <translation>Layer für alle konfigurierten Geometrietypen anlegen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="781"/>
         <source>Options:</source>
-        <translation type="unfinished"></translation>
+        <translation>Optionen:</translation>
     </message>
 </context>
 </TS>
