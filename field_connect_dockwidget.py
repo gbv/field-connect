@@ -34,6 +34,7 @@ from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
 from qgis.core import (
+    Qgis,
     QgsCoordinateReferenceSystem,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -476,15 +477,24 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectExportCrs.setCrs(crs)
         else:
             project_crs = self.project.crs()
+            self.selectImportCrs.setCrs(project_crs)
             self.selectExportCrs.setCrs(project_crs)
-            self.selectExportCrs.setCrs(project_crs)
-            self.selectExportCrs.setCrs(project_crs)
-            self.mB.pushWarning(
-                self.plugin_name,
-                self.tr(
-                    "Invalid EPSG code in project properties: {epsgId}. Using QGIS project CRS."
-                ).format(epsgId=epsg_id),
-            )
+            if epsg_id is None:
+                self.mB.pushMessage(
+                    title=self.plugin_name,
+                    text=self.tr(
+                        "Missing EPSG code in project properties. Using QGIS project CRS."
+                    ),
+                    level=Qgis.MessageLevel.Info,
+                    duration=-1,
+                )
+            else:
+                self.mB.pushWarning(
+                    self.plugin_name,
+                    self.tr(
+                        "Invalid EPSG code in project properties: {epsgId}. Using QGIS project CRS."
+                    ).format(epsgId=epsg_id),
+                )
 
     def normalize_export_value(self, value, dt=None):
         """
