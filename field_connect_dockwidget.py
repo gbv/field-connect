@@ -959,7 +959,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         tz_im_val = s.value(f"{pn}/import/timezone", type=str)
         self.selectImportTz.setCurrentText(
             tz_im_val
-            if QTimeZone(tz_im_val.encode("utf-8")).isValid()
+            if tz_im_val and QTimeZone(tz_im_val.encode("utf-8")).isValid()
             else QTimeZone.systemTimeZoneId().data().decode("utf-8")
         )
         # export tab
@@ -978,7 +978,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         tz_ex_val = s.value(f"{pn}/export/timezone", type=str)
         self.selectExportTz.setCurrentText(
             tz_ex_val
-            if QTimeZone(tz_ex_val.encode("utf-8")).isValid()
+            if tz_ex_val and QTimeZone(tz_ex_val.encode("utf-8")).isValid()
             else QTimeZone.systemTimeZoneId().data().decode("utf-8")
         )
 
