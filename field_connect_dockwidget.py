@@ -1072,7 +1072,20 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         if not self.api.is_connection_active_and_valid(self.active_project):
             return
-        self._import_running = True
+
+        cats = dict(
+            zip(
+                [d for d in self.selectCats.checkedItemsData() if d],
+                [i for i in self.selectCats.checkedItems() if i != self.labels["DESELECT_ALL"]],
+            )
+        )  # untranslated: translated
+
+        if not cats:
+            self.mB.pushWarning(
+                self.plugin_name, self.tr("Select at least one category to continue.")
+            )
+            return
+        self.progressBar.setMaximum(len(cats))
 
         # collect ui options
         create_all_layers = self.chk_layers_for_all_geom_types.isChecked()
@@ -1092,6 +1105,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
         else:
             dt = DateTimeTransformer(QTimeZone(b"UTC"), QTimeZone(import_tz))
+
+        self._import_running = True
 
         self.progressBar.reset()
         self.show_or_hide_progress_bar()
@@ -1158,18 +1173,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # get geojson first since its one file with all geometries
         r_geo: Response = self.api.get("/export/geojson?context=project&formatted=true")
         geo_json = json.loads(r_geo.text)
-
-        cats = dict(
-            zip(
-                [d for d in self.selectCats.checkedItemsData() if d],
-                [i for i in self.selectCats.checkedItems() if i != self.labels["DESELECT_ALL"]],
-            )
-        )  # untranslated: translated
-
-        # todo: abort if no categories have been selected
-
-        # todo: remove
-        self.progressBar.setMaximum(len(cats))
 
         if self.chkSetAliases.isChecked():
             # todo: extract function
