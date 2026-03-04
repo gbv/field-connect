@@ -75,15 +75,62 @@ from PyQt5.QtWidgets import (
 from .modules.api_client import ApiClient
 from .modules.cldr_loader import CLDRLoader
 from .modules.datetime_transformer import DateTimeTransformer
+from .modules.exceptions import (
+    ApiError,
+    ApiConnectionError,
+    ApiTimeoutError,
+    ApiUnauthorizedError,
+    ApiBadRequestError,
+    ApiRequestFailedError,
+)
 from .utils.helpers import deep_merge, safe_get
 
 from . import resources  # noqa:F401
-from functools import partial
+from functools import partial, wraps
 
 
 FORM_CLASS, _ = uic.loadUiType(
     os.path.join(os.path.dirname(__file__), "field_connect_dockwidget_base.ui")
 )
+
+
+def handle_api_errors(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+
+        except ApiConnectionError:
+            self.mB.pushCritical(self.plugin_name, self.labels["CONNECTION_REFUSED"])
+
+        except ApiTimeoutError:
+            self.mB.pushCritical(self.plugin_name, self.labels["CONNECTION_REFUSED"])
+
+        except ApiUnauthorizedError:
+            self.set_connection_enabled(False)
+            self.field_disconnect()
+            self.mB.pushWarning(self.plugin_name, self.labels["CONNECTION_UNAUTHORIZED"])
+
+        except ApiBadRequestError as e:
+            message = str(e)
+            if e.import_errors:
+                message += ": " + "; ".join(str(err) for err in e.import_errors)
+
+            self.mB.pushWarning(self.plugin_name, message)
+
+        except ApiRequestFailedError as e:
+            self.set_connection_enabled(False)
+            self.field_disconnect()
+            self.mB.pushMessage(
+                f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}", Qgis.Warning, 5
+            )
+
+        except ApiError as e:
+            self.mB.pushCritical(self.plugin_name, str(e))
+
+        return None
+
+    return wrapper
 
 
 class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
@@ -1028,7 +1075,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self._import_running = False
             self._export_running = False
 
-    def field_connect(self):
+    @handle_api_errors
+    def field_connect(self, *args):
         """Connects to field and enables import/export form if the request was successful"""
         if self.connected:
             self.field_disconnect()
@@ -1042,7 +1090,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # create session
         self.api = ApiClient(
             u.password or self.lineEditPassword.text(),
-            self,
             f"{scheme}://{hostname}:{port}",
         )
         project_info = self.api.get("/info")
@@ -1066,11 +1113,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.sB.showMessage(self.tr("Choose categories and format"))
             self.set_connection_status()
 
-    def field_import(self):
+    @handle_api_errors
+    def field_import(self, *args):
         """Imports data from the currently active project in Field Desktop
         into QGIS, optionally as temporary layers or saved to disk into one geopackage
         """
-        if not self.api.is_connection_active_and_valid(self.active_project):
+        if not self._check_connection_and_project():
             return
 
         cats = dict(
@@ -1731,9 +1779,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._import_running = False
         QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
-    def field_export(self):
+    @handle_api_errors
+    def field_export(self, *args):
         """Export group of layers back to Field Desktop using POST /import/{format}"""
-        if not self.api.is_connection_active_and_valid(self.active_project):
+        if not self._check_connection_and_project():
             return
         self.progressBar.reset()
         self._export_running = True
@@ -2075,7 +2124,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     # todo: use this in loadImportCategories - old?
     def get_category_list(self):
-        if self.api.is_connection_active_and_valid(self.active_project):
+        if not self._check_connection_and_project():
             return safe_get(
                 self.api.get(f"/{self.active_project}/configuration", 3001).json(),
                 "resource",
@@ -2241,3 +2290,20 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         enum_name = f"{target}Z"
 
         return getattr(QgsWkbTypes, enum_name)
+
+    def _check_connection_and_project(self) -> bool:
+        response = self.api.get("/info")
+
+        # if exception occurred, decorator already handled it
+        # and execution would not reach here
+
+        data = response.json()
+        active_project_from_server = safe_get(data, "activeProject", default=False)
+
+        if self.active_project != active_project_from_server:
+            self.set_connection_enabled(False)
+            self.field_disconnect()
+            self.mB.pushCritical(self.plugin_name, self.labels["ACTIVE_PROJECT_CHANGED"])
+            return False
+
+        return True
