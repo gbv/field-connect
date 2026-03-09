@@ -17,608 +17,618 @@
 <context>
     <name>FieldConnectDockWidget</name>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="153"/>
+        <location filename="../field_connect_dockwidget.py" line="201"/>
         <source>Select all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="136"/>
+        <location filename="../field_connect_dockwidget.py" line="183"/>
         <source>Bad request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="137"/>
+        <location filename="../field_connect_dockwidget.py" line="184"/>
         <source>Connection lost!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="140"/>
+        <location filename="../field_connect_dockwidget.py" line="187"/>
         <source>Deselect all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="141"/>
+        <location filename="../field_connect_dockwidget.py" line="188"/>
         <source>Connected to Field Desktop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="142"/>
+        <location filename="../field_connect_dockwidget.py" line="190"/>
         <source>Import failed!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="143"/>
+        <location filename="../field_connect_dockwidget.py" line="191"/>
         <source>Import successful!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="147"/>
+        <location filename="../field_connect_dockwidget.py" line="195"/>
         <source>Layer validation failed!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="151"/>
+        <location filename="../field_connect_dockwidget.py" line="199"/>
         <source>No categories found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="152"/>
+        <location filename="../field_connect_dockwidget.py" line="200"/>
         <source>Request failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="161"/>
+        <location filename="../field_connect_dockwidget.py" line="209"/>
         <source>Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="167"/>
+        <location filename="../field_connect_dockwidget.py" line="215"/>
         <source>The date specification for a single date; the start date for a date range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="173"/>
+        <location filename="../field_connect_dockwidget.py" line="221"/>
         <source>The end date for a date range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="177"/>
+        <location filename="../field_connect_dockwidget.py" line="225"/>
         <source>Indicates whether the date is a date range. Possible values are: true (date range), false (single date).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="183"/>
+        <location filename="../field_connect_dockwidget.py" line="231"/>
         <source>Relation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="186"/>
+        <location filename="../field_connect_dockwidget.py" line="234"/>
         <source>Specifies the direct parent resource in the hierarchy; remains empty for top-level resources.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="204"/>
+        <location filename="../field_connect_dockwidget.py" line="252"/>
         <source>Links the image to one or more resources</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="243"/>
+        <location filename="../field_connect_dockwidget.py" line="291"/>
         <source>Dating system</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="249"/>
+        <location filename="../field_connect_dockwidget.py" line="297"/>
         <source>Year</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="719"/>
+        <location filename="../field_connect_dockwidget.py" line="767"/>
         <source>Period</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="332"/>
+        <location filename="../field_connect_dockwidget.py" line="380"/>
         <source>Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="333"/>
+        <location filename="../field_connect_dockwidget.py" line="381"/>
         <source>The identifier of the selected value; if two values are selected, the first of the two values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="339"/>
+        <location filename="../field_connect_dockwidget.py" line="387"/>
         <source>The identifier of the second selected value if two values are selected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="440"/>
+        <location filename="../field_connect_dockwidget.py" line="488"/>
         <source>No groups available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1066"/>
+        <location filename="../field_connect_dockwidget.py" line="1123"/>
         <source>Choose categories and format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1134"/>
+        <location filename="../field_connect_dockwidget.py" line="1207"/>
         <source>Save GeoPackage as...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1806"/>
+        <location filename="../field_connect_dockwidget.py" line="1868"/>
         <source>Coordinate transformation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1807"/>
+        <location filename="../field_connect_dockwidget.py" line="1869"/>
         <source>The layer CRS differs from the target CRS. Do you want to transform coordinates?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1814"/>
+        <location filename="../field_connect_dockwidget.py" line="1876"/>
         <source>Yes to all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1815"/>
+        <location filename="../field_connect_dockwidget.py" line="1877"/>
         <source>No to all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1816"/>
+        <location filename="../field_connect_dockwidget.py" line="1878"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="208"/>
+        <location filename="../field_connect_dockwidget.py" line="256"/>
         <source>Links the resource to one or more images.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="212"/>
+        <location filename="../field_connect_dockwidget.py" line="260"/>
         <source>Adds the image as a map layer in the context of the resource specified as the target.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="218"/>
+        <location filename="../field_connect_dockwidget.py" line="266"/>
         <source>Adds one or more images as a map layer in the context of this resource.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="233"/>
+        <location filename="../field_connect_dockwidget.py" line="281"/>
         <source>The dating type. Possible values are: range (Period), single (Single year), before (Before), after (After), scientific (Scientific).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="244"/>
+        <location filename="../field_connect_dockwidget.py" line="292"/>
         <source>The time scale. Possible values are: bce (BCE), ce (CE), bp (BP).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="250"/>
+        <location filename="../field_connect_dockwidget.py" line="298"/>
         <source>The year.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="398"/>
+        <location filename="../field_connect_dockwidget.py" line="446"/>
         <source>Ready to connect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1018"/>
+        <location filename="../field_connect_dockwidget.py" line="1066"/>
         <source>Disconnect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1021"/>
+        <location filename="../field_connect_dockwidget.py" line="1069"/>
         <source>Connect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="145"/>
+        <location filename="../field_connect_dockwidget.py" line="193"/>
         <source>Export failed!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="146"/>
+        <location filename="../field_connect_dockwidget.py" line="194"/>
         <source>Export successful!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="148"/>
+        <location filename="../field_connect_dockwidget.py" line="196"/>
         <source>Could not extract category name. Please set the layer variable &quot;field_category&quot; manually</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="154"/>
+        <location filename="../field_connect_dockwidget.py" line="202"/>
         <source>No layer selected in the layer tree!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="162"/>
+        <location filename="../field_connect_dockwidget.py" line="210"/>
         <source>The unique identifier of the resource</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="338"/>
+        <location filename="../field_connect_dockwidget.py" line="386"/>
         <source>End value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="176"/>
+        <location filename="../field_connect_dockwidget.py" line="224"/>
         <source>Is range?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="185"/>
+        <location filename="../field_connect_dockwidget.py" line="233"/>
         <source>Is child of</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="191"/>
+        <location filename="../field_connect_dockwidget.py" line="239"/>
         <source>Is recorded in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="192"/>
+        <location filename="../field_connect_dockwidget.py" line="240"/>
         <source>Specifies the operation in which the resource has been recorded; remains empty for top-level resources.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="197"/>
+        <location filename="../field_connect_dockwidget.py" line="245"/>
         <source>Lies within</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="198"/>
+        <location filename="../field_connect_dockwidget.py" line="246"/>
         <source>Specifies the direct parent resource in the hierarchy; remains empty for top-level resources or if the direct parent resource is an operation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="203"/>
+        <location filename="../field_connect_dockwidget.py" line="251"/>
         <source>Depicts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="207"/>
+        <location filename="../field_connect_dockwidget.py" line="255"/>
         <source>Is depicted in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="211"/>
+        <location filename="../field_connect_dockwidget.py" line="259"/>
         <source>Is map layer of</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="217"/>
+        <location filename="../field_connect_dockwidget.py" line="265"/>
         <source>Has map layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="223"/>
+        <location filename="../field_connect_dockwidget.py" line="271"/>
         <source>Has default map layer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="224"/>
+        <location filename="../field_connect_dockwidget.py" line="272"/>
         <source>Specifies that the linked image is a default map layer in the context of this resource.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="232"/>
+        <location filename="../field_connect_dockwidget.py" line="280"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="238"/>
+        <location filename="../field_connect_dockwidget.py" line="286"/>
         <source>Beginning:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="239"/>
+        <location filename="../field_connect_dockwidget.py" line="287"/>
         <source>Year specification that is set for the dating type &quot;after&quot; and as the start date for the dating type &quot;range&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="254"/>
+        <location filename="../field_connect_dockwidget.py" line="302"/>
         <source>End:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="255"/>
+        <location filename="../field_connect_dockwidget.py" line="303"/>
         <source>Year specification that is set for the dating types &quot;single&quot;, &quot;before&quot; and &quot;scientific&quot; and as the end date for the dating type &quot;range&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="260"/>
+        <location filename="../field_connect_dockwidget.py" line="308"/>
         <source>Margin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="261"/>
+        <location filename="../field_connect_dockwidget.py" line="309"/>
         <source>Tolerance margin in years for dating type &quot;scientific&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="266"/>
+        <location filename="../field_connect_dockwidget.py" line="314"/>
         <source>Source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="267"/>
+        <location filename="../field_connect_dockwidget.py" line="315"/>
         <source>Source of the dating.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="295"/>
+        <location filename="../field_connect_dockwidget.py" line="343"/>
         <source>Is imprecise?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="271"/>
+        <location filename="../field_connect_dockwidget.py" line="319"/>
         <source>Specification &quot;Imprecise&quot;. Cannot be set for dating type &quot;scientific&quot;. Possible values are: true (yes), false (no).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="276"/>
+        <location filename="../field_connect_dockwidget.py" line="324"/>
         <source>Is uncertain?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="277"/>
+        <location filename="../field_connect_dockwidget.py" line="325"/>
         <source>Specification &quot;Uncertain&quot;. Cannot be set for dating type &quot;scientific&quot;. Possible values are: true (yes), false (no).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="285"/>
+        <location filename="../field_connect_dockwidget.py" line="333"/>
         <source>The measured numerical value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="289"/>
+        <location filename="../field_connect_dockwidget.py" line="337"/>
         <source>The second measured numerical value, if the dimension is a range.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="293"/>
+        <location filename="../field_connect_dockwidget.py" line="341"/>
         <source>Comment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="296"/>
+        <location filename="../field_connect_dockwidget.py" line="344"/>
         <source>Specification &quot;Imprecise&quot;. Possible values are: true (yes), false (no).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="302"/>
+        <location filename="../field_connect_dockwidget.py" line="350"/>
         <source>As measured by</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="318"/>
+        <location filename="../field_connect_dockwidget.py" line="366"/>
         <source>Unit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="305"/>
+        <location filename="../field_connect_dockwidget.py" line="353"/>
         <source>The unit of measurement. Possible values: mm, cm, m.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="309"/>
+        <location filename="../field_connect_dockwidget.py" line="357"/>
         <source>Measurement device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="312"/>
+        <location filename="../field_connect_dockwidget.py" line="360"/>
         <source>The unit of measurement. Possible values: mg, g, kg.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="316"/>
+        <location filename="../field_connect_dockwidget.py" line="364"/>
         <source>Measurement technique</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="319"/>
+        <location filename="../field_connect_dockwidget.py" line="367"/>
         <source>The unit of measurement. Possible values: ml, l.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="323"/>
+        <location filename="../field_connect_dockwidget.py" line="371"/>
         <source>Literature quotation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="324"/>
+        <location filename="../field_connect_dockwidget.py" line="372"/>
         <source>Zenon ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="325"/>
+        <location filename="../field_connect_dockwidget.py" line="373"/>
         <source>DOI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="326"/>
+        <location filename="../field_connect_dockwidget.py" line="374"/>
         <source>Page</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="327"/>
+        <location filename="../field_connect_dockwidget.py" line="375"/>
         <source>Figure</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1218"/>
+        <location filename="../field_connect_dockwidget.py" line="1279"/>
         <source>Importing category {label} %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1684"/>
+        <location filename="../field_connect_dockwidget.py" line="1745"/>
         <source>Style saved by the Field Connect plugin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="144"/>
+        <location filename="../field_connect_dockwidget.py" line="192"/>
         <source>Export finished with errors!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1865"/>
+        <location filename="../field_connect_dockwidget.py" line="1927"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="228"/>
+        <location filename="../field_connect_dockwidget.py" line="276"/>
         <source>Typological classification</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="133"/>
+        <location filename="../field_connect_dockwidget.py" line="180"/>
         <source>The active project in Field Desktop has changed! Disconnecting...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="392"/>
+        <location filename="../field_connect_dockwidget.py" line="440"/>
         <source>Type to filter...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="683"/>
+        <location filename="../field_connect_dockwidget.py" line="731"/>
         <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="683"/>
+        <location filename="../field_connect_dockwidget.py" line="731"/>
         <source>No</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="686"/>
+        <location filename="../field_connect_dockwidget.py" line="734"/>
         <source>ml</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="686"/>
+        <location filename="../field_connect_dockwidget.py" line="734"/>
         <source>l</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="689"/>
+        <location filename="../field_connect_dockwidget.py" line="737"/>
         <source>mg</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="690"/>
+        <location filename="../field_connect_dockwidget.py" line="738"/>
         <source>g</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="691"/>
+        <location filename="../field_connect_dockwidget.py" line="739"/>
         <source>kg</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="697"/>
+        <location filename="../field_connect_dockwidget.py" line="745"/>
         <source>mm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="698"/>
+        <location filename="../field_connect_dockwidget.py" line="746"/>
         <source>cm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="699"/>
+        <location filename="../field_connect_dockwidget.py" line="747"/>
         <source>m</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1753"/>
+        <location filename="../field_connect_dockwidget.py" line="1815"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1406"/>
+        <location filename="../field_connect_dockwidget.py" line="1467"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="138"/>
+        <location filename="../field_connect_dockwidget.py" line="185"/>
         <source>Field Desktop is not running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="139"/>
+        <location filename="../field_connect_dockwidget.py" line="186"/>
         <source>Incorrect password.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="155"/>
+        <location filename="../field_connect_dockwidget.py" line="203"/>
         <source>No unsaved layers available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="710"/>
+        <location filename="../field_connect_dockwidget.py" line="758"/>
         <source>BCE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="711"/>
+        <location filename="../field_connect_dockwidget.py" line="759"/>
         <source>CE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="712"/>
+        <location filename="../field_connect_dockwidget.py" line="760"/>
         <source>BP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="720"/>
+        <location filename="../field_connect_dockwidget.py" line="768"/>
         <source>Single year</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="721"/>
+        <location filename="../field_connect_dockwidget.py" line="769"/>
         <source>Before</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="722"/>
+        <location filename="../field_connect_dockwidget.py" line="770"/>
         <source>After</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="723"/>
+        <location filename="../field_connect_dockwidget.py" line="771"/>
         <source>Scientific</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1973"/>
+        <location filename="../field_connect_dockwidget.py" line="2035"/>
         <source>Exporting category {cat} (1/2) %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2012"/>
+        <location filename="../field_connect_dockwidget.py" line="2074"/>
         <source>Exporting category {cat} (2/2) %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="483"/>
+        <location filename="../field_connect_dockwidget.py" line="531"/>
         <source>Missing EPSG code in project properties. Using QGIS project CRS.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="492"/>
+        <location filename="../field_connect_dockwidget.py" line="540"/>
         <source>Invalid EPSG code in project properties: {epsgId}. Using QGIS project CRS.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2048"/>
+        <location filename="../field_connect_dockwidget.py" line="2110"/>
         <source>Exporting geodata %p%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="189"/>
+        <source>Field Connect requires Field Desktop 3.7.0 or later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="1142"/>
+        <source>Select at least one category to continue.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
