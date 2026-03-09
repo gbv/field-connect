@@ -186,6 +186,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "CONNECTION_UNAUTHORIZED": self.tr("Incorrect password."),
             "DESELECT_ALL": self.tr("Deselect all"),
             "FIELD_CONNECTED": self.tr("Connected to Field Desktop"),
+            "FIELD_VERSION_UNSUPPORTED": self.tr("Field Connect requires Field Desktop 3.7.0 or later."),
             "IMPORT_FAILED": self.tr("Import failed!"),
             "IMPORT_SUCCESS": self.tr("Import successful!"),
             "EXPORT_ERRORS": self.tr("Export finished with errors!"),
@@ -1094,13 +1095,22 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         )
         project_info = self.api.get("/info")
         if project_info:
-            self.set_connection_enabled(True)
             project_info_json = project_info.json()
             self.field_user, self.field_version, self.active_project = (
                 safe_get(project_info_json, "user"),
                 safe_get(project_info_json, "version"),
                 safe_get(project_info_json, "activeProject"),
             )
+
+            # check for field desktop min version 3.7.0
+            m = re.match(r"(\d+)\.(\d+)", self.field_version)
+            major, minor = (map(int, m.groups()))
+
+            if (major, minor) < (3, 7):
+                self.mB.pushCritical(self.plugin_name, self.labels['FIELD_VERSION_UNSUPPORTED'])
+                return
+
+            self.set_connection_enabled(True)
             self.toggle_field_info(self.field_user, self.field_version, self.active_project)
             self.set_project_crs()
 
