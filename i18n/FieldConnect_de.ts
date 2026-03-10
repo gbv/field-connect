@@ -539,7 +539,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1815"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1467"/>
@@ -624,12 +624,12 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="189"/>
         <source>Field Connect requires Field Desktop 3.7.0 or later.</source>
-        <translation type="unfinished"></translation>
+        <translation>Field Connect setzt Field Desktop 3.7.0 oder höher voraus.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1142"/>
         <source>Select at least one category to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wählen Sie mindestens eine Kategorie aus, um fortzufahren.</translation>
     </message>
 </context>
 <context>
@@ -849,7 +849,7 @@ Dies kann die Importdauer verlängern.</translation>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="835"/>
         <source>Saves the layer after the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Speichert den Layer nach dem Export. Nützlich in Kombination mit der Option &quot;Nur ungespeicherte Objekte exportieren&quot;.</translation>
     </message>
 </context>
 </TS>
