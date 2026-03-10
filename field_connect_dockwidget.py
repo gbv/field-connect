@@ -114,7 +114,7 @@ def handle_api_errors(func):
         except ApiBadRequestError as e:
             message = str(e)
             if e.import_errors:
-                message += ": " + "; ".join(str(err) for err in e.import_errors)
+                message = "; ".join(str(err) for err in e.import_errors)
 
             self.mB.pushWarning(self.plugin_name, message)
 
