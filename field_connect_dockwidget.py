@@ -416,6 +416,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.toggle_field_info()
         self.selectImportCrs.setCrs(self.project.crs())
         self.selectExportCrs.setCrs(self.project.crs())
+        self.setMinimumSize(0, 0)
         self.formLayout.setWidget(
             self.formLayout.getWidgetPosition(self.hzLineSettings)[0],
             QFormLayout.SpanningRole,
