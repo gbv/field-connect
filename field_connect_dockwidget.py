@@ -2012,6 +2012,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         csv_exp_rows[category].append(row)
                     # print(csv_exp_rows[category])
 
+                    if opts["commitSave"] and opts["quickExport"]:
+                        if not layer.commitChanges():
+                            errors = "; ".join(layer.commitErrors())
+                            self.mB.pushWarning(
+                                self.plugin_name,
+                                self.tr("Could not save layer {layer}: {errors}").format(
+                                    layer=layer.name(), errors=errors
+                                ),
+                            )
+
             if opts["quickExport"] and not _export_unsaved_layers:
                 self.mB.pushInfo(
                     self.plugin_name, self.labels["INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS"]
