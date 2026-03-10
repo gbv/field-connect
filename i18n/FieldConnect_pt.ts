@@ -467,7 +467,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1927"/>
+        <location filename="../field_connect_dockwidget.py" line="2018"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -597,12 +597,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2035"/>
+        <location filename="../field_connect_dockwidget.py" line="2045"/>
         <source>Exporting category {cat} (1/2) %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2074"/>
+        <location filename="../field_connect_dockwidget.py" line="2084"/>
         <source>Exporting category {cat} (2/2) %p%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -617,7 +617,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2110"/>
+        <location filename="../field_connect_dockwidget.py" line="2120"/>
         <source>Exporting geodata %p%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -831,11 +831,6 @@ Might increase import time.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="835"/>
-        <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../field_connect_dockwidget_base.ui" line="552"/>
         <source>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</source>
         <translation type="unfinished"></translation>
@@ -848,6 +843,11 @@ Might increase import time.</source>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="781"/>
         <source>Options:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget_base.ui" line="835"/>
+        <source>Saves the layer after the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

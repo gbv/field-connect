@@ -467,7 +467,7 @@
         <translation>Export mit Fehlern beendet!</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1927"/>
+        <location filename="../field_connect_dockwidget.py" line="2018"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation>Layer {layer} konnte nicht gespeichert werden: {errors}</translation>
     </message>
@@ -597,12 +597,12 @@
         <translation>Naturwissenschaftlich</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2035"/>
+        <location filename="../field_connect_dockwidget.py" line="2045"/>
         <source>Exporting category {cat} (1/2) %p%</source>
         <translation>Exportiere Kategorie {cat} (1/2) %p%</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2074"/>
+        <location filename="../field_connect_dockwidget.py" line="2084"/>
         <source>Exporting category {cat} (2/2) %p%</source>
         <translation>Exportiere Kategorie {cat} (2/2) %p%</translation>
     </message>
@@ -617,7 +617,7 @@
         <translation>Ungültiger EPSG-Code in den Projekteigenschaften: {epsgId}. Das CRS des QGIS-Projekts wird verwendet.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2110"/>
+        <location filename="../field_connect_dockwidget.py" line="2120"/>
         <source>Exporting geodata %p%</source>
         <translation>Exportiere Geodaten %p%</translation>
     </message>
@@ -832,11 +832,6 @@ Dies kann die Importdauer verlängern.</translation>
         <translation>Nur ungespeicherte Objekte exportieren</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="835"/>
-        <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation>Speichert den Layer beim Export. Nützlich in Kombination mit der Option &quot;Nur ungespeicherte Objekte exportieren&quot;</translation>
-    </message>
-    <message>
         <location filename="../field_connect_dockwidget_base.ui" line="552"/>
         <source>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</source>
         <translation>Wenn diese Option aktiviert ist, werden Layer für sämtliche Geometrietypen, die für die entsprechende Kategorie konfiguriert sind, angelegt, unabhängig davon ob sie Objekte enthalten oder nicht.</translation>
@@ -850,6 +845,11 @@ Dies kann die Importdauer verlängern.</translation>
         <location filename="../field_connect_dockwidget_base.ui" line="781"/>
         <source>Options:</source>
         <translation>Optionen:</translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget_base.ui" line="835"/>
+        <source>Saves the layer after the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>
