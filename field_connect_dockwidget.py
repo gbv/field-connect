@@ -128,6 +128,10 @@ def handle_api_errors(func):
         except ApiError as e:
             self.mB.pushCritical(self.plugin_name, str(e))
 
+        self._import_running = False
+        self._export_running = False
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+
         return None
 
     return wrapper
