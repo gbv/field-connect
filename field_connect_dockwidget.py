@@ -1282,11 +1282,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
             QApplication.processEvents()
 
-            csv_reader = (
-                csv_export_project
-                if cat == "Project" and csv_export_project
-                else self.get_category_csv(cat, csv_ui_opts["combineHierarchicalRelations"])
-            )
+            csv_reader = self.get_category_csv(cat, csv_ui_opts["combineHierarchicalRelations"])
             csv_header = csv_reader.fieldnames
             if self.chkSetAliases.isChecked():
                 # merge without overwriting nested items
