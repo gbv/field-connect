@@ -1676,6 +1676,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if layer.wkbType() != QgsWkbTypes.NoGeometry:
                     layer.renderer().symbol().setOpacity(0.7)
 
+                layer.setDisplayExpression("\"identifier\"")
+
                 if filename:
                     if not filename.lower().endswith(".gpkg"):
                         filename += ".gpkg"
