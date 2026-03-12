@@ -10,13 +10,13 @@
     <x>0</x>
     <y>0</y>
     <width>439</width>
-    <height>763</height>
+    <height>838</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>439</width>
-    <height>763</height>
+    <height>838</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -215,7 +215,7 @@ border: 1px solid #555;</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabImport">
        <attribute name="title">
@@ -419,6 +419,42 @@ border: 1px solid #555;</string>
               </property>
              </widget>
             </item>
+            <item row="7" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chk_layers_for_all_geom_types">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</string>
+                </property>
+                <property name="text">
+                 <string>Create layers for all configured geometry types</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_13">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
             <item row="8" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_7">
               <property name="rightMargin">
@@ -492,19 +528,6 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="10" column="1">
-             <spacer name="verticalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item row="11" column="1">
              <layout class="QHBoxLayout" name="hzLay_import">
               <property name="topMargin">
@@ -538,41 +561,18 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="7" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_8">
-              <property name="rightMargin">
-               <number>0</number>
+            <item row="10" column="1">
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
               </property>
-              <item>
-               <widget class="QCheckBox" name="chk_layers_for_all_geom_types">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="toolTip">
-                 <string>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</string>
-                </property>
-                <property name="text">
-                 <string>Create layers for all configured geometry types</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_13">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -923,19 +923,6 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="11" column="1">
-             <spacer name="verticalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item row="12" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <property name="leftMargin">
@@ -971,6 +958,267 @@ Might increase import time.</string>
                </widget>
               </item>
              </layout>
+            </item>
+            <item row="11" column="1">
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabFileApi">
+       <attribute name="title">
+        <string>Photo</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0">
+           <layout class="QFormLayout" name="fLayFileApi">
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Import:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_15">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Folder:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QgsFileWidget" name="fileApiDir">
+                <property name="storageMode">
+                 <enum>QgsFileWidget::GetDirectory</enum>
+                </property>
+                <property name="relativeStorage">
+                 <enum>QgsFileWidget::RelativeProject</enum>
+                </property>
+                <property name="options">
+                 <set>QFileDialog::ShowDirsOnly</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="fileApiDirOpen">
+                <property name="maximumSize">
+                 <size>
+                  <width>30</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Open folder path</string>
+                </property>
+                <property name="text">
+                 <string>📂</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="2" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_16">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_8">
+                <property name="text">
+                 <string>Mode:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_17">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="fileApiImportAll">
+                <property name="toolTip">
+                 <string>Import all images from the projects configured image categories in Field Desktop.</string>
+                </property>
+                <property name="text">
+                 <string>All photos</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_18">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="fileApiImportLayers">
+                <property name="toolTip">
+                 <string>Imports images from a selected vector layer. Selection can be narrowed down by selecting features in the attribute table.</string>
+                </property>
+                <property name="text">
+                 <string>Selected layer(s)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_16">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="3" column="1">
+             <widget class="QCheckBox" name="chkImportWorldfiles">
+              <property name="text">
+               <string>Import worldfiles</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <spacer name="horizontalSpacer_14">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnFileImport">
+                <property name="text">
+                 <string>Import</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>Export:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QCheckBox" name="chkExportWorldfiles">
+              <property name="text">
+               <string>Export worldfiles</string>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_14">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <spacer name="horizontalSpacer_15">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnFileExport">
+                <property name="text">
+                 <string>Export</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="5" column="1">
+             <widget class="Line" name="hzLinePhoto">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QCheckBox" name="chkReadCreatorsFromMetadata">
+              <property name="text">
+               <string>readCreatorsFromMetadata</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -1018,6 +1266,11 @@ Might increase import time.</string>
    <class>QgsCheckableComboBox</class>
    <extends>QComboBox</extends>
    <header>qgscheckablecombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsFileWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsfilewidget.h</header>
   </customwidget>
   <customwidget>
    <class>QgsProjectionSelectionWidget</class>

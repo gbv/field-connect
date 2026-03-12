@@ -24,10 +24,13 @@
 
 import io
 import os
+from pathlib import Path
 import re
 import csv
 import json
+import urllib
 import uuid
+import webbrowser
 
 from requests.models import Response
 from urllib.parse import urlparse, ParseResult
@@ -49,7 +52,10 @@ from qgis.core import (
     QgsJsonUtils,
     QgsLayerTreeGroup,
     QgsMapLayer,
+    QgsMapLayerType,
+    QgsMessageLog,
     QgsProject,
+    QgsRasterLayer,
     QgsSettings,
     QgsVectorFileWriter,
     QgsVectorLayer,
@@ -63,16 +69,19 @@ from qgis.utils import iface
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
     QApplication,
+    QComboBox,
     QFileDialog,
     QFormLayout,
     QGraphicsDropShadowEffect,
     QLabel,
     QMessageBox,
+    QPushButton,
     QSizePolicy,
     QStatusBar,
 )
 
 from .modules.api_client import ApiClient
+from .modules.file_api_client import FileApiClient
 from .modules.cldr_loader import CLDRLoader
 from .modules.datetime_transformer import DateTimeTransformer
 from .modules.exceptions import (
@@ -153,6 +162,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.loc = locale
         self.CLDRLoader = CLDRLoader(plugin_dir)
         self.CLDRTranslations = self.CLDRLoader.load_language_for(self.loc)
+
+        self.api = None
+        self.file_api = None
 
         # hide server address input in ui for now
         self.labelServerAddress.hide()
@@ -426,6 +438,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QFormLayout.SpanningRole,
             self.hzLineSettings,
         )
+        self.fLayFileApi.setWidget(
+            self.fLayFileApi.getWidgetPosition(self.hzLinePhoto)[0],
+            QFormLayout.SpanningRole,
+            self.hzLinePhoto,
+        )
         # add fullwidth for category selection
         # self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.selectCats)[0], QFormLayout.SpanningRole, self.selectCats)
 
@@ -453,6 +470,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # export tab
         self.export_update_layer_groups()
+        # file api tab
+        # prevents editing the folder path, but keeps the option to clear the field
+        self.fileApiDir.lineEdit().setFocusPolicy(Qt.NoFocus)
 
         # todo: test loading/saving after object names change
         # load saved settings
@@ -482,6 +502,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.treeRoot.addedChildren.connect(self.export_update_layer_groups)
         self.treeRoot.removedChildren.connect(self.export_update_layer_groups)
         self.treeRoot.nameChanged.connect(self.export_update_layer_groups)
+        # file api
+        # import
+        self.btnFileImport.clicked.connect(self.file_api_import)
+        self.fileApiDirOpen.clicked.connect(self.file_api_open_folder_path)
+        # export
+        self.btnFileExport.clicked.connect(self.file_api_export)
 
     def closeEvent(self, event):  # noqa: N802
         self.closing_plugin.emit()
@@ -661,7 +687,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return lup_layer
 
     # dataSourceUri: .gpkg|layername=.*_CategoryName'
-    def get_category_name_for_export(self, layer: QgsVectorLayer):
+    def get_category_name_for_export(self, layer):
         """Extract the category name from the layer variable 'field_category' which is set on import, or
         try the dataSourceUri as fallback"""
         cat_name = (
@@ -672,10 +698,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return cat_name
 
-    def load_import_categories(self):
+    def get_import_categories(self, sub_cat=None):
         """Loads available categories for import with translated labels
         and their original name as userData."""
-        self.selectCats.clear()
         cats = []
 
         def collect_categories(node):
@@ -701,27 +726,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 for sub in trees:
                     collect_categories(sub)
 
-        categories = self.projectConfig.get("categories")
+        categories = self.projectConfigCategories
+        if sub_cat:
+            match = next((c for c in categories if c.get("item", {}).get("name") == sub_cat), None)
+            if match:
+                categories = match
         if isinstance(categories, dict):
             collect_categories(categories)
         elif isinstance(categories, list):
             for cat in categories:
                 collect_categories(cat)
 
-        if cats:
-            self.selectCats.addItem(self.labels["SELECT_ALL"])
-            for label, name in cats:
-                self.selectCats.addItem(label, name)
-        else:
-            self.selectCats.model().blockSignals(True)
-            self.selectCats.clear()
-            self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
-            self.selectCats.setCurrentIndex(0)
-            self.selectCats.setItemCheckState(0, Qt.Checked)
-            self.selectCats.setEnabled(False)
-            self.selectCats.model().blockSignals(False)
-            return
-        self.selectCats.setEnabled(True)
+        return cats
 
     def collect_field_informations(self, cat):
         """Extract translations and relevant informations from the project config.
@@ -1096,8 +1112,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # create session
         self.api = ApiClient(
             u.password or self.lineEditPassword.text(),
-            f"{scheme}://{hostname}:{port}",
+            f"{scheme}://{hostname}:{port}"
         )
+        self.file_api = FileApiClient(self.api)
+
         project_info = self.api.get("/info")
         if project_info:
             project_info_json = project_info.json()
@@ -1122,7 +1140,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # get config from active project as json
             self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
             self.projectConfigCategories = safe_get(self.projectConfig, "categories")
-            self.load_import_categories()
+
+            self.selectCats.clear()
+            cats = self.get_import_categories()
+            if cats:
+                self.selectCats.addItem(self.labels["SELECT_ALL"])
+                for label, name in cats:
+                    self.selectCats.addItem(label, name)
+            else:
+                self.selectCats.model().blockSignals(True)
+                self.selectCats.clear()
+                self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
+                self.selectCats.setCurrentIndex(0)
+                self.selectCats.setItemCheckState(0, Qt.Checked)
+                self.selectCats.setEnabled(False)
+                self.selectCats.model().blockSignals(False)
+                # return?
+            self.selectCats.setEnabled(True)
 
             self.mB.pushSuccess(self.plugin_name, self.labels["FIELD_CONNECTED"])
             self.sB.showMessage(self.tr("Choose categories and format"))
@@ -2330,3 +2364,259 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return False
 
         return True
+
+    @handle_api_errors
+    def file_api_import(self, *args):
+        # todo: save photo tab settings (folder path, checkboxes)
+        # todo: skip existing images (overwrite checkbox?) but add layers again if not in group
+        # todo: output statistics after import (image count ✓, skipping already existing images etc.)
+        if not self._check_connection_and_project():
+            return
+        folder = self.fileApiDir.filePath()
+        # os.path.exists dir else abort
+        if not os.path.exists(folder):
+            # todo: message
+            return
+        self._import_running = True
+        self.show_or_hide_progress_bar()
+        _import_errors = False
+        step = 0
+        self.progressBar.setValue(step)
+        import_list = {}
+        import_worldfiles = self.chkImportWorldfiles.isChecked()
+
+        self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
+
+        group = self.treeRoot.findGroup(self.active_project)
+        if group is None:
+            group = self.treeRoot.addGroup(self.active_project)
+
+        # import from selected vector layers/features
+        if self.fileApiImportLayers.isChecked():
+            # get list of identifiers from csv export or selected layers
+            layers: list[QgsVectorLayer] = iface.layerTreeView().selectedLayers()
+            if layers:
+                for layer in layers:
+                    selected_features = layer.selectedFeatures()
+                    if not selected_features:
+                        selected_features = layer.getFeatures()
+                    category = self.get_category_name_for_export(layer)
+                    ids = [feature["identifier"] for feature in selected_features]
+
+                    import_list[category] = ids
+            else:
+                # todo: extract function for canceling an import/export
+                self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
+                self._import_running = False
+                self.show_or_hide_progress_bar()
+                return
+        # import from image and subcategories csv export
+        elif self.fileApiImportAll.isChecked():
+            image_cats = self.get_import_categories("Image")  # [(label, name),]
+            for label, cat_name in image_cats:
+                csv_reader = self.get_category_csv(cat_name)
+                ids = [row["identifier"] for row in csv_reader]
+                import_list[cat_name] = ids
+
+        # get identifier count of finished import_list
+        total_import_count = sum(len(v) for v in import_list.values())
+        self.progressBar.setMaximum(total_import_count)
+
+        # import for both modes after collecting identifiers
+        for cat, ids in import_list.items():
+            for identifier in ids:
+                self.progressBar.setFormat("{id} %p%".format(id=identifier))
+                QApplication.processEvents()
+
+                file_path = os.path.splitext(f"{folder}/{identifier}")[0]
+                image_data, image_ext = self.file_api.get_image_data(identifier)
+                final_image_path = ".".join([file_path, image_ext])
+                if import_worldfiles:
+                    worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(identifier, image_ext)
+                    if worldfile_data:
+                        final_worldfile_path = ".".join([file_path, worldfile_ext])
+                        with open(f"{final_worldfile_path}", "w") as f:
+                            f.write(worldfile_data)
+                if image_data:
+                    # todo: only write if file does not exist
+                    with open(f"{final_image_path}", "wb") as f:
+                        f.write(image_data)
+
+                    raster_layer = QgsRasterLayer(final_image_path, identifier)
+                    raster_layer.setCrs(self.project.crs())
+
+                    md = raster_layer.metadata()
+                    md.setCategories([cat])
+
+                    raster_layer.setMetadata(md)
+
+                    if raster_layer.isValid():
+                        self.project.addMapLayer(raster_layer, False)
+                        node = group.insertLayer(-1, raster_layer)
+                        # collapse raster bands
+                        node.setExpanded(False)
+                    else:
+                        _import_errors = True
+
+                step += 1
+                self.progressBar.setValue(step)
+                QApplication.processEvents()
+
+        # todo: more error handling
+        if not _import_errors:
+            self.mB.pushSuccess(self.plugin_name, self.tr("Successfully imported {image_count} images.").format(image_count=total_import_count))
+            self.sB.showMessage(self.tr("Image import successful!"), 10000)
+            QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+
+        self._import_running = False
+
+    # todo: test QgsTask with file_api_export
+    # todo: add cancel buttons for im-/exports (after QgsTask?)
+    @handle_api_errors
+    def file_api_export(self, *args):
+        if not self._check_connection_and_project():
+            return
+        self._export_running = True
+        # ui opts
+        export_worldfiles = self.chkExportWorldfiles.isChecked()
+        read_creators_from_metadata = self.chkReadCreatorsFromMetadata.isChecked()
+
+        raster_layer = None
+        file_export_paths = []
+        selected_layers = iface.layerTreeView().selectedLayers()
+        raster_count = 0  # total number of images processed
+        worldfile_count = 0
+
+        # category dialog
+        locked_category = None
+        categories = self.get_import_categories("Image")
+        categories_values = [name for label, name in categories]
+
+        self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
+
+        for layer in selected_layers:
+            if layer.type() == QgsMapLayerType.RasterLayer:
+                md_categories: list = layer.metadata().categories()
+                match_cat = next((cat for cat in categories_values if cat in md_categories), None)
+                # if there is no category, make a selection box with load_import_categories("Image")
+                if not md_categories or not match_cat:
+                    if locked_category is None:
+                        msg = QMessageBox(self)
+                        msg.setWindowTitle(self.tr("Photo export"))
+                        msg.setText(
+                            self.tr(
+                                "No category found.\n\n"
+                                "Please select the category the image '{image_name}' belongs to."
+                            ).format(image_name=layer.name())
+                        )
+
+                        combo = QComboBox(msg)
+
+                        for label, data in categories:
+                            combo.addItem(label, data)
+
+                        msg.layout().addWidget(combo, 1, 1)
+
+                        use_all_btn = msg.addButton(self.tr("Use for all"), QMessageBox.YesRole)
+                        use_once_btn = msg.addButton(self.tr("Use once"), QMessageBox.AcceptRole)
+                        cancel_btn = msg.addButton(self.tr("Cancel export"), QMessageBox.RejectRole)
+
+                        msg.exec_()
+
+                        clicked = msg.clickedButton()
+                        selected_category = combo.currentData()
+
+                        if clicked == use_all_btn:
+                            category = locked_category
+
+                        elif clicked == use_once_btn:
+                            category = selected_category
+
+                        elif clicked == cancel_btn:
+                            self._export_running = False
+                            self.show_or_hide_progress_bar()
+                            return
+                    # check if category in metadata and add if not
+                    md = layer.metadata()
+                    md_cats = md.categories()
+                    if category not in md_cats:
+                        md.setCategories([category, *md_cats])
+                        layer.setMetadata(md)
+                elif match_cat:
+                    category = match_cat
+                file_export_paths.append(layer.source())
+                raster_count += 1
+
+            elif layer.type() == QgsMapLayerType.VectorLayer:
+                category = self.get_category_name_for_export(layer)
+                selected_features = layer.selectedFeatures()
+                if not selected_features:
+                    selected_features = layer.getFeatures()
+
+                for f in selected_features:
+                    identifier = f["identifier"]
+                    # find raster layer by name - .source() always has an extension
+                    # and could add duplicate images
+                    layers_by_name = self.project.mapLayersByName(identifier)
+                    if layers_by_name:
+                        raster_layer = layers_by_name[0]
+                        raster_count += 1
+                    else:
+                        raster_count += 1
+                        continue
+                    if raster_layer.type() == QgsMapLayerType.RasterLayer:
+                        file_export_paths.append(raster_layer.source())
+
+            # find worldfiles for collected paths
+            if export_worldfiles:
+                for file_path in file_export_paths:
+                    path = Path(file_path)
+                    # todo: extend
+                    # Gültige Dateiendungen sind: .jpg, .jpeg, .png, .tif, .tiff, .wld, .jpgw, .jpegw, .jgw, .pngw, .pgw, .tifw, .tiffw, .tfw
+                    worldfile_candidates = [
+                        path.with_suffix(".jgw"),
+                        path.with_suffix(".pgw"),
+                        path.with_suffix(".tfw"),
+                        path.with_suffix(".wld"),
+                    ]
+                    # only takes the first found - would be replaced anyway
+                    worldfile_path = next((f for f in worldfile_candidates if f.exists()), None)
+                    if worldfile_path:
+                        worldfile_count += 1
+                        file_export_paths.append(str(worldfile_path))
+
+            # print(file_export_paths)
+            # export
+            if file_export_paths:
+                resp = self.file_api.post_images(file_export_paths, category, read_creators_from_metadata)
+
+                result = resp.json()
+                imported_images, imported_worldfiles, messages = result.values()
+
+                msg_content = self.tr("Imported images: {ii}/{rc}, imported worldfiles: {iw}/{wc}.")
+                if messages:
+                    msg_content += " Check the {pn} logs for more information."
+                msg = self.mB.createMessage(
+                    msg_content.format(ii=imported_images, rc=raster_count, iw=imported_worldfiles, wc=worldfile_count, pn=self.plugin_name)
+                )
+                if messages:
+                    button = QPushButton(self.tr("Open Logs"))
+
+                    def open_logs():
+                        iface.openMessageLog(self.plugin_name)
+                    button.clicked.connect(open_logs)
+                    msg.layout().addWidget(button)
+                iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Info, 0)
+
+                for msg in messages:
+                    QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Info)
+
+        self._export_running = False
+
+    def file_api_open_folder_path(self):
+        path = self.fileApiDir.filePath()
+        if path:
+            webbrowser.open("file:///" + urllib.parse.quote(path, safe=':/', encoding='1252'))
+        else:
+            # todo: message
+            return
