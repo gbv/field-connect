@@ -202,7 +202,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "CONNECTION_UNAUTHORIZED": self.tr("Incorrect password."),
             "DESELECT_ALL": self.tr("Deselect all"),
             "FIELD_CONNECTED": self.tr("Connected to Field Desktop"),
-            "FIELD_VERSION_UNSUPPORTED": self.tr("Field Connect requires Field Desktop 3.7.0 or later."),
+            "FIELD_VERSION_UNSUPPORTED": self.tr(
+                "Field Connect requires Field Desktop 3.7.0 or later."
+            ),
             "IMPORT_FAILED": self.tr("Import failed!"),
             "IMPORT_SUCCESS": self.tr("Import successful!"),
             "EXPORT_ERRORS": self.tr("Export finished with errors!"),
@@ -1111,8 +1113,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # create session
         self.api = ApiClient(
-            u.password or self.lineEditPassword.text(),
-            f"{scheme}://{hostname}:{port}"
+            u.password or self.lineEditPassword.text(), f"{scheme}://{hostname}:{port}"
         )
         self.file_api = FileApiClient(self.api)
 
@@ -1127,10 +1128,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             # check for field desktop min version 3.7.0
             m = re.match(r"(\d+)\.(\d+)", self.field_version)
-            major, minor = (map(int, m.groups()))
+            major, minor = map(int, m.groups())
 
             if (major, minor) < (3, 7):
-                self.mB.pushCritical(self.plugin_name, self.labels['FIELD_VERSION_UNSUPPORTED'])
+                self.mB.pushCritical(self.plugin_name, self.labels["FIELD_VERSION_UNSUPPORTED"])
                 return
 
             self.set_connection_enabled(True)
@@ -1710,7 +1711,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if layer.wkbType() != QgsWkbTypes.NoGeometry:
                     layer.renderer().symbol().setOpacity(0.7)
 
-                layer.setDisplayExpression("\"identifier\"")
+                layer.setDisplayExpression('"identifier"')
 
                 if filename:
                     if not filename.lower().endswith(".gpkg"):
@@ -2432,7 +2433,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 image_data, image_ext = self.file_api.get_image_data(identifier)
                 final_image_path = ".".join([file_path, image_ext])
                 if import_worldfiles:
-                    worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(identifier, image_ext)
+                    worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(
+                        identifier, image_ext
+                    )
                     if worldfile_data:
                         final_worldfile_path = ".".join([file_path, worldfile_ext])
                         with open(f"{final_worldfile_path}", "w") as f:
@@ -2464,7 +2467,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # todo: more error handling
         if not _import_errors:
-            self.mB.pushSuccess(self.plugin_name, self.tr("Successfully imported {image_count} images.").format(image_count=total_import_count))
+            self.mB.pushSuccess(
+                self.plugin_name,
+                self.tr("Successfully imported {image_count} images.").format(
+                    image_count=total_import_count
+                ),
+            )
             self.sB.showMessage(self.tr("Image import successful!"), 10000)
             QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
@@ -2519,7 +2527,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         use_all_btn = msg.addButton(self.tr("Use for all"), QMessageBox.YesRole)
                         use_once_btn = msg.addButton(self.tr("Use once"), QMessageBox.AcceptRole)
-                        cancel_btn = msg.addButton(self.tr("Cancel export"), QMessageBox.RejectRole)
+                        cancel_btn = msg.addButton(
+                            self.tr("Cancel export"), QMessageBox.RejectRole
+                        )
 
                         msg.exec_()
 
@@ -2592,7 +2602,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # print(file_export_paths)
         # export
         if file_export_paths:
-            resp = self.file_api.post_images(file_export_paths, category, read_creators_from_metadata)
+            resp = self.file_api.post_images(
+                file_export_paths, category, read_creators_from_metadata
+            )
 
             result = resp.json()
             imported_images, imported_worldfiles, messages = result.values()
@@ -2601,13 +2613,20 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if messages:
                 msg_content += " Check the {pn} logs for more information."
             msg = self.mB.createMessage(
-                msg_content.format(ii=imported_images, rc=raster_count, iw=imported_worldfiles, wc=worldfile_count, pn=self.plugin_name)
+                msg_content.format(
+                    ii=imported_images,
+                    rc=raster_count,
+                    iw=imported_worldfiles,
+                    wc=worldfile_count,
+                    pn=self.plugin_name,
+                )
             )
             if messages:
                 button = QPushButton(self.tr("Open Logs"))
 
                 def open_logs():
                     iface.openMessageLog(self.plugin_name)
+
                 button.clicked.connect(open_logs)
                 msg.layout().addWidget(button)
             iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Info, 0)
@@ -2620,7 +2639,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def file_api_open_folder_path(self):
         path = self.fileApiDir.filePath()
         if path:
-            webbrowser.open("file:///" + urllib.parse.quote(path, safe=':/', encoding='1252'))
+            webbrowser.open("file:///" + urllib.parse.quote(path, safe=":/", encoding="1252"))
         else:
             # todo: message
             return
