@@ -1024,6 +1024,12 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QPushButton" name="fileApiDirOpen">
+                <property name="minimumSize">
+                 <size>
+                  <width>30</width>
+                  <height>30</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>30</width>

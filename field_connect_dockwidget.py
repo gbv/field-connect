@@ -38,6 +38,7 @@ from collections import defaultdict
 
 from qgis.core import (
     Qgis,
+    QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -79,6 +80,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QStatusBar,
 )
+from .workers.file_api_export_task import FileApiExportTask
 
 from .modules.api_client import ApiClient
 from .modules.file_api_client import FileApiClient
@@ -2479,14 +2481,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self._import_running = False
 
-    # todo: test QgsTask with file_api_export
-    # todo: add cancel buttons for im-/exports (after QgsTask?)
-    # todo: progress bar
     @handle_api_errors
     def file_api_export(self, *args):
         if not self._check_connection_and_project():
             return
         self._export_running = True
+        self.show_or_hide_progress_bar()
         # ui opts
         export_worldfiles = self.chkExportWorldfiles.isChecked()
         read_creators_from_metadata = self.chkReadCreatorsFromMetadata.isChecked()
@@ -2605,39 +2605,65 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # print(file_export_paths)
         # export
         if file_export_paths:
-            resp = self.file_api.post_images(
-                file_export_paths, category, read_creators_from_metadata
+            task = FileApiExportTask(
+                f"{self.plugin_name} - Export images",
+                self.file_api,
+                file_export_paths,
+                category,
+                read_creators_from_metadata,
+                raster_count,
+                worldfile_count,
             )
 
-            result = resp.json()
-            imported_images, imported_worldfiles, messages = result.values()
+            task.progressChanged.connect(lambda p: self.progressBar.setValue(int(p)))
 
-            msg_content = self.tr("Exported images: {ii}/{rc}, Exported worldfiles: {iw}/{wc}.")
-            if messages:
-                msg_content += " Check the {pn} logs for more information."
-            msg = self.mB.createMessage(
-                msg_content.format(
-                    ii=imported_images,
-                    rc=raster_count,
-                    iw=imported_worldfiles,
-                    wc=worldfile_count,
-                    pn=self.plugin_name,
+            def update_current(name):
+                self.progressBar.setFormat("{id} %p%".format(id=name))
+
+            task.progress_text.connect(update_current)
+
+            def task_finished(result):
+                self._export_running = False
+                QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+
+                if not result:
+                    return
+
+                imported_images, imported_worldfiles, messages = task.result.values()
+
+                msg_content = self.tr(
+                    "Exported images: {ii}/{rc}, Exported worldfiles: {iw}/{wc}."
                 )
-            )
-            if messages:
-                button = QPushButton(self.tr("Open Logs"))
 
-                def open_logs():
-                    iface.openMessageLog(self.plugin_name)
+                if messages:
+                    msg_content += " Check the {pn} logs for more information."
 
-                button.clicked.connect(open_logs)
-                msg.layout().addWidget(button)
-            iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Info, 0)
+                msg = self.mB.createMessage(
+                    msg_content.format(
+                        ii=imported_images,
+                        rc=raster_count,
+                        iw=imported_worldfiles,
+                        wc=worldfile_count,
+                        pn=self.plugin_name,
+                    )
+                )
 
-            for msg in messages:
-                QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Info)
+                if messages:
+                    button = QPushButton(self.tr("Open Logs"))
 
-        self._export_running = False
+                    def open_logs():
+                        iface.openMessageLog(self.plugin_name)
+
+                    button.clicked.connect(open_logs)
+                    msg.layout().addWidget(button)
+
+                iface.messageBar().pushWidget(msg, Qgis.Info, 0)
+
+                for m in messages:
+                    QgsMessageLog.logMessage(m, self.plugin_name, Qgis.Info)
+
+            task.export_finished.connect(task_finished)
+            QgsApplication.taskManager().addTask(task)
 
     def file_api_open_folder_path(self):
         path = self.fileApiDir.filePath()
