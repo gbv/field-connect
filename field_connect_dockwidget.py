@@ -2567,49 +2567,53 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if raster_layer.type() == QgsMapLayerType.RasterLayer:
                         file_export_paths.append(raster_layer.source())
 
-            # find worldfiles for collected paths
-            if export_worldfiles:
-                for file_path in file_export_paths:
-                    path = Path(file_path)
-                    # todo: extend
-                    # Gültige Dateiendungen sind: .jpg, .jpeg, .png, .tif, .tiff, .wld, .jpgw, .jpegw, .jgw, .pngw, .pgw, .tifw, .tiffw, .tfw
-                    worldfile_candidates = [
-                        path.with_suffix(".jgw"),
-                        path.with_suffix(".pgw"),
-                        path.with_suffix(".tfw"),
-                        path.with_suffix(".wld"),
-                    ]
-                    # only takes the first found - would be replaced anyway
-                    worldfile_path = next((f for f in worldfile_candidates if f.exists()), None)
-                    if worldfile_path:
-                        worldfile_count += 1
-                        file_export_paths.append(str(worldfile_path))
+        collected_paths = file_export_paths.copy()
+        # find worldfiles for collected paths
+        if export_worldfiles:
+            for file_path in collected_paths:
+                path = Path(file_path)
+                worldfile_candidates = [
+                    path.with_suffix(".jgw"),
+                    path.with_suffix(".jpgw"),
+                    path.with_suffix(".jpegw"),
+                    path.with_suffix(".pgw"),
+                    path.with_suffix(".pngw"),
+                    path.with_suffix(".tfw"),
+                    path.with_suffix(".tifw"),
+                    path.with_suffix(".tiffw"),
+                    path.with_suffix(".wld"),
+                ]
+                # only takes the first found - would be replaced anyway
+                worldfile_path = next((f for f in worldfile_candidates if f.exists()), None)
+                if worldfile_path:
+                    worldfile_count += 1
+                    file_export_paths.append(str(worldfile_path))
 
-            # print(file_export_paths)
-            # export
-            if file_export_paths:
-                resp = self.file_api.post_images(file_export_paths, category, read_creators_from_metadata)
+        # print(file_export_paths)
+        # export
+        if file_export_paths:
+            resp = self.file_api.post_images(file_export_paths, category, read_creators_from_metadata)
 
-                result = resp.json()
-                imported_images, imported_worldfiles, messages = result.values()
+            result = resp.json()
+            imported_images, imported_worldfiles, messages = result.values()
 
-                msg_content = self.tr("Imported images: {ii}/{rc}, imported worldfiles: {iw}/{wc}.")
-                if messages:
-                    msg_content += " Check the {pn} logs for more information."
-                msg = self.mB.createMessage(
-                    msg_content.format(ii=imported_images, rc=raster_count, iw=imported_worldfiles, wc=worldfile_count, pn=self.plugin_name)
-                )
-                if messages:
-                    button = QPushButton(self.tr("Open Logs"))
+            msg_content = self.tr("Exported images: {ii}/{rc}, Exported worldfiles: {iw}/{wc}.")
+            if messages:
+                msg_content += " Check the {pn} logs for more information."
+            msg = self.mB.createMessage(
+                msg_content.format(ii=imported_images, rc=raster_count, iw=imported_worldfiles, wc=worldfile_count, pn=self.plugin_name)
+            )
+            if messages:
+                button = QPushButton(self.tr("Open Logs"))
 
-                    def open_logs():
-                        iface.openMessageLog(self.plugin_name)
-                    button.clicked.connect(open_logs)
-                    msg.layout().addWidget(button)
-                iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Info, 0)
+                def open_logs():
+                    iface.openMessageLog(self.plugin_name)
+                button.clicked.connect(open_logs)
+                msg.layout().addWidget(button)
+            iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Info, 0)
 
-                for msg in messages:
-                    QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Info)
+            for msg in messages:
+                QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Info)
 
         self._export_running = False
 
