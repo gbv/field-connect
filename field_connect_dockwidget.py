@@ -2379,6 +2379,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # todo: message
             return
         self._import_running = True
+        self.progressBar.resetFormat()
         self.show_or_hide_progress_bar()
         _import_errors = False
         step = 0
@@ -2480,6 +2481,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     # todo: test QgsTask with file_api_export
     # todo: add cancel buttons for im-/exports (after QgsTask?)
+    # todo: progress bar
     @handle_api_errors
     def file_api_export(self, *args):
         if not self._check_connection_and_project():
@@ -2537,7 +2539,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         selected_category = combo.currentData()
 
                         if clicked == use_all_btn:
-                            category = locked_category
+                            category = combo.currentData()
+                            locked_category = category
 
                         elif clicked == use_once_btn:
                             category = selected_category
