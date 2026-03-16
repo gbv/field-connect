@@ -393,6 +393,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     ),
                 },
             },
+            "unspecifiedLanguage": {
+                "label": self.tr("Unspecified Language"),
+            },
+            "scanCode": {
+                "label": self.tr("QR Code"),
+            },
         }
         # link identical translations
         # fmt: off
