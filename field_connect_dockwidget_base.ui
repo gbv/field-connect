@@ -165,6 +165,13 @@ border: 1px solid #555;</string>
         </property>
        </widget>
       </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="labelFieldProject">
+        <property name="text">
+         <string>Field Project:</string>
+        </property>
+       </widget>
+      </item>
       <item row="6" column="1">
        <widget class="Line" name="hzLineSettings">
         <property name="sizePolicy">
@@ -175,20 +182,6 @@ border: 1px solid #555;</string>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="labelSettings">
-        <property name="text">
-         <string>Settings</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="labelFieldProject">
-        <property name="text">
-         <string>Field Project:</string>
         </property>
        </widget>
       </item>
@@ -215,7 +208,7 @@ border: 1px solid #555;</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabImport">
        <attribute name="title">
@@ -1011,6 +1004,9 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QgsFileWidget" name="fileApiDir">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="storageMode">
                  <enum>QgsFileWidget::GetDirectory</enum>
                 </property>
@@ -1024,6 +1020,9 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QPushButton" name="fileApiDirOpen">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="minimumSize">
                  <size>
                   <width>30</width>
@@ -1040,7 +1039,7 @@ Might increase import time.</string>
                  <string>Open folder path</string>
                 </property>
                 <property name="text">
-                 <string>📂</string>
+                 <string/>
                 </property>
                </widget>
               </item>
@@ -1073,11 +1072,17 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QRadioButton" name="fileApiImportAll">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="toolTip">
                  <string>Import all images from the projects configured image categories in Field Desktop.</string>
                 </property>
                 <property name="text">
                  <string>All photos</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1096,6 +1101,9 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QRadioButton" name="fileApiImportLayers">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="toolTip">
                  <string>Imports images from a selected vector layer. Selection can be narrowed down by selecting features in the attribute table.</string>
                 </property>
@@ -1121,6 +1129,9 @@ Might increase import time.</string>
             </item>
             <item row="3" column="1">
              <widget class="QCheckBox" name="chkImportWorldfiles">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Import worldfiles</string>
               </property>
@@ -1152,6 +1163,9 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QPushButton" name="btnFileImport">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Import</string>
                 </property>
@@ -1168,6 +1182,9 @@ Might increase import time.</string>
             </item>
             <item row="7" column="1">
              <widget class="QCheckBox" name="chkExportWorldfiles">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Export worldfiles</string>
               </property>
@@ -1193,6 +1210,9 @@ Might increase import time.</string>
               </item>
               <item>
                <widget class="QPushButton" name="btnFileExport">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Export</string>
                 </property>
@@ -1221,6 +1241,9 @@ Might increase import time.</string>
             </item>
             <item row="8" column="1">
              <widget class="QCheckBox" name="chkReadCreatorsFromMetadata">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>readCreatorsFromMetadata</string>
               </property>
