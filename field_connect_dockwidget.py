@@ -477,6 +477,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # file api tab
         # prevents editing the folder path, but keeps the option to clear the field
         self.fileApiDir.lineEdit().setFocusPolicy(Qt.NoFocus)
+        self.fileApiDirOpen.setIcon(QgsApplication.getThemeIcon("mActionFileOpen.svg"))
 
         # todo: test loading/saving after object names change
         # load saved settings
