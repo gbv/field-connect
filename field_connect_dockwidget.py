@@ -1412,7 +1412,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 parts.append(part)
                                 continue
 
-                            if len(part) == 2 and part in field_informations:
+                            if (len(part) == 2 or part == "unspecifiedLanguage") and part in field_informations:
                                 parts.append(
                                     safe_get(field_informations, part, "label", default=part)
                                 )
