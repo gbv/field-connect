@@ -1086,6 +1086,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnExport.setEnabled(on_off)
         self.selectExportTz.setEnabled(on_off)
         self.selectExportTzReset.setEnabled(on_off)
+        # file api tab
+        self.fileApiDir.setEnabled(on_off)
+        self.fileApiDirOpen.setEnabled(on_off)
+        self.fileApiImportAll.setEnabled(on_off)
+        self.fileApiImportLayers.setEnabled(on_off)
+        self.chkImportWorldfiles.setEnabled(on_off)
+        self.btnFileImport.setEnabled(on_off)
+        self.chkExportWorldfiles.setEnabled(on_off)
+        self.chkReadCreatorsFromMetadata.setEnabled(on_off)
+        self.btnFileExport.setEnabled(on_off)
         # on or off only
         if on_off:
             self.btnConnect.setText(self.tr("Disconnect"))
