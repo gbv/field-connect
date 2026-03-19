@@ -539,7 +539,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1820"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1470"/>
@@ -634,12 +634,12 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="397"/>
         <source>Unspecified language</source>
-        <translation type="unfinished"></translation>
+        <translation>Ohne Sprachangabe</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="400"/>
         <source>QR code</source>
-        <translation type="unfinished"></translation>
+        <translation>QR-Code</translation>
     </message>
 </context>
 <context>
@@ -842,7 +842,7 @@
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="791"/>
         <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Speichert den Layer beim Export. Nützlich in Kombination mit der Option &quot;Nur ungespeicherte Objekte exportieren&quot;.</translation>
     </message>
 </context>
 </TS>
