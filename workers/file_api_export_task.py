@@ -1,6 +1,6 @@
 from pathlib import Path
 from qgis.core import QgsTask
-from PyQt5.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import pyqtSignal
 
 
 class FileApiExportTask(QgsTask):
@@ -17,7 +17,7 @@ class FileApiExportTask(QgsTask):
         raster_count,
         worldfile_count,
     ):
-        super().__init__(description, QgsTask.CanCancel)
+        super().__init__(description, QgsTask.Flag.CanCancel)
 
         self.file_api = file_api
         self.file_export_paths = file_export_paths

@@ -450,7 +450,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         )
         self.fLayFileApi.setWidget(
             self.fLayFileApi.getWidgetPosition(self.hzLinePhoto)[0],
-            QFormLayout.SpanningRole,
+            QFormLayout.ItemRole.SpanningRole,
             self.hzLinePhoto,
         )
         # add fullwidth for category selection
@@ -482,7 +482,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.export_update_layer_groups()
         # file api tab
         # prevents editing the folder path, but keeps the option to clear the field
-        self.fileApiDir.lineEdit().setFocusPolicy(Qt.NoFocus)
+        self.fileApiDir.lineEdit().setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.fileApiDirOpen.setIcon(QgsApplication.getThemeIcon("mActionFileOpen.svg"))
 
         # todo: test loading/saving after object names change
@@ -1174,7 +1174,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.selectCats.clear()
                 self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
                 self.selectCats.setCurrentIndex(0)
-                self.selectCats.setItemCheckState(0, Qt.Checked)
+                self.selectCats.setItemCheckState(0, Qt.CheckState.Checked)
                 self.selectCats.setEnabled(False)
                 self.selectCats.model().blockSignals(False)
                 # return?
