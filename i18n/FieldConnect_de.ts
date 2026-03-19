@@ -137,37 +137,37 @@
         <translation>Keine Gruppen verfügbar</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1134"/>
+        <location filename="../field_connect_dockwidget.py" line="1131"/>
         <source>Choose categories and format</source>
         <translation>Kategorien und Format auswählen</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1218"/>
+        <location filename="../field_connect_dockwidget.py" line="1215"/>
         <source>Save GeoPackage as...</source>
         <translation>GeoPackage speichern als...</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1878"/>
+        <location filename="../field_connect_dockwidget.py" line="1873"/>
         <source>Coordinate transformation</source>
         <translation>Koordinatentransformation</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1879"/>
+        <location filename="../field_connect_dockwidget.py" line="1874"/>
         <source>The layer CRS differs from the target CRS. Do you want to transform coordinates?</source>
         <translation>Das CRS des Layers unterscheidet sich vom Ziel-CRS. Möchten Sie die Koordinaten transformieren?</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1886"/>
+        <location filename="../field_connect_dockwidget.py" line="1881"/>
         <source>Yes to all</source>
         <translation>Ja zu allem</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1887"/>
+        <location filename="../field_connect_dockwidget.py" line="1882"/>
         <source>No to all</source>
         <translation>Nein zu allem</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1888"/>
+        <location filename="../field_connect_dockwidget.py" line="1883"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
     </message>
@@ -207,12 +207,12 @@
         <translation>Bereit zum Verbinden</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1077"/>
+        <location filename="../field_connect_dockwidget.py" line="1074"/>
         <source>Disconnect</source>
         <translation>Verbindung beenden</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1080"/>
+        <location filename="../field_connect_dockwidget.py" line="1077"/>
         <source>Connect</source>
         <translation>Verbinden</translation>
     </message>
@@ -452,12 +452,12 @@
         <translation>Abbildung</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1290"/>
+        <location filename="../field_connect_dockwidget.py" line="1286"/>
         <source>Importing category {label} %p%</source>
         <translation>Importiere Kategorie {label} %p%</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1755"/>
+        <location filename="../field_connect_dockwidget.py" line="1750"/>
         <source>Style saved by the Field Connect plugin</source>
         <translation>Style wurde vom &quot;Field Connect&quot;-Plugin gesichert</translation>
     </message>
@@ -467,7 +467,7 @@
         <translation>Export mit Fehlern beendet!</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2028"/>
+        <location filename="../field_connect_dockwidget.py" line="2023"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation>Layer {layer} konnte nicht gespeichert werden: {errors}</translation>
     </message>
@@ -537,12 +537,12 @@
         <translation>m</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1825"/>
+        <location filename="../field_connect_dockwidget.py" line="1820"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
         <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1474"/>
+        <location filename="../field_connect_dockwidget.py" line="1470"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
         <translation>Unterstützte Datumsformate: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</translation>
     </message>
@@ -597,12 +597,12 @@
         <translation>Naturwissenschaftlich</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2055"/>
+        <location filename="../field_connect_dockwidget.py" line="2050"/>
         <source>Exporting category {cat} (1/2) %p%</source>
         <translation>Exportiere Kategorie {cat} (1/2) %p%</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2094"/>
+        <location filename="../field_connect_dockwidget.py" line="2089"/>
         <source>Exporting category {cat} (2/2) %p%</source>
         <translation>Exportiere Kategorie {cat} (2/2) %p%</translation>
     </message>
@@ -617,7 +617,7 @@
         <translation>Ungültiger EPSG-Code in den Projekteigenschaften: {epsgId}. Das CRS des QGIS-Projekts wird verwendet.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2130"/>
+        <location filename="../field_connect_dockwidget.py" line="2125"/>
         <source>Exporting geodata %p%</source>
         <translation>Exportiere Geodaten %p%</translation>
     </message>
@@ -627,18 +627,18 @@
         <translation>Field Connect setzt Field Desktop 3.7.0 oder höher voraus.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1153"/>
+        <location filename="../field_connect_dockwidget.py" line="1150"/>
         <source>Select at least one category to continue.</source>
         <translation>Wählen Sie mindestens eine Kategorie aus, um fortzufahren.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="397"/>
-        <source>Unspecified Language</source>
+        <source>Unspecified language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="400"/>
-        <source>QR Code</source>
+        <source>QR code</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -660,7 +660,7 @@
         <translation>Field-Version:</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="528"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="527"/>
         <source>Import</source>
         <translation>Import</translation>
     </message>
@@ -670,7 +670,7 @@
         <translation>Format:</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="962"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="925"/>
         <source>Export</source>
         <translation>Export</translation>
     </message>
@@ -710,12 +710,12 @@
         <translation>Temporär</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="597"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="560"/>
         <source>Layer group:</source>
         <translation>Layer-Gruppe:</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="705"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="668"/>
         <source>Target CRS:</source>
         <translation>Ziel-CRS:</translation>
     </message>
@@ -735,126 +735,114 @@
         <translation>GeoPackage</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="430"/>
-        <source>Load labels and descriptions</source>
-        <translation>Bezeichnungen und Beschreibungen laden</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="466"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="465"/>
         <source>Combine hierarchical relations</source>
         <translation>Hierarchische Relationen zusammenfassen</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="648"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="611"/>
         <source>Export all layers in the selected layer group</source>
         <translation>Alle Layer der ausgewählten Layer-Gruppe exportieren</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="651"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="614"/>
         <source>Group</source>
         <translation>Gruppe</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="677"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="640"/>
         <source>Only export the layer selected in the layer tree</source>
         <translation>Ausschließlich den im Layer-Baum ausgewählten Layer exportieren</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="789"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="752"/>
         <source>Only export added or edited features in the edit buffer. Layers need to be in edit mode and unsaved.</source>
         <translation>Ausschließlich neu hinzugefügte oder bearbeitete Objekte exportieren. Dazu müssen sich die Layer im Editierungsmodus befinden und die Änderungen noch nicht gespeichert worden sein.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="900"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="863"/>
         <source>Permit field deletions</source>
         <translation>Löschen von Feldern erlauben</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="867"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="830"/>
         <source>Ignore unconfigured fields</source>
         <translation>Nicht konfigurierte Felder ignorieren</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="617"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="580"/>
         <source>Mode:</source>
         <translation>Modus:</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="897"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="860"/>
         <source>If this option is enabled, fields can not only be changed but also be deleted. Any fields (including relations) for which the corresponding field in the attribute table is empty will be deleted. Fields not listed in the attribute table remain unchanged.</source>
         <translation>Wenn diese Option aktiviert ist, können Felder nicht nur bearbeitet, sondern auch gelöscht werden. Gelöscht werden alle Felder (inklusive Relationen), für die das entsprechende Feld in der Attributtabelle leer ist. Nicht in der Attributtabelle gelistete Felder bleiben unverändert.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="864"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="827"/>
         <source>If this option is enabled, the export process will not be aborted if unconfigured fields are encountered. Instead, data in unconfigured fields will be ignored.</source>
         <translation>Wenn diese Option aktiviert ist, wird der Exportprozess nicht abgebrochen, sobald unkonfigurierte Felder gefunden werden. Stattdessen werden Daten in unkonfigurierten Feldern ignoriert.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="463"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="462"/>
         <source>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</source>
         <translation>Wenn diese Option aktiviert ist, werden die hierarchischen Relationen zur vereinfachten Relation &quot;isChildOf&quot; zusammengefasst, mit der die unmittelbar übergeordnete Ressource angegeben wird. Diese Option sollte in der Regel aktiviert bleiben.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="426"/>
-        <source>If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.
-Might increase import time.</source>
-        <translation>Wenn diese Option aktiviert ist, werden Feldbezeichnungen und -beschreibungen aus der Field-Projektkonfiguration in die Attributtabelle geladen.
-Dies kann die Importdauer verlängern.</translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="680"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="643"/>
         <source>Selected layer(s)</source>
         <translation>Ausgewählte(r) Layer</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="743"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="706"/>
         <source>Timezone (IANA format, e.g. Europe/Berlin)</source>
         <translation>Zeitzone (IANA-Format, z. B. Europe/Berlin)</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="762"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="725"/>
         <source>Reset to system timezone</source>
         <translation>Auf System-Zeitzone zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="765"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="728"/>
         <source>↺</source>
         <translation>↺</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="719"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="682"/>
         <source>Timezone:</source>
         <translation>Zeitzone:</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="831"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="794"/>
         <source>Save unsaved changes</source>
         <translation>Ungespeicherte Änderungen speichern</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="795"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="758"/>
         <source>Export only unsaved features</source>
         <translation>Nur ungespeicherte Objekte exportieren</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="545"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="426"/>
         <source>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</source>
         <translation>Wenn diese Option aktiviert ist, werden Layer für sämtliche Geometrietypen, die für die entsprechende Kategorie konfiguriert sind, angelegt, unabhängig davon ob sie Objekte enthalten oder nicht.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="548"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="429"/>
         <source>Create layers for all configured geometry types</source>
         <translation>Layer für alle konfigurierten Geometrietypen anlegen</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="774"/>
+        <location filename="../field_connect_dockwidget_base.ui" line="737"/>
         <source>Options:</source>
         <translation>Optionen:</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget_base.ui" line="828"/>
-        <source>Saves the layer after the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation>Speichert den Layer nach dem Export. Nützlich in Kombination mit der Option &quot;Nur ungespeicherte Objekte exportieren&quot;.</translation>
+        <location filename="../field_connect_dockwidget_base.ui" line="791"/>
+        <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>
