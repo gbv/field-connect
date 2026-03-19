@@ -449,43 +449,6 @@ border: 1px solid #555;</string>
              </layout>
             </item>
             <item row="8" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QCheckBox" name="chkSetAliases">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="toolTip">
-                 <string>If this option is enabled, field labels and descriptions are loaded from the Field project configuration into the attribute table.
-Might increase import time.</string>
-                </property>
-                <property name="text">
-                 <string>Load labels and descriptions</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="9" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <property name="leftMargin">
                <number>0</number>
@@ -521,7 +484,20 @@ Might increase import time.</string>
               </item>
              </layout>
             </item>
-            <item row="11" column="1">
+            <item row="9" column="1">
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="10" column="1">
              <layout class="QHBoxLayout" name="hzLay_import">
               <property name="topMargin">
                <number>0</number>
@@ -553,19 +529,6 @@ Might increase import time.</string>
                </widget>
               </item>
              </layout>
-            </item>
-            <item row="10" column="1">
-             <spacer name="verticalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>10</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </item>
@@ -825,7 +788,7 @@ Might increase import time.</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>Saves the layer after the export. Useful in combination with the option &quot;Export only unsaved features&quot;</string>
+                 <string>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</string>
                 </property>
                 <property name="text">
                  <string>Save unsaved changes</string>

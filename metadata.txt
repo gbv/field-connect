@@ -4,7 +4,8 @@
 
 [general]
 name=Field Connect
-qgisMinimumVersion=3.36
+qgisMinimumVersion=3.44
+qgisMaximumVersion=4.99
 description=Connects to Field Desktop
 version=0.1
 author=Oliver Zapiec
