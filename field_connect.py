@@ -226,7 +226,7 @@ class FieldConnect:
             self.dockwidget.closing_plugin.connect(self.on_close_plugin)
 
             # show the dockwidget
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
         else:
             # save settings on toggle

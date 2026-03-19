@@ -60,8 +60,8 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QMetaType, QTimeZone, QTimer, pyqtSignal
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import (
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
     QFormLayout,
@@ -190,7 +190,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "CONNECTION_UNAUTHORIZED": self.tr("Incorrect password."),
             "DESELECT_ALL": self.tr("Deselect all"),
             "FIELD_CONNECTED": self.tr("Connected to Field Desktop"),
-            "FIELD_VERSION_UNSUPPORTED": self.tr("Field Connect requires Field Desktop 3.7.0 or later."),
+            "FIELD_VERSION_UNSUPPORTED": self.tr(
+                "Field Connect requires Field Desktop 3.7.0 or later."
+            ),
             "IMPORT_FAILED": self.tr("Import failed!"),
             "IMPORT_SUCCESS": self.tr("Import successful!"),
             "EXPORT_ERRORS": self.tr("Export finished with errors!"),
@@ -429,7 +431,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.setMinimumSize(0, 0)
         self.formLayout.setWidget(
             self.formLayout.getWidgetPosition(self.hzLineSettings)[0],
-            QFormLayout.SpanningRole,
+            QFormLayout.ItemRole.SpanningRole,
             self.hzLineSettings,
         )
         # add fullwidth for category selection
@@ -453,10 +455,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.set_connection_status()
         self.mB: QgsMessageBar = iface.messageBar()
         self.sB = QStatusBar()
-        self.sB.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.sB.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.sB.showMessage(self.tr("Ready to connect"))
         self.dockWidgetContents.layout().addWidget(self.sB)
-        self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         # export tab
         self.export_update_layer_groups()
 
@@ -594,18 +596,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         }
         for k, v in d.items():
             row = self.formLayout.getWidgetPosition(k)[0]
-            w = self.formLayout.itemAt(row, QFormLayout.FieldRole)
+            w = self.formLayout.itemAt(row, QFormLayout.ItemRole.FieldRole)
             if w:
                 self.formLayout.removeWidget(w.widget())
             # k.setVisible(not k.isVisible())
             policy = k.sizePolicy()
             # only hide if disconnected
-            if policy.horizontalPolicy() == QSizePolicy.Preferred and not self.connected:
-                k.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+            if policy.horizontalPolicy() == QSizePolicy.Policy.Preferred and not self.connected:
+                k.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
             elif self.connected:
                 label = QLabel(v)
-                self.formLayout.setWidget(row, QFormLayout.FieldRole, label)
-                k.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+                self.formLayout.setWidget(row, QFormLayout.ItemRole.FieldRole, label)
+                k.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
 
     # for de-/selecting items in the category field
     def handle_category_list(self, item):
@@ -618,14 +620,19 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for i in range(1, self.selectCats.count()):
                 mdl.item(i).setCheckState(state)
             item.setText(
-                self.labels["DESELECT_ALL"] if state == Qt.Checked else self.labels["SELECT_ALL"]
+                self.labels["DESELECT_ALL"]
+                if state == Qt.CheckState.Checked
+                else self.labels["SELECT_ALL"]
             )
         else:
             # update the first item to reflect whether all other items are checked
             all_checked = all(
-                mdl.item(i).checkState() == Qt.Checked for i in range(1, self.selectCats.count())
+                mdl.item(i).checkState() == Qt.CheckState.Checked
+                for i in range(1, self.selectCats.count())
             )
-            mdl.item(0).setCheckState(Qt.Checked if all_checked else Qt.Unchecked)
+            mdl.item(0).setCheckState(
+                Qt.CheckState.Checked if all_checked else Qt.CheckState.Unchecked
+            )
             mdl.item(0).setText(
                 self.labels["DESELECT_ALL"] if all_checked else self.labels["SELECT_ALL"]
             )
@@ -651,10 +658,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             fields = QgsFields()
             # fields.append(QgsField('id', QMetaType.Int))
-            fields.append(QgsField("group_id", QMetaType.QString))
-            fields.append(QgsField("key", QMetaType.QString))
-            fields.append(QgsField("value", QMetaType.QString))
-            fields.append(QgsField("description", QMetaType.QString))
+            fields.append(QgsField("group_id", QMetaType.Type.QString))
+            fields.append(QgsField("key", QMetaType.Type.QString))
+            fields.append(QgsField("value", QMetaType.Type.QString))
+            fields.append(QgsField("description", QMetaType.Type.QString))
 
             lup_layer = QgsVectorLayer(
                 "None", f"{self.active_project}_lookup", "memory"
@@ -723,7 +730,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectCats.clear()
             self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
             self.selectCats.setCurrentIndex(0)
-            self.selectCats.setItemCheckState(0, Qt.Checked)
+            self.selectCats.setItemCheckState(0, Qt.CheckState.Checked)
             self.selectCats.setEnabled(False)
             self.selectCats.model().blockSignals(False)
             return
@@ -1112,10 +1119,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             # check for field desktop min version 3.7.0
             m = re.match(r"(\d+)\.(\d+)", self.field_version)
-            major, minor = (map(int, m.groups()))
+            major, minor = map(int, m.groups())
 
             if (major, minor) < (3, 7):
-                self.mB.pushCritical(self.plugin_name, self.labels['FIELD_VERSION_UNSUPPORTED'])
+                self.mB.pushCritical(self.plugin_name, self.labels["FIELD_VERSION_UNSUPPORTED"])
                 return
 
             self.set_connection_enabled(True)
@@ -1304,7 +1311,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # create fields here for reuse
             fields = QgsFields()
             for col in csv_header:
-                fields.append(QgsField(col, QMetaType.QString))
+                fields.append(QgsField(col, QMetaType.Type.QString))
 
             geometry_info = field_informations.get("geometry")
 
@@ -1385,9 +1392,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     fname = field.name()
                     f_idx = layer.fields().indexFromName(fname)
                     split = fname.split(".")  # dating 0 begin inputType
-                    input_type = safe_get(
-                        field_informations, split[0], "inputType", default=""
-                    )
+                    input_type = safe_get(field_informations, split[0], "inputType", default="")
                     # print(inputType)
                     date_config = safe_get(
                         field_informations, split[0], "dateConfiguration", default={}
@@ -1408,10 +1413,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             parts.append(part)
                             continue
 
-                        if (len(part) == 2 or part == "unspecifiedLanguage") and part in field_informations:
-                            parts.append(
-                                safe_get(field_informations, part, "label", default=part)
-                            )
+                        if (
+                            len(part) == 2 or part == "unspecifiedLanguage"
+                        ) and part in field_informations:
+                            parts.append(safe_get(field_informations, part, "label", default=part))
                             paths.append(part)
                             continue
 
@@ -1443,9 +1448,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 )
                             )
                         else:
-                            look_up = safe_get(
-                                field_informations, *paths, "label", default=part
-                            )
+                            look_up = safe_get(field_informations, *paths, "label", default=part)
                             if look_up:
                                 parts.append(look_up)
 
@@ -1607,23 +1610,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             )
                     elif input_type == "volume":
                         if "inputUnit" in split:
-                            setup = QgsEditorWidgetSetup(
-                                "ValueMap", valuemaps[":volInputUnit"]
-                            )
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":volInputUnit"])
                         elif "isImprecise" in split:
                             setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
                     elif input_type == "weight":
                         if "inputUnit" in split:
-                            setup = QgsEditorWidgetSetup(
-                                "ValueMap", valuemaps[":weightInputUnit"]
-                            )
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":weightInputUnit"])
                         elif "isImprecise" in split:
                             setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
                     elif input_type == "dimension":
                         if "inputUnit" in split:
-                            setup = QgsEditorWidgetSetup(
-                                "ValueMap", valuemaps[":dimInputUnit"]
-                            )
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":dimInputUnit"])
                         if "isImprecise" in split:
                             setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
 
@@ -1649,11 +1646,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     }
 
                     for base, sub in lup.items():
-                        if (
-                            base in valuemaps
-                            and base in split
-                            and any(s in split for s in sub)
-                        ):
+                        if base in valuemaps and base in split and any(s in split for s in sub):
                             setup = QgsEditorWidgetSetup("ValueMap", valuemaps[base])
                             layer.setEditorWidgetSetup(f_idx, setup)
                             break
@@ -1675,10 +1668,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                 # apply layer properties
                 # change opacity
-                if layer.wkbType() != QgsWkbTypes.NoGeometry:
+                if layer.wkbType() != QgsWkbTypes.Type.NoGeometry:
                     layer.renderer().symbol().setOpacity(0.7)
 
-                layer.setDisplayExpression("\"identifier\"")
+                layer.setDisplayExpression('"identifier"')
 
                 if filename:
                     if not filename.lower().endswith(".gpkg"):
@@ -1695,9 +1688,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     # CreateOrOverwriteFile needed first, after that CreateOrOverwriteLayer works
                     if not os.path.exists(filename):
-                        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+                        options.actionOnExistingFile = (
+                            QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
+                        )
                     else:
-                        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                        options.actionOnExistingFile = (
+                            QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
+                        )
 
                     error_code, error_message, new_filename, new_layer = (
                         QgsVectorFileWriter.writeAsVectorFormatV3(
@@ -1752,7 +1749,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.tr("Style saved by the Field Connect plugin"),
                     True,
                     None,
-                    QgsMapLayer.AllStyleCategories,
+                    QgsMapLayer.StyleCategory.AllStyleCategories,
                 )
             self.progressBar.setValue(i + 1)
             QApplication.processEvents()
@@ -1766,7 +1763,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.project.addMapLayer(lup_layer_temp, False)
                 self.treeRoot.insertLayer(0, lup_layer_temp)
             if filename and not existing_lup_layer:
-                options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                options.actionOnExistingFile = (
+                    QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
+                )
                 options.layerName = lup_layer_name
                 QgsVectorFileWriter.writeAsVectorFormatV3(
                     lup_layer_temp, filename, transform_context, options
@@ -1876,13 +1875,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             "The layer CRS differs from the target CRS. Do you want to transform coordinates?"
                         )
                     )
-                    msg.setIcon(QMessageBox.Question)
+                    msg.setIcon(QMessageBox.Icon.Question)
 
-                    yes_button = msg.addButton(self.tr("Yes to all"), QMessageBox.YesRole)
-                    no_button = msg.addButton(self.tr("No to all"), QMessageBox.NoRole)
-                    cancel_button = msg.addButton(self.tr("Cancel"), QMessageBox.RejectRole)
+                    yes_button = msg.addButton(
+                        self.tr("Yes to all"), QMessageBox.ButtonRole.YesRole
+                    )
+                    no_button = msg.addButton(self.tr("No to all"), QMessageBox.ButtonRole.NoRole)
+                    cancel_button = msg.addButton(
+                        self.tr("Cancel"), QMessageBox.ButtonRole.RejectRole
+                    )
 
-                    msg.exec_()
+                    msg.exec()
                     clicked = msg.clickedButton()
 
                     if clicked == yes_button:
@@ -2292,7 +2295,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
 
         if geom_type == "NoGeometry":
-            return QgsWkbTypes.NoGeometry
+            return QgsWkbTypes.Type.NoGeometry
 
         if geom_type.startswith("Multi"):
             base = geom_type[5:]
@@ -2303,7 +2306,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # no geometry support
         if geometry_types is None:
-            return QgsWkbTypes.NoGeometry
+            return QgsWkbTypes.Type.NoGeometry
 
         # explicit schema
         if geometry_types:
