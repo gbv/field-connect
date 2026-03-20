@@ -976,9 +976,6 @@ border: 1px solid #555;</string>
                 <property name="relativeStorage">
                  <enum>QgsFileWidget::RelativeProject</enum>
                 </property>
-                <property name="options">
-                 <set>QFileDialog::ShowDirsOnly</set>
-                </property>
                </widget>
               </item>
               <item>

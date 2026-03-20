@@ -453,6 +453,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QFormLayout.ItemRole.SpanningRole,
             self.hzLinePhoto,
         )
+        self.fileApiDir.setOptions(QFileDialog.Option.ShowDirsOnly)
         # add fullwidth for category selection
         # self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.selectCats)[0], QFormLayout.SpanningRole, self.selectCats)
 
