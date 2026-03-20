@@ -2512,8 +2512,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def file_api_export(self, *args):
         if not self._check_connection_and_project():
             return
+        selected_layers = iface.layerTreeView().selectedLayers()
+        if not selected_layers:
+            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
+            return
+
         self._export_running = True
+        self.progressBar.resetFormat()
         self.show_or_hide_progress_bar()
+
         # ui opts
         export_worldfiles = self.chkExportWorldfiles.isChecked()
         read_creators_from_metadata = self.chkReadCreatorsFromMetadata.isChecked()
