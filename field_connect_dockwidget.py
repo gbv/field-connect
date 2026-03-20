@@ -1447,9 +1447,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         field_informations, split[0], "dateConfiguration", default={}
                     )
                     date_config_data_type = date_config.get("dataType", None)
-                    is_composite = (
-                        ":" in split[0]
-                    )  # ':' not allowed when creating composite fields and always used as separator (projectname:fieldname)
+                    is_composite = input_type == "composite"
                     # fieldType = field.type()  # unused for now
                     paths = []
                     parts = []
