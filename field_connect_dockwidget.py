@@ -1438,8 +1438,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     fname = field.name()
                     f_idx = layer.fields().indexFromName(fname)
                     split = fname.split(".")  # dating 0 begin inputType
+                    # print(split)
                     input_type = safe_get(field_informations, split[0], "inputType", default="")
-                    # print(inputType)
+                    sub_type = None
+
                     date_config = safe_get(
                         field_informations, split[0], "dateConfiguration", default={}
                     )
@@ -1452,6 +1454,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     parts = []
                     desc = ""
                     setup = None
+
+                    if is_composite:
+                        sub_type = safe_get(
+                            field_informations, split[0], split[2], "inputType", default=None
+                        )
+                    # print(f"sub_type: {sub_type}")
 
                     for idx, part in enumerate(split):
                         # skip numbers only
@@ -1495,8 +1503,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             )
                         else:
                             look_up = safe_get(field_informations, *paths, "label", default=part)
-                            if look_up:
-                                parts.append(look_up)
+
+                            # look for composite field translation by its nested input_type (sub_type)
+                            if sub_type and look_up == part:
+                                look_up = safe_get(
+                                    field_informations, sub_type, part, "label", default=part
+                                )
+
+                            parts.append(look_up)
 
                         # set to latest description
                         new_desc = safe_get(
