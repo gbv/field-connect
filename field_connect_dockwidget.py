@@ -448,11 +448,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QFormLayout.ItemRole.SpanningRole,
             self.hzLineSettings,
         )
-        self.fLayFileApi.setWidget(
-            self.fLayFileApi.getWidgetPosition(self.hzLinePhoto)[0],
-            QFormLayout.ItemRole.SpanningRole,
-            self.hzLinePhoto,
-        )
         self.fileApiDir.setOptions(QFileDialog.Option.ShowDirsOnly)
         # add fullwidth for category selection
         # self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.selectCats)[0], QFormLayout.SpanningRole, self.selectCats)
@@ -2402,10 +2397,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # todo: output statistics after import (image count ✓, skipping already existing images etc.)
         if not self._check_connection_and_project():
             return
+        layers: list[QgsVectorLayer] = iface.layerTreeView().selectedLayers()
+        import_layers = self.fileApiImportLayers.isChecked()
+        if import_layers and not layers:
+            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
+            return
+
         folder = self.fileApiDir.filePath()
         # os.path.exists dir else abort
         if not os.path.exists(folder):
-            # todo: message
+            # todo?: message and abort, or open folder selection?
+            # self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_FOLDER_SELECTED"])
             return
         self._import_running = True
         self.progressBar.resetFormat()
@@ -2423,26 +2425,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             group = self.treeRoot.addGroup(self.active_project)
 
         # import from selected vector layers/features
-        if self.fileApiImportLayers.isChecked():
+        if import_layers:
             # get list of identifiers from csv export or selected layers
-            layers: list[QgsVectorLayer] = iface.layerTreeView().selectedLayers()
-            if layers:
-                for layer in layers:
-                    selected_features = layer.selectedFeatures()
-                    if not selected_features:
-                        selected_features = layer.getFeatures()
-                    category = self.get_category_name_for_export(layer)
-                    ids = [feature["identifier"] for feature in selected_features]
+            for layer in layers:
+                selected_features = layer.selectedFeatures()
+                if not selected_features:
+                    selected_features = layer.getFeatures()
+                category = self.get_category_name_for_export(layer)
+                ids = [feature["identifier"] for feature in selected_features]
 
-                    import_list[category] = ids
-            else:
-                # todo: extract function for canceling an import/export
-                self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
-                self._import_running = False
-                self.show_or_hide_progress_bar()
-                return
-        # import from image and subcategories csv export
-        elif self.fileApiImportAll.isChecked():
+                import_list[category] = ids
+        # import all from image and subcategories csv export
+        else:
             image_cats = self.get_import_categories("Image")  # [(label, name),]
             for label, cat_name in image_cats:
                 csv_reader = self.get_category_csv(cat_name)
@@ -2471,7 +2465,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         with open(f"{final_worldfile_path}", "w") as f:
                             f.write(worldfile_data)
                 if image_data:
-                    # todo: only write if file does not exist
                     with open(f"{final_image_path}", "wb") as f:
                         f.write(image_data)
 
@@ -2527,7 +2520,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         raster_layer = None
         file_export_paths = []
-        selected_layers = iface.layerTreeView().selectedLayers()
         raster_count = 0  # total number of images processed
         worldfile_count = 0
 
