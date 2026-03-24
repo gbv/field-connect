@@ -1,5 +1,3 @@
-# Field Connect
-
 ## What is Field Connect?
 
 *Field Connect* is a plugin for [QGIS](https://qgis.org) that establishes a connection with [Field](https://field.idai.world), a documentation software for archaeological field and find recording developed as a cooperation between the German Archaeological Institute ([DAI](https://www.dainst.org)) and the Head Office of the GBV Common Library Network ([VZG](https://www.gbv.de)).
