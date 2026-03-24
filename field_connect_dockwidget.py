@@ -1226,7 +1226,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.reset()
         self.show_or_hide_progress_bar()
         csv_export_project = None
-        active_group = None
+        group_ref = None
         layer_names = []
         lup_layer_temp = None
         processed_vmaps = []
@@ -1256,6 +1256,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # update project config, in case changes have been made in field desktop
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
 
+        # takes the first group from the top if there are multiple with the same name
+        group_ref = self.treeRoot.findGroup(
+                self.active_project
+            ) or self.treeRoot.insertGroup(-1, f"{self.active_project}")
+
         filename = None
         # check if file path exists for handling/updating existing geopackages
         import_overwrite = False
@@ -1273,16 +1278,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 return
             elif os.path.exists(filename):
                 import_overwrite = True
-
-        if import_overwrite:
-            # takes the first group from the top if there are multiple with the same name
-            active_group = self.treeRoot.findGroup(
-                self.active_project
-            ) or self.treeRoot.insertGroup(-1, f"{self.active_project}")
-            layer_names = [layer.name() for layer in active_group.findLayers()]
-        else:
-            # create group at the bottom for inserting layers
-            group_ref = self.treeRoot.insertGroup(-1, f"{self.active_project}")
+                layer_names = [layer.name() for layer in group_ref.findLayers()]
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
@@ -1789,11 +1785,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # add layer to group_ref
                     self.project.addMapLayer(layer, False)
                     group_ref.insertLayer(-1, layer)
-                elif active_group:
+                elif group_ref:
                     # only add layers that are not in the self.activeProject group
                     if lay_name not in layer_names:
                         self.project.addMapLayer(layer, False)
-                        active_group.insertLayer(-1, layer)
+                        group_ref.insertLayer(-1, layer)
 
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
