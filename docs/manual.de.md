@@ -1,13 +1,14 @@
 <p align="center">
-  <img src="./img/logo.png" style="width: 120px; height: 120px; box-shadow: none; -webkit-box-shadow: none" alt="Field"/>
+  <img src="./img/logo.png" style="width: 140px; height: 140px; box-shadow: none; -webkit-box-shadow: none" alt="Field"/>
 </p>
-
 
 <div align="center" markdown="1">
 
 ### [English](./index.md) \| [Deutsch](./manual.de.md)
 
 </div>
+
+<br>
 
 ## Was ist Field Connect?
 
