@@ -702,12 +702,15 @@ border: 1px solid #555;</string>
              </layout>
             </item>
             <item row="12" column="1">
-             <widget class="QCheckBox" name="chkImportWorldfiles">
+             <widget class="QCheckBox" name="chk_file_api_import_images">
               <property name="enabled">
                <bool>false</bool>
               </property>
+              <property name="toolTip">
+               <string>An image category has to be selected in the categories field, to be able to import images.</string>
+              </property>
               <property name="text">
-               <string>Import worldfiles</string>
+               <string>Import images</string>
               </property>
              </widget>
             </item>

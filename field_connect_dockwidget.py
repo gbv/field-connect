@@ -181,6 +181,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             {}
         )  # /configuration/{project} :3000, not /{project}/configuration :3001
         self.projectConfigCategories = {}
+        self.image_categories = None
 
         # show field information after connecting
         self.field_user = ""
@@ -639,14 +640,22 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         mdl = self.selectCats.model()
         mdl.blockSignals(True)
         row = mdl.indexFromItem(item).row()
-        # print(row)
+        state = item.checkState()
+        item_is_checked = state == Qt.CheckState.Checked
+        checked_items = self.selectCats.checkedItemsData()
+        any_item_in_image_cat = any(s in self.image_categories for s in checked_items)
+
+        if any_item_in_image_cat:
+            self.import_photo_form_set_enabled(True)
+        else:
+            self.import_photo_form_set_enabled(False)
+
         if row == 0:  # first de-/select all entry
-            state = item.checkState()
             for i in range(1, self.selectCats.count()):
                 mdl.item(i).setCheckState(state)
             item.setText(
                 self.labels["DESELECT_ALL"]
-                if state == Qt.CheckState.Checked
+                if item_is_checked
                 else self.labels["SELECT_ALL"]
             )
         else:
@@ -662,6 +671,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.labels["DESELECT_ALL"] if all_checked else self.labels["SELECT_ALL"]
             )
         mdl.blockSignals(False)
+
+    def import_photo_form_set_enabled(self, on_off):
+        self.chk_file_api_import_images.setEnabled(on_off)
+        self.chk_file_api_georef_only.setEnabled(on_off)
+        if not on_off:
+            self.chk_file_api_import_images.setChecked(False)
 
     def show_or_hide_progress_bar(self):
         """Shows the progress bar if an import/export is actively running or hides it if not"""
@@ -1091,12 +1106,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnExport.setEnabled(on_off)
         self.selectExportTz.setEnabled(on_off)
         self.selectExportTzReset.setEnabled(on_off)
-        # file api tab
+        # file api options
         self.fileApiDir.setEnabled(on_off)
         self.fileApiDirOpen.setEnabled(on_off)
         self.fileApiImportAll.setEnabled(on_off)
         self.fileApiImportLayers.setEnabled(on_off)
-        self.chkImportWorldfiles.setEnabled(on_off)
         self.btnFileImport.setEnabled(on_off)
         self.chkExportWorldfiles.setEnabled(on_off)
         self.chkReadCreatorsFromMetadata.setEnabled(on_off)
@@ -1113,6 +1127,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.field_user = ""
             self.field_version = ""
             self.active_project = ""
+            self.image_categories = None
             self._import_running = False
             self._export_running = False
 
@@ -1175,6 +1190,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.selectCats.model().blockSignals(False)
                 # return?
             self.selectCats.setEnabled(True)
+            # todo?: always put untranslated cat name into image_categories?
+            self.image_categories = [cat for label, cat in self.get_import_categories("Image")]
+            print(self.image_categories)
 
             self.mB.pushSuccess(self.plugin_name, self.labels["FIELD_CONNECTED"])
             self.sB.showMessage(self.tr("Choose categories and format"))
@@ -2412,7 +2430,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         step = 0
         self.progressBar.setValue(step)
         import_list = {}
-        import_worldfiles = self.chkImportWorldfiles.isChecked()
+        import_georef_only = self.chk_file_api_georef_only.isChecked()
 
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
 
@@ -2452,14 +2470,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 file_path = os.path.splitext(f"{folder}/{identifier}")[0]
                 image_data, image_ext = self.file_api.get_image_data(identifier)
                 final_image_path = ".".join([file_path, image_ext])
-                if import_worldfiles:
-                    worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(
-                        identifier, image_ext
-                    )
-                    if worldfile_data:
-                        final_worldfile_path = ".".join([file_path, worldfile_ext])
-                        with open(f"{final_worldfile_path}", "w") as f:
-                            f.write(worldfile_data)
+
+                worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(
+                    identifier, image_ext
+                )
+                if worldfile_data:
+                    final_worldfile_path = ".".join([file_path, worldfile_ext])
+                    with open(f"{final_worldfile_path}", "w") as f:
+                        f.write(worldfile_data)
+                elif import_georef_only:
+                    continue
+
                 if image_data:
                     with open(f"{final_image_path}", "wb") as f:
                         f.write(image_data)
@@ -2521,7 +2542,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # category dialog
         locked_category = None
-        categories = self.get_import_categories("Image")
+        categories = self.image_categories or [cat for label, cat in self.get_import_categories("Image")]
         categories_values = [name for label, name in categories]
 
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
