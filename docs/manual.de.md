@@ -14,7 +14,7 @@
 
 *Field Connect* ist ein Plugin für [QGIS](https://qgis.org), das eine Verbindung mit [Field Desktop](https://field.idai.world/download) herstellt, einer Software zur archäologischen Grabungsdokumentation und Funderfassung, die in einer Kooperation zwischen dem Deutschen Archäologischen Institut ([DAI](https://www.dainst.org)) und der Verbundzentrale des Gemeinsamen Bibliotheksverbundes ([VZG](https://www.gbv.de)) entwickelt wird.
 
-Das Plugin ermöglicht den Austausch von Daten zwischen einem QGIS-Projekt und einer auf demselben Computer ausgeführten Installation von Field Desktop. In diesem Zusammenhang kann es außerdem dazu verwendet werden, [GeoPackage](https://www.geopackage.org)-Dateien aus den Daten eines Field-Projekts zu erstellen.
+Das Plugin ermöglicht den Austausch von Daten zwischen einem QGIS-Projekt und einer auf demselben Computer ausgeführten Installation von Field Desktop. In diesem Zusammenhang kann es außerdem dazu verwendet werden, [GeoPackage](https://www.geopackage.org)-Dateien aus den in Field Desktop aufgenommenen Daten zu erstellen.
 
 Die Benutzeroberfläche von Field Connect ist in den Sprachen Deutsch und Englisch verfügbar.
 
