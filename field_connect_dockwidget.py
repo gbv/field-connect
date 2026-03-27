@@ -1215,9 +1215,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
 
         # takes the first group from the top if there are multiple with the same name
-        group_ref = self.treeRoot.findGroup(
-                self.active_project
-            ) or self.treeRoot.insertGroup(-1, f"{self.active_project}")
+        group_ref = self.treeRoot.findGroup(self.active_project) or self.treeRoot.insertGroup(
+            -1, f"{self.active_project}"
+        )
 
         filename = None
         # check if file path exists for handling/updating existing geopackages
@@ -1307,7 +1307,32 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # create fields here for reuse
             fields = QgsFields()
             for col in csv_header:
-                fields.append(QgsField(col, QMetaType.Type.QString))
+                # copied logic from below to set the latest description
+                # for the comment field of a QgsField early as it becomes immutable later
+                # todo: extract function/refactor
+                # todo?: move more logic from below up here?
+                desc = ""
+                paths = []
+                split = col.split(".")
+                for idx, part in enumerate(split):
+                    # skip numbers only
+                    if part.isdigit():
+                        continue
+
+                    if (
+                        len(part) == 2 or part == "unspecifiedLanguage"
+                    ) and part in field_informations:
+                        paths.append(part)
+                        continue
+
+                    # build path to look for a description
+                    paths.append(part)
+                    # set to latest description
+                    new_desc = safe_get(field_informations, *paths, "description", default=None)
+                    if new_desc is not None:
+                        desc = new_desc
+
+                fields.append(QgsField(col, QMetaType.Type.QString, comment=desc))
 
             geometry_info = field_informations.get("geometry")
 
@@ -1400,7 +1425,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # fieldType = field.type()  # unused for now
                     paths = []
                     parts = []
-                    desc = ""
                     setup = None
 
                     if is_composite:
@@ -1460,39 +1484,28 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                             parts.append(look_up)
 
-                        # set to latest description
-                        new_desc = safe_get(
-                            field_informations, *paths, "description", default=None
-                        )
-                        if new_desc is not None:
-                            desc = new_desc
-
-                    # todo: refactor/split up
-                    if desc or date_config:
-                        constraint_strength = date_data_type_constraint.get(
-                            date_config.get("dataType", ""), soft_constraint
-                        )
-                        exp = "true"
+                    if date_config:
                         # set constraint expression for date fields to show format warnings
                         if fname in ("date.value", "date.endValue") or (
                             date_config and is_composite and split[-1] in ("value", "endValue")
                         ):
-                            if not desc:
-                                desc = self.tr(
-                                    "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
-                                )
+                            constraint_strength = date_data_type_constraint.get(
+                                date_config.get("dataType", ""), soft_constraint
+                            )
+                            constraint_desc = self.tr(
+                                "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
+                            )
                             regex = date_regexes.get(
                                 date_config_data_type, date_regexes["optional"]
                             )
                             exp = f"regexp_match(\"{fname}\", '{regex}')"
 
-                        layer.setConstraintExpression(f_idx, exp, desc)
-                        # apply constraint by dateConfiguration
-                        layer.setFieldConstraint(
-                            f_idx,
-                            QgsFieldConstraints.ConstraintExpression,
-                            constraint_strength,
-                        )
+                            layer.setConstraintExpression(f_idx, exp, constraint_desc)
+                            layer.setFieldConstraint(
+                                f_idx,
+                                QgsFieldConstraints.ConstraintExpression,
+                                constraint_strength,
+                            )
 
                     layer.setFieldAlias(f_idx, " ".join(parts))
 
