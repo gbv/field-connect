@@ -155,7 +155,9 @@ Please also note that, by default, no field data is deleted, not even in subfiel
 
 ## The attribute table
 
-The attribute table of an imported layer contains all the fields that can also be filled in using the resource editor in Field Desktop. However, due to the tabular data format, there are differences in how data is entered: Depending on the input type, more than one column may be required to describe a field.
+The attribute table of an imported layer contains all the fields that can also be filled in using the resource editor in Field Desktop. However, due to the tabular data format, there are differences in how data is entered: Depending on the input type, more than one column may be required to describe a field. You can find further information on this in the following sections.
+
+If a field description in the language set in QGIS is available in the Field project configuration, this will be displayed in the  tooltip of the field in the QGIS attribute table.
 
 The field labels listed below refer to the alias set by default in the attribute table of a layer created by Field Connect. The actual field names correspond to the column names that are used in CSV files created by Field Desktop. You can refer to the subchapter "CSV" of the chapter "Import and Export" in the Field Desktop manual for guidance.
 

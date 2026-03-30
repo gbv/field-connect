@@ -156,7 +156,9 @@ Beachten Sie außerdem, dass standardmäßig keine Felddaten, auch nicht in Unte
 
 ## Die Attributtabelle
 
-Die Attributtabelle eines importierten Layers enthält sämtliche Felder, die auch im Ressourceneditor von Field Desktop ausgefüllt werden können. Aufgrund des tabellarischen Datenformats gibt es allerdings Unterschiede bei der Dateneingabe: Abhängig vom Eingabetyp kann etwa mehr als eine Spalte nötig sein, um ein Feld zu beschreiben.
+Die Attributtabelle eines importierten Layers enthält sämtliche Felder, die auch im Ressourceneditor von Field Desktop ausgefüllt werden können. Aufgrund des tabellarischen Datenformats gibt es allerdings Unterschiede bei der Dateneingabe: Abhängig vom Eingabetyp kann etwa mehr als eine Spalte nötig sein, um ein Feld zu beschreiben. Weitere Informationen dazu finden Sie in den folgenden Abschnitten.
+
+Ist für das Feld in der Field-Projektkonfiguration ein Beschreibungstext in der in QGIS eingestellten Sprache hinterlegt, so wird dieser im Tooltip des Feldes in der QGIS-Attributtabelle angezeigt.
 
 Die im folgenden genannten Feldbezeichnungen beziehen sich jeweils auf den Alias, der standardmäßig in der Attributtabelle eines durch Field Connect angelegten Layers gesetzt ist. Die eigentlichen Feldnamen entsprechen den Spaltennamen, die in den von Field Desktop erstellten CSV-Dateien verwendet werden. Sie können sich dabei am Unterkapitel "CSV" des Kapitels "Import und Export" des Handbuchs von Field Desktop orientieren.
 
