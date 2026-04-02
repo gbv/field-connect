@@ -1243,45 +1243,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         r_geo: Response = self.api.get("/export/geojson?context=project&formatted=true")
         geo_json = json.loads(r_geo.text)
 
-        # todo: extract function
         # get fixed staff/campaigns lists from 'Project' csv export which are not available in the project config
-        csv_export_project = self.get_category_csv(
-            "Project", csv_ui_opts["combineHierarchicalRelations"]
-        )
-        # collect valuemaps from project csv export
-        prj_maps = {
-            "staff": {
-                "map": {},
-                "inputType": "checkboxes",
-            },
-            "campaigns": {
-                "map": {},
-                "inputType": "checkboxes",
-            },
-        }
-
-        for row in csv_export_project:
-            for key in prj_maps:
-                cell = row.get(key)
-                if not cell:
-                    continue
-
-                for val in cell.split(";"):
-                    val = val.strip()
-                    if val:
-                        prj_maps[key]["map"][val] = val
-
-        field_aliases = {
-            "staff": (
-                "processor",
-                "supervisor",
-            ),
-            "campaigns": ("campaign",),
-        }
-
-        for src_key, targets in field_aliases.items():
-            for field in targets:
-                prj_maps[field] = prj_maps[src_key]
+        prj_maps = self._get_project_value_maps(csv_ui_opts["combineHierarchicalRelations"])
         # print(prjMaps)
 
         for i, (cat, label) in enumerate(cats.items()):
@@ -2356,3 +2319,44 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return False
 
         return True
+
+    def _get_project_value_maps(self, combine_relations=True):
+        csv_export_project = self.get_category_csv(
+            "Project", combine_relations
+        )
+        # collect valuemaps from project csv export
+        prj_maps = {
+            "staff": {
+                "map": {},
+                "inputType": "checkboxes",
+            },
+            "campaigns": {
+                "map": {},
+                "inputType": "checkboxes",
+            },
+        }
+
+        for row in csv_export_project:
+            for key in prj_maps:
+                cell = row.get(key)
+                if not cell:
+                    continue
+
+                for val in cell.split(";"):
+                    val = val.strip()
+                    if val:
+                        prj_maps[key]["map"][val] = val
+
+        field_aliases = {
+            "staff": (
+                "processor",
+                "supervisor",
+            ),
+            "campaigns": ("campaign",),
+        }
+
+        for src_key, targets in field_aliases.items():
+            for field in targets:
+                prj_maps[field] = prj_maps[src_key]
+
+        return prj_maps
