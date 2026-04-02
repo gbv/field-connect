@@ -74,6 +74,8 @@ Start the import by clicking the button "Import". The progress of the import pro
 
 Field Connect creates a new group in the currently open QGIS project with the same name as the Field project, which contains all layers with the imported data. The layers are named according to the scheme "Project identifier_Category identifier_Geometry type" (e.g. "test_Find_Point").
 
+**Important**: If you select an existing GeoPackage file as the import target, the corresponding layers in the GeoPackage will be replaced by the current state of the project in Field Desktop.
+
 If the option "Create layers for all configured geometry types" is disabled, layers are created only for categories and geometry types for which corresponding data exists in the Field project.
 
 If, however, the option is enabled, the project configuration of the Field project is considered: In Field Desktop, you can select the allowed geometry types for a category’s geometry field via the menu "Tools" ➝ "Project Configuration". Possible geometry types are: "Polygon", "Multipolygon", "Polyline", "Multipolyline", "Point" and "Multipoint". A corresponding layer is created for each of the allowed geometry types. Exception: If a multi-geometry type is permitted, no layer is created for the corresponding single-geometry type within this category (e.g. polygons and multipolygons are stored together in a layer named "test_Trench_MultiPolygon").

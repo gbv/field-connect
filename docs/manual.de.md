@@ -74,6 +74,8 @@ Starten Sie den Import über den Button "Import". Der Fortschritt des Importvorg
 
 Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten enthält. Die Layer sind jeweils nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point").
 
+**Wichtig**: Wählen Sie eine bereits existierende GeoPackage-Datei als Ziel des Imports aus, so werden die entsprechenden Layer im GeoPackage durch den aktuellen Stand des Projekts in Field Desktop ersetzt.
+
 Ist die Option "Layer für alle konfigurierten Geometrietypen anlegen" deaktiviert, werden ausschließlich Layer für Kategorien und Geometrietypen angelegt, für die entsprechende Daten im Field-Projekt existieren.
 
 Ist die Option hingegen aktiviert, wird die Projektkonfiguration des Field-Projekts ausgelesen: In Field Desktop können im Menü "Werkzeuge" ➝ "Projektkonfiguration" für das Geometriefeld einer Kategorie die erlaubten Geometrietypen ausgewählt werden. Mögliche Geometrietypen sind: "Polygon", "Multipolygon", "Polyline", "Multipolyline", "Punkt" und "Multipunkt". Für jeden der erlaubten Geometrietypen wird ein entsprechender Layer angelegt. Ausnahme: Ist ein Multi-Geometrietyp erlaubt, wird für diese Kategorie kein Layer für den entsprechenden Einzel-Geometrietyp angelegt (z. B. werden Polygone und Multipolygone gemeinsam in einem Layer "test_Schnitt_MultiPolygon" gespeichert).
