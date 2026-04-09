@@ -1460,6 +1460,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             if csv_feat and field_name in csv_feat.fields().names():
                                 value = csv_feat[field_name]
 
+                            # handle checkboxes
+                            idx = existing_layer.fields().indexFromName(field_name)
+                            setup = existing_layer.editorWidgetSetup(idx)
+
+                            if setup and setup.type() == "ValueRelation":
+                                value = self.normalize_export_value(value)
+
                             attrs.append(value)
 
                         new_feat.setAttributes(attrs)
