@@ -21,6 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+from qgis.gui import QgisInterface
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
@@ -45,7 +46,7 @@ class FieldConnect:
         :type iface: QgsInterface
         """
         # Save reference to the QGIS interface
-        self.iface = iface
+        self.iface: QgisInterface = iface
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -220,7 +221,7 @@ class FieldConnect:
             #    removed on close (see self.onClosePlugin method)
             if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = FieldConnectDockWidget(self.plugin_dir, self.locale)
+                self.dockwidget = FieldConnectDockWidget(self.iface, self.plugin_dir, self.locale)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closing_plugin.connect(self.on_close_plugin)
