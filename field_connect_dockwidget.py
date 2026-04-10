@@ -149,6 +149,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.qgis_version_int = Qgis.QGIS_VERSION_INT
         self.iface = iface
 
         self.loc = locale
@@ -1851,13 +1852,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
             if filename and not import_overwrite:
-                layer.saveStyleToDatabaseV2(
-                    f"{cat}",
-                    self.tr("Style saved by the Field Connect plugin"),
-                    True,
-                    None,
-                    QgsMapLayer.StyleCategory.AllStyleCategories,
-                )
+                # versions below 3.44.7
+                if self.qgis_version_int < 34407:
+                    layer.saveStyleToDatabase(
+                        f"{cat}",
+                        self.tr("Style saved by the Field Connect plugin"),
+                        True,
+                        None,
+                        QgsMapLayer.StyleCategory.AllStyleCategories,
+                    )
+                else:
+                    layer.saveStyleToDatabaseV2(
+                        f"{cat}",
+                        self.tr("Style saved by the Field Connect plugin"),
+                        True,
+                        None,
+                        QgsMapLayer.StyleCategory.AllStyleCategories,
+                    )
             self.progressBar.setValue(i + 1)
             QApplication.processEvents()
 
