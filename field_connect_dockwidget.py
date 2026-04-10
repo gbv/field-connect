@@ -1393,6 +1393,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # previous layer index for insertion of new_lyr
                     # parent() should return the group the ltl is in
                     existing_ltl_index = existing_ltl.parent().children().index(existing_ltl)
+                    existing_layer = existing_ltl.layer()
+
+                    csv_field_names = [f.name() for f in fields]
+                    # append manually added columns to new_lyr
+                    missing_fields = [
+                        f for f in existing_layer.fields()
+                        if f.name() not in csv_field_names and f.name() != "fid"
+                    ]
+
+                    if missing_fields:
+                        for fld in missing_fields:
+                            fields.append(fld)
 
                     # recreation of layer wouldnt be necessary if the field comments wouldnt need a recreation of a QgsField to update
                     new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
@@ -1400,8 +1412,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     new_lyr.setCrs(crs)
                     pr.addAttributes(fields)
                     new_lyr.updateFields()
-
-                    existing_layer = existing_ltl.layer()
 
                     # index existing features
                     existing_index = {}
