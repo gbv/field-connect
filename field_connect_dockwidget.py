@@ -572,10 +572,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if value == NULL or value is None:
             return ""
 
-        # adding a feature to a layer sometimes puts this string into an empty checkbox field
-        if value == """{"{\\"\'\\{\\}\'\\"}"}""":
-            return ""
-
         # ValueRelation multiselect
         if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
             inner = value[1:-1].strip()
