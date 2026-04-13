@@ -1389,7 +1389,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             features = dict(
                 sorted(features.items(), key=lambda item: item[0] == "NoGeometry")
             )
-            print(features)
 
             # incoming QgsFeature objects created from csv
             for geom_type, csv_feats in features.items():
