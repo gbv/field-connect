@@ -1440,9 +1440,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     # index existing features
                     existing_index = {}
-                    for f in existing_layer.getFeatures():
+                    for f in existing_layer.dataProvider().getFeatures():
                         # skip features without geometry in a geometry layer as they are
                         # reimported into the NoGeometry layer where they belong
+                        # !(only if they have been exported)
                         if geom_type != "NoGeometry" and f.geometry().isEmpty():
                             continue
                         existing_index[f["identifier"]] = f
