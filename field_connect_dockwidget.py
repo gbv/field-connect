@@ -1385,6 +1385,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         # only create layers that contain features
                         features = {k: v for k, v in features.items() if v}
 
+            # process NoGeometry features last
+            features = dict(
+                sorted(features.items(), key=lambda item: item[0] == "NoGeometry")
+            )
+            print(features)
+
             # incoming QgsFeature objects created from csv
             for geom_type, csv_feats in features.items():
                 # prov_type = None  # unused for now
@@ -1443,8 +1449,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     for f in existing_layer.dataProvider().getFeatures():
                         # skip features without geometry in a geometry layer as they are
                         # reimported into the NoGeometry layer where they belong
-                        # !(only if they have been exported)
                         if geom_type != "NoGeometry" and f.geometry().isEmpty():
+                            # todo: test with thousands of features
+                            # recreate id list in case features have been appended
+                            nogeom_ids = {f["identifier"] for f in features.get("NoGeometry", [])}
+
+                            # move to features["NoGeometry"]
+                            if f["identifier"] not in nogeom_ids:
+                                features.setdefault("NoGeometry", []).append(f)
+
                             continue
                         existing_index[f["identifier"]] = f
 
