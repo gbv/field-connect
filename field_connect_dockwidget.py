@@ -1386,9 +1386,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         features = {k: v for k, v in features.items() if v}
 
             # process NoGeometry features last
-            features = dict(
-                sorted(features.items(), key=lambda item: item[0] == "NoGeometry")
-            )
+            features = dict(sorted(features.items(), key=lambda item: item[0] == "NoGeometry"))
 
             # incoming QgsFeature objects created from csv
             for geom_type, csv_feats in features.items():
@@ -1450,11 +1448,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         # reimported into the NoGeometry layer where they belong
                         if geom_type != "NoGeometry" and f.geometry().isEmpty():
                             # todo: test with thousands of features
-                            # recreate id list in case features have been appended
+                            # recreate id lists in case features have been appended
                             nogeom_ids = {f["identifier"] for f in features.get("NoGeometry", [])}
+                            existing_nogeom_ids = {
+                                f["identifier"] for f in existing_layer.getFeatures()
+                            }
+                            merged_ids = nogeom_ids | existing_nogeom_ids
 
                             # move to features["NoGeometry"]
-                            if f["identifier"] not in nogeom_ids:
+                            if f["identifier"] not in merged_ids:
                                 features.setdefault("NoGeometry", []).append(f)
 
                             continue
