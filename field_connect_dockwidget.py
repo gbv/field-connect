@@ -654,7 +654,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'
         """
 
-        lookup_layers = [lyr for lyr in group_ref.findLayers() if f"{self.active_project}_lookup" in lyr.layer().name()]
+        lookup_layers = [
+            lyr
+            for lyr in group_ref.findLayers()
+            if f"{self.active_project}_lookup" in lyr.layer().name()
+        ]
         if lookup_layers:
             # todo?: additional checks?
             return lookup_layers[0].layer()
@@ -1239,10 +1243,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # print(filename)
 
             # check if filename matches a groups first vectorlayer source
-            existing_groups = list(filter(lambda grp: grp.name() == self.active_project, self.treeRoot.findGroups()))
+            existing_groups = list(
+                filter(lambda grp: grp.name() == self.active_project, self.treeRoot.findGroups())
+            )
             for group in existing_groups:
                 # get first vector layer in group
-                group_layers = list(filter(lambda lyr: lyr.layer().type() == QgsMapLayerType.VectorLayer, group.findLayers()))
+                group_layers = list(
+                    filter(
+                        lambda lyr: lyr.layer().type() == QgsMapLayerType.VectorLayer,
+                        group.findLayers(),
+                    )
+                )
                 if group_layers:
                     grp_layer: QgsVectorLayer = group_layers[0].layer()
                     if filename in grp_layer.source() and not grp_layer.isTemporary():
@@ -1383,8 +1394,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 lay_name_source = f"{self.active_project}_{cat}_{geom_type}"
                 lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
 
-                # todo: features in the edit buffer get readded twice when asked to save
-                #       and only once, if changes are discarded
                 # check if lay_name exists in group_ref_layer_names
                 if lay_name in group_ref_layer_names.keys():
                     layer_in_group = True
@@ -1397,21 +1406,37 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     csv_field_names = [f.name() for f in fields]
                     # append manually added columns to new_lyr
-                    missing_fields = [
-                        f for f in existing_layer.fields()
+                    missing_fields = {
+                        f.name(): f
+                        for f in existing_layer.fields()
                         if f.name() not in csv_field_names and f.name() != "fid"
-                    ]
+                    }
 
+                    fields_copy = QgsFields(fields)
                     if missing_fields:
-                        for fld in missing_fields:
-                            fields.append(fld)
+                        for fld in missing_fields.values():
+                            fields_copy.append(fld)
 
                     # recreation of layer wouldnt be necessary if the field comments wouldnt need a recreation of a QgsField to update
                     new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
                     pr = new_lyr.dataProvider()
                     new_lyr.setCrs(crs)
-                    pr.addAttributes(fields)
+                    pr.addAttributes(fields_copy)
                     new_lyr.updateFields()
+
+                    editor_setup_to_add = []
+                    for field_name in new_lyr.fields().names():
+                        if field_name in missing_fields.keys():
+                            idx = existing_layer.fields().indexFromName(field_name)
+                            new_idx = new_lyr.fields().indexFromName(field_name)
+                            existing_setup = existing_layer.editorWidgetSetup(idx)
+                            editor_setup_to_add.append((new_idx, existing_setup))
+
+                    for idex, stp in editor_setup_to_add:
+                        new_lyr.setEditorWidgetSetup(
+                            idex,
+                            stp,
+                        )
 
                     # index existing features
                     existing_index = {}
@@ -1466,13 +1491,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # overwrite with csv
                             if csv_feat and field_name in csv_feat.fields().names():
                                 value = csv_feat[field_name]
-
-                            # handle checkboxes
-                            idx = existing_layer.fields().indexFromName(field_name)
-                            setup = existing_layer.editorWidgetSetup(idx)
-
-                            if setup and setup.type() == "ValueRelation":
-                                value = self.normalize_export_value(value)
 
                             attrs.append(value)
 
@@ -1881,7 +1899,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # add lookup layer
         if lup_layer_temp:
             lup_layer_name = lup_layer_temp.name()
-            existing_lup_layer = [lyr for lyr in group_ref.findLayers() if "_lookup" in lyr.layer().name()]
+            existing_lup_layer = [
+                lyr for lyr in group_ref.findLayers() if "_lookup" in lyr.layer().name()
+            ]
             if not import_overwrite and not existing_lup_layer:
                 self.project.addMapLayer(lup_layer_temp, False)
                 # add lookup layer into group
