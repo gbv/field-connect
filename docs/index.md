@@ -20,8 +20,8 @@ The user interface of Field Connect is available in German and English.
 
 ## Requirements
 
-* QGIS 3.44 or later
-* Field Desktop 3.7.0 or later
+* QGIS 3.40 or later
+* Field Desktop 3.7 or later
 
 ## How to start
 
@@ -166,6 +166,8 @@ The field labels listed below refer to the alias set by default in the attribute
 ### The identifier
 
 The field "Identifier" must always be filled in. **Important**: The identifier is used to assign the feature to the corresponding resource in Field Desktop. If you import a resource from Field Desktop into QGIS, change the identifier and then export it back to Field Desktop, the existing resource will **not** be updated; instead, an additional resource with the new identifier will be created.
+
+Please note that only the identifier should be used to uniquely reference an object. The field "fid", which is created when generating GeoPackage files, is not suitable for this purpose, as the values set here may change during subsequent imports from Field Desktop.
 
 ### Valuelist fields
 

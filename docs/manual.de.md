@@ -20,8 +20,8 @@ Die Benutzeroberfläche von Field Connect ist in den Sprachen Deutsch und Englis
 
 ## Voraussetzungen
 
-* QGIS 3.44 oder aktueller
-* Field Desktop 3.7.0 oder aktueller
+* QGIS 3.40 oder aktueller
+* Field Desktop 3.7 oder aktueller
 
 ## Erste Schritte
 
@@ -167,6 +167,8 @@ Die im folgenden genannten Feldbezeichnungen beziehen sich jeweils auf den Alias
 ### Der Bezeichner
 
 Das Feld "Bezeichner" muss immer ausgefüllt sein. **Wichtig**: Der Bezeichner dient zur Zuordnung des Objekts zur entsprechenden Ressource in Field Desktop. Importieren Sie eine Ressource aus Field Desktop nach QGIS, ändern den Bezeichner und exportieren es anschließend zurück nach Field Desktop, so wird **nicht** die bestehende Ressource aktualisiert, sondern eine zusätzliche Ressource mit dem neuen Bezeichner angelegt.
+
+Bitte beachten Sie, dass ausschließlich der Bezeichner zur eindeutigen Referenzierung eines Objekts verwendet werden sollte. Das Feld "fid", das beim Erstellen von GeoPackage-Dateien angelegt wird, ist dazu nicht geeignet, da sich die hier gesetzten Werte bei späteren Importen aus Field Desktop ändern können.
 
 ### Wertelistenfelder
 
