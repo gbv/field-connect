@@ -560,7 +560,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     ).format(epsgId=epsg_id),
                 )
 
-    def normalize_export_value(self, value, dt=None):
+    def normalize_export_value(self, value, setup_type, dt=None):
         """
         Normalize attribute values for CSV export.
 
@@ -573,7 +573,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return ""
 
         # ValueRelation multiselect
-        if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
+        if setup_type == "ValueRelation":
             inner = value[1:-1].strip()
             if not inner:
                 return ""
@@ -1407,18 +1407,20 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     existing_ltl_index = existing_ltl.parent().children().index(existing_ltl)
                     existing_layer = existing_ltl.layer()
 
+                    existing_fields = existing_layer.fields()
+                    existing_field_names = [f.name() for f in existing_fields]
                     csv_field_names = [f.name() for f in fields]
+
                     # append manually added columns to new_lyr
                     missing_fields = {
-                        f.name(): f
-                        for f in existing_layer.fields()
-                        if f.name() not in csv_field_names and f.name() != "fid"
+                        name: existing_fields[index]
+                        for index, name in enumerate(existing_field_names)
+                        if name not in csv_field_names and name != "fid"
                     }
 
                     fields_copy = QgsFields(fields)
-                    if missing_fields:
-                        for fld in missing_fields.values():
-                            fields_copy.append(fld)
+                    for fld in missing_fields.values():
+                        fields_copy.append(fld)
 
                     # recreation of layer wouldnt be necessary if the field comments wouldnt need a recreation of a QgsField to update
                     new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
@@ -1427,13 +1429,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     pr.addAttributes(fields_copy)
                     new_lyr.updateFields()
 
+                    new_fields = new_lyr.fields()
+                    new_field_names = new_fields.names()
+
+                    value_relation_fields = {}
+
                     editor_setup_to_add = []
-                    for field_name in new_lyr.fields().names():
-                        if field_name in missing_fields.keys():
-                            idx = existing_layer.fields().indexFromName(field_name)
-                            new_idx = new_lyr.fields().indexFromName(field_name)
-                            existing_setup = existing_layer.editorWidgetSetup(idx)
-                            editor_setup_to_add.append((new_idx, existing_setup))
+                    for field_name in new_field_names:
+                        idx = existing_fields.indexFromName(field_name)
+                        if idx != -1:
+                            setup = existing_layer.editorWidgetSetup(idx)
+                            if setup.type() == "ValueRelation":
+                                value_relation_fields[field_name] = True
+
+                            # only apply editor setup for missing fields
+                            if field_name in missing_fields.keys():
+                                new_idx = new_fields.indexFromName(field_name)
+                                editor_setup_to_add.append((new_idx, setup))
 
                     for idex, stp in editor_setup_to_add:
                         new_lyr.setEditorWidgetSetup(
@@ -1441,36 +1453,51 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             stp,
                         )
 
+                    csv_index = {f["identifier"]: f for f in csv_feats}
+                    ordered_ids = list(csv_index.keys())
+
                     # index existing features
                     existing_index = {}
+                    nogeom_ref = features.setdefault("NoGeometry", [])
+                    nogeom_ids = {f["identifier"] for f in nogeom_ref}
+                    incoming_nogeom_ids = set(csv_index.keys())
+
                     for f in existing_layer.dataProvider().getFeatures():
                         # skip features without geometry in a geometry layer as they are
                         # reimported into the NoGeometry layer where they belong
                         if geom_type != "NoGeometry" and f.geometry().isEmpty():
                             # todo: test with thousands of features
                             # recreate id lists in case features have been appended
-                            nogeom_ids = {f["identifier"] for f in features.get("NoGeometry", [])}
-                            existing_nogeom_ids = {
-                                f["identifier"] for f in existing_layer.getFeatures()
-                            }
-                            merged_ids = nogeom_ids | existing_nogeom_ids
 
                             # move to features["NoGeometry"]
-                            if f["identifier"] not in merged_ids:
-                                features.setdefault("NoGeometry", []).append(f)
+                            ident = f["identifier"]
+                            if ident not in nogeom_ids and ident not in incoming_nogeom_ids:
+                                new_feat = QgsFeature(new_fields)
+                                new_feat.setGeometry(None)
 
+                                attrs = []
+                                for field_name in new_field_names:
+                                    value = None
+
+                                    if field_name in existing_field_names:
+                                        if field_name in value_relation_fields:
+                                            value = self.normalize_export_value(
+                                                f[field_name], "ValueRelation"
+                                            )
+                                        else:
+                                            value = f[field_name]
+
+                                    attrs.append(value)
+
+                                new_feat.setAttributes(attrs)
+
+                                nogeom_ref.append(new_feat)
+                                nogeom_ids.add(ident)
                             continue
+
                         existing_index[f["identifier"]] = f
 
-                    csv_index = {}
-                    ordered_ids = []
                     features_to_add = []
-
-                    for f in csv_feats:
-                        ident = f["identifier"]
-                        # index incoming CSV features
-                        csv_index[ident] = f
-                        ordered_ids.append(ident)
 
                     for ident in existing_index:
                         if ident not in csv_index:
@@ -1486,7 +1513,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         old_feat = existing_index.get(ident)
                         csv_feat = csv_index.get(ident)
 
-                        new_feat = QgsFeature(new_lyr.fields())
+                        new_feat = QgsFeature(new_fields)
 
                         # geometry priority: CSV > existing
                         if csv_feat and csv_feat.hasGeometry():
@@ -1496,12 +1523,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         attrs = []
 
-                        for field_name in new_lyr.fields().names():
+                        for field_name in new_field_names:
                             value = None
 
                             # start with old
-                            if old_feat and field_name in old_feat.fields().names():
-                                value = old_feat[field_name]
+                            if old_feat and field_name in existing_field_names:
+                                if field_name in value_relation_fields:
+                                    value = self.normalize_export_value(
+                                        old_feat[field_name], "ValueRelation"
+                                    )
+                                else:
+                                    value = old_feat[field_name]
 
                             # overwrite with csv
                             if csv_feat and field_name in csv_feat.fields().names():
@@ -2170,12 +2202,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             val = f[field_name]
                             idx = layer.fields().indexFromName(field_name)
                             setup = layer.editorWidgetSetup(idx)
+                            setup_type = setup.type()
 
                             # todo: check if ValueRelation case still needed
-                            if setup and setup.type() == "ValueRelation":
-                                val = self.normalize_export_value(val)
+                            # todo: type handled now in normalize method
+                            if setup_type == "ValueRelation":
+                                val = self.normalize_export_value(val, setup_type)
                             else:
-                                val = self.normalize_export_value(val, dt=dt)
+                                val = self.normalize_export_value(val, setup_type, dt=dt)
 
                             row[field_name] = val
 
