@@ -7,9 +7,9 @@ name=Field Connect
 qgisMinimumVersion=3.40
 qgisMaximumVersion=4.99
 description=Exchange data between QGIS and Field Desktop
-version=0.1
-author=Oliver Zapiec
-email=oliver.zapiec@gbv.de
+version=1.0.0
+author=Head Office of the GBV Common Library Network (VZG)
+email=oliver.zapiec@gbv.de,Thomas.Kleinke@gbv.de
 
 about=<p>Field Connect is a plugin for QGIS that establishes a connection with Field Desktop, a documentation software for archaeological field and find recording developed as a cooperation between the German Archaeological Institute (DAI) and the Head Office of the GBV Common Library Network (VZG).</p><p>The plugin enables the exchange of data between a QGIS project and a Field Desktop installation running on the same computer. In this context, it can also be used to create GeoPackage files from data recorded in Field Desktop.</p>
 
