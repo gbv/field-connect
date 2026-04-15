@@ -843,6 +843,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         # handle relation fields
                         if data.get("inputType") == "relation":
+                            # fallback to trAttrs label in case there is one
+                            if label == fieldname:
+                                tr_attrs_label = safe_get(self.trAttrs, "relations", fieldname, "label", default=None)
+                                if tr_attrs_label:
+                                    label = tr_attrs_label
                             result.setdefault("relations", {})[fieldname] = {
                                 "label": label,
                                 "description": description,
