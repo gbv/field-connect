@@ -72,9 +72,7 @@ Start the import by clicking the button "Import". The progress of the import pro
 
 ### Import results
 
-Field Connect creates a new group in the currently open QGIS project with the same name as the Field project, which contains all layers with the imported data. The layers are named according to the scheme "Project identifier_Category identifier_Geometry type" (e.g. "test_Find_Point").
-
-**Important**: If you select an existing GeoPackage file as the import target, the corresponding layers in the GeoPackage will be replaced by the current state of the project in Field Desktop.
+Field Connect creates a new group in the currently open QGIS project with the same name as the Field project, which contains all layers with the imported data. The layers are named according to the scheme "Project identifier_Category identifier_Geometry type" (e.g. "test_Find_Point"). For resources without a geometry, a layer with the geometry type "NoGeometry" is created.
 
 If the option "Create layers for all configured geometry types" is disabled, layers are created only for categories and geometry types for which corresponding data exists in the Field project.
 
@@ -85,6 +83,16 @@ The category identifier is stored in the variable "field_category" within the us
 During import, Field Connect also reads valuelists, field and value labels as well as description texts from the Field project configuration and saves these in a separate layer with the naming scheme "Project identifier_lookup" (e.g. "test_lookup") . This layer is required for the plugin to function and should **not be deleted**.
 
 Further details on the structure of the attribute table of an imported layer can be found in the chapter "The attribute table".
+
+### Updating GeoPackage files
+
+If you select an existing GeoPackage file as the import target, the corresponding layers in the GeoPackage will be updated. If a resource with the same identifier is found in the data imported from Field Desktop, the object will be updated as follows:
+* The field contents from the import data will be entered into all fields, provided the corresponding fields exist in the import data.
+* Fields that do not exist in the import data retain their previous contents.
+
+Objects for which no resource is found in the data imported from Field Desktop remain unchanged.
+
+**Important**: Features in geometry layers that do not have a geometry are automatically moved to the corresponding "NoGeometry" layer when the GeoPackage is updated. If no such layer exists, it will be created.
 
 ## Export
 

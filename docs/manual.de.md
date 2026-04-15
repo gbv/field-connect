@@ -72,9 +72,7 @@ Starten Sie den Import über den Button "Import". Der Fortschritt des Importvorg
 
 ### Ergebnis des Imports
 
-Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten enthält. Die Layer sind jeweils nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point").
-
-**Wichtig**: Wählen Sie eine bereits existierende GeoPackage-Datei als Ziel des Imports aus, so werden die entsprechenden Layer im GeoPackage durch den aktuellen Stand des Projekts in Field Desktop ersetzt.
+Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten enthält. Die Layer sind jeweils nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point"). Für Ressourcen ohne Geometrien wird jeweils ein Layer mit Geometrietyp "NoGeometry" angelegt.
 
 Ist die Option "Layer für alle konfigurierten Geometrietypen anlegen" deaktiviert, werden ausschließlich Layer für Kategorien und Geometrietypen angelegt, für die entsprechende Daten im Field-Projekt existieren.
 
@@ -86,6 +84,15 @@ Field Connect liest beim Import darüber hinaus Wertelisten, Feld- und Wertebeze
 
 Nähere Angaben zum Aufbau der Attributtabelle eines importierten Layers finden Sie im Kapitel "Die Attributtabelle".
 
+### Aktualisierung von GeoPackage-Dateien
+
+Wenn Sie eine bereits existierende GeoPackage-Datei als Ziel des Imports auswählen, so werden die entsprechenden Layer im GeoPackage aktualisiert. Wird für ein Objekt eine Ressource mit dem gleichen Bezeichner in den aus Field Desktop importierten Daten gefunden, gilt:
+* In allen Feldern werden die Feldinhalte der Importdaten eingetragen, falls die entsprechenden Felder dort vorhanden sind.
+* Felder, die in den Importdaten nicht vorhanden sind, bleiben mit ihren bisherigen Inhalten erhalten.
+
+Objekte, für die keine Ressource in den aus Field Desktop importierten Daten gefunden wird, bleiben unverändert erhalten.
+
+**Wichtig**: Objekte in Geometrie-Layern, die über keine Geometrie verfügen, werden beim Aktualisieren des GeoPackages automatisch in den entsprechenden "NoGeometry"-Layer verschoben. Gibt es noch keinen solchen Layer, so wird er angelegt.
 
 ## Export
 
