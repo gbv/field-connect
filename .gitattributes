@@ -7,12 +7,13 @@ __pycache__       export-ignore
 *.qrc             export-ignore
 *.sh              export-ignore
 *.ts              export-ignore
+docs/             export-ignore
 help/             export-ignore
 Makefile          export-ignore
 pb_tool.cfg       export-ignore
 plugin_upload.py  export-ignore
 pylintrc          export-ignore
-README.html       export-ignore
+README.md         export-ignore
 README.txt        export-ignore
 scripts/          export-ignore
 test/             export-ignore
