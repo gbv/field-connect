@@ -1351,7 +1351,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if create_all_layers:
                     features = {"NoGeometry": features.get("NoGeometry", [])}
                 else:
-                    # only create layer if there are actual features
+                    # only create layer if there are features
                     if not features:
                         features = {}
 
@@ -1388,8 +1388,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # process NoGeometry features last
             features = dict(sorted(features.items(), key=lambda item: item[0] == "NoGeometry"))
 
+            # use dynamic iteration in case geom types are added
+            queue = list(features.keys())
+            qi = 0
+
             # incoming QgsFeature objects created from csv
-            for geom_type, csv_feats in features.items():
+            while qi < len(queue):
+                geom_type = queue[qi]
+                csv_feats = features[geom_type]
                 # prov_type = None  # unused for now
                 layer_in_group = None
                 resolved = self._resolve_wkb_type(geom_type, geometry_types)
@@ -1407,7 +1413,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     existing_ltl_index = existing_ltl.parent().children().index(existing_ltl)
                     existing_layer = existing_ltl.layer()
 
-                    existing_fields = existing_layer.fields()
+                    # only get committed fields
+                    # saving the layer will copy fields in the buffer or discard them when not saving
+                    existing_fields = existing_layer.dataProvider().fields()
                     existing_field_names = [f.name() for f in existing_fields]
                     csv_field_names = [f.name() for f in fields]
 
@@ -1422,7 +1430,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     for fld in missing_fields.values():
                         fields_copy.append(fld)
 
-                    # recreation of layer wouldnt be necessary if the field comments wouldnt need a recreation of a QgsField to update
+                    # recreation of layers wouldnt be necessary if the field comments
+                    # wouldnt need a recreation of a QgsField to update
                     new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
                     pr = new_lyr.dataProvider()
                     new_lyr.setCrs(crs)
@@ -1458,20 +1467,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     # index existing features
                     existing_index = {}
-                    nogeom_ref = features.setdefault("NoGeometry", [])
+                    nogeom_ref = []
+                    if "NoGeometry" in features:
+                        nogeom_ref = features["NoGeometry"]
                     nogeom_ids = {f["identifier"] for f in nogeom_ref}
-                    incoming_nogeom_ids = set(csv_index.keys())
 
                     for f in existing_layer.dataProvider().getFeatures():
-                        # skip features without geometry in a geometry layer as they are
-                        # reimported into the NoGeometry layer where they belong
+                        # move features without geometry in a geometry layer
+                        # into the NoGeometry feature collection
                         if geom_type != "NoGeometry" and f.geometry().isEmpty():
-                            # todo: test with thousands of features
-                            # recreate id lists in case features have been appended
+                            if "NoGeometry" not in features:
+                                features["NoGeometry"] = []
+                                queue.append("NoGeometry")
 
-                            # move to features["NoGeometry"]
                             ident = f["identifier"]
-                            if ident not in nogeom_ids and ident not in incoming_nogeom_ids:
+                            if ident not in nogeom_ids and ident not in ordered_ids:
                                 new_feat = QgsFeature(new_fields)
                                 new_feat.setGeometry(None)
 
@@ -1491,7 +1501,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                                 new_feat.setAttributes(attrs)
 
-                                nogeom_ref.append(new_feat)
+                                features["NoGeometry"].append(new_feat)
                                 nogeom_ids.add(ident)
                             continue
 
@@ -1829,8 +1839,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             layer.setEditorWidgetSetup(f_idx, setup)
                             break
 
-                # python 3.12+
-                # if valuemaps: print(f'unassigned vmaps:\n{',\n'.join([f'{k}: {v}' for k,v in valuemaps.items()])}')
                 # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
                 # if valuemaps:
                 #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
@@ -1919,6 +1927,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         self.project.addMapLayer(layer, False)
                         # insert at original position
                         group_ref.insertLayer(existing_ltl_index, layer)
+                qi += 1
+            # while end
 
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
