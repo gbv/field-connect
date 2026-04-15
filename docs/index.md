@@ -221,6 +221,7 @@ In addition to the relations listed in the project configuration in the form of 
 * *Depicted in* (not for image resources): Links the resource to one or more images.
 * *Is map layer of* (only for image resources): Adds the image as a map layer in the context of the resource specified as the target.
 * *Has map layer* (not for image resources): Adds one or more images as a map layer in the context of this resource.
+* *Has default map layer* (not for image resources): Specifies which map layers should be enabled by default when displayed in Field Desktop.
 
 To link images to the project or set them up as map layers at project level, enter the project identifier in the column *Relation Depicts* or *Relation Is map layer of*.
 

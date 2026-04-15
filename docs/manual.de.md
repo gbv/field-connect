@@ -222,6 +222,7 @@ Zusätzlich zu den Relationen, die in der Projektkonfiguration im Formular der j
 * *Wird gezeigt in* (nicht bei Bildressourcen): Verknüpft die Ressource mit einem oder mehreren Bildern.
 * *Kartenhintergrund von* (nur bei Bildressourcen): Fügt das Bild als Kartenhintergrund im Kontext der als Ziel angegebenen Ressource hinzu.
 * *Hat Kartenhintergrund* (nicht bei Bildressourcen): Fügt im Kontext dieser Ressource eines oder mehrere Bilder als Kartenhintergrund hinzu.
+* *Hat Standard-Kartenhintergrund* (nicht bei Bildressourcen): Gibt an, welche Kartenhintergünde bei der Anzeige in Field Desktop standardmäßig aktiviert sein sollen.
 
 Um Bilder mit dem Projekt zu verknüpfen oder auf Projektebene als Kartenhintergrund einzurichten, tragen Sie in der Spalte *Relation Zeigt* bzw. *Relation Kartenhintergrund von* die Projektkennung ein.
 
