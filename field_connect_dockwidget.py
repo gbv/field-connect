@@ -50,6 +50,7 @@ from qgis.core import (
     QgsLayerTreeGroup,
     QgsMapLayer,
     QgsMapLayerType,
+    QgsMessageLog,
     QgsProject,
     QgsSettings,
     QgsVectorFileWriter,
@@ -68,6 +69,7 @@ from qgis.PyQt.QtWidgets import (
     QGraphicsDropShadowEffect,
     QLabel,
     QMessageBox,
+    QPushButton,
     QSizePolicy,
     QStatusBar,
 )
@@ -122,7 +124,9 @@ def handle_api_errors(func):
             self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushMessage(
-                f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}", Qgis.Warning, 5
+                f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}",
+                Qgis.MessageLevel.Warning,
+                5,
             )
 
         except ApiError as e:
@@ -198,6 +202,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             ),
             "IMPORT_FAILED": self.tr("Import failed!"),
             "IMPORT_SUCCESS": self.tr("Import successful!"),
+            "IMPORT_UPDATE_LAYER_VARIABLES_MISSING": self.tr(
+                "There are layers that have no field_category layer variable set. Check the log for more information."
+            ),
             "EXPORT_ERRORS": self.tr("Export finished with errors!"),
             "EXPORT_FAILED": self.tr("Export failed!"),
             "EXPORT_SUCCESS": self.tr("Export successful!"),
@@ -845,7 +852,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         if data.get("inputType") == "relation":
                             # fallback to trAttrs label in case there is one
                             if label == fieldname:
-                                tr_attrs_label = safe_get(self.trAttrs, "relations", fieldname, "label", default=None)
+                                tr_attrs_label = safe_get(
+                                    self.trAttrs, "relations", fieldname, "label", default=None
+                                )
                                 if tr_attrs_label:
                                     label = tr_attrs_label
                             result.setdefault("relations", {})[fieldname] = {
@@ -1197,6 +1206,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.reset()
         self.show_or_hide_progress_bar()
         group_ref = None
+        group_has_modified_layers = None
         group_ref_layer_names = {}
         lup_layer_temp = None
         processed_vmaps = []
@@ -1269,9 +1279,94 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if group_ref is None:
             group_ref = self.treeRoot.insertGroup(-1, f"{self.active_project}")
 
+        group_ref_layers = group_ref.findLayers()
+        group_ref_vector_layers = [
+            ltl for ltl in group_ref_layers if ltl.layer().type() == QgsMapLayerType.VectorLayer
+        ]
+
+        # todo?: ask user to save/discard changes on group_ref or only for group_ref_layers_filtered,
+        #        as other layers may not need to be saved
+        if import_overwrite:
+            group_has_modified_layers = any(
+                [ltl.layer().isModified() for ltl in group_ref_vector_layers]
+            )
+            if group_has_modified_layers:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText(
+                    "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
+                )
+                msg.setInformativeText("Save changes before overwriting GeoPackage?")
+                msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+                msg.setDefaultButton(QMessageBox.Cancel)
+
+                result = msg.exec_()
+
+                if result == QMessageBox.Cancel:
+                    self._import_running = False
+                    self.show_or_hide_progress_bar()
+                    return  # abort import
+
+                if result == QMessageBox.Save:
+                    for ltl in group_ref_vector_layers:
+                        ltl.layer().commitChanges()
+
+                elif result == QMessageBox.Discard:
+                    for ltl in group_ref_vector_layers:
+                        ltl.layer().rollBack()
+
+        # todo: try to reuse group_ref_vector_layers and only filter _lookup
+        group_ref_layers_filtered = [
+            ltl
+            for ltl in group_ref_layers
+            if ltl.layer().type() == QgsMapLayerType.VectorLayer
+            and "_lookup" not in ltl.layer().name()
+        ]
+
+        # todo: dissolve, as it will be in group_ref_layers_grouped
+        # todo?: or build names from group_ref_layers_grouped?
         group_ref_layer_names = dict(
-            [(ltl.layer().name(), ltl.layer().id()) for ltl in group_ref.findLayers()]
+            [
+                (lr.layer().name(), lr.layer().id())
+                for lr in group_ref_layers_filtered
+                if lr.layer().type() == QgsMapLayerType.VectorLayer
+                and "_lookup" not in lr.layer().name()
+            ]
         )
+
+        # existing layers grouped by their field_category layer variable
+        group_ref_layers_grouped = {}
+        group_ref_layer_names_missing_variables = []
+        for ltl in group_ref_layers_filtered:
+            lay = ltl.layer()
+            field_category = QgsExpressionContextUtils.layerScope(lay).variable("field_category")
+            if field_category is None:
+                group_ref_layer_names_missing_variables.append(lay.name())
+            group_ref_layers_grouped.setdefault(field_category, {})[lay.name()] = ltl
+        # print(f"group_ref_layers_grouped: {group_ref_layers_grouped}")
+
+        # log layer names with missing variables
+        if group_ref_layer_names_missing_variables:
+            msg_content = self.tr(self.labels["IMPORT_UPDATE_LAYER_VARIABLES_MISSING"])
+            msg = self.mB.createMessage(msg_content)
+
+            button = QPushButton(self.tr("Open Logs"))
+
+            def open_logs():
+                self.iface.openMessageLog(self.plugin_name)
+
+            button.clicked.connect(open_logs)
+            msg.layout().addWidget(button)
+
+            self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
+
+            QgsMessageLog.logMessage(
+                self.tr("List of layers without a field_category layer variable:"),
+                self.plugin_name,
+                Qgis.MessageLevel.Warning,
+            )
+            for n in group_ref_layer_names_missing_variables:
+                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Warning)
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
@@ -1393,6 +1488,124 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # process NoGeometry features last
             features = dict(sorted(features.items(), key=lambda item: item[0] == "NoGeometry"))
 
+            if import_overwrite:
+                # get differences between incoming and existing features
+                incoming_geom_map = {}
+                for geom_type, feats in features.items():
+                    for f in feats:
+                        incoming_geom_map[f["identifier"]] = geom_type
+
+                existing_geom_map = {}
+                group_ref_layers_current_group = group_ref_layers_grouped.get(cat, {})
+                for ltl in group_ref_layers_current_group.values():
+                    group_ref_layer = ltl.layer()
+                    geom_type = QgsWkbTypes.displayString(
+                        QgsWkbTypes.flatType(group_ref_layer.wkbType())
+                    )
+                    for f in group_ref_layer.getFeatures():
+                        existing_geom_map[f["identifier"]] = (group_ref_layer, f.id(), geom_type)
+
+                # print(incoming_geom_map)
+                # print(existing_geom_map)
+
+                # unify old and new index and get differences/transitions
+                all_ids = set(existing_geom_map) | set(incoming_geom_map)
+                transitions = {}
+                # only_existing = set()
+                # only_incoming = set()
+
+                for ident in all_ids:
+                    old = existing_geom_map.get(ident)  # tuple (layer, fid, geom_type)
+                    new = incoming_geom_map.get(ident)
+
+                    old_geom = old[2] if old else None
+                    #     if old and not new:
+                    #         only_existing.add(ident)
+                    #     elif new and not old:
+                    #         only_incoming.add(ident)
+                    #     elif old != new:
+                    #         transitions[ident] = (old, new)
+
+                    # only get transitions of existing identifiers
+                    if old_geom is not None:
+                        if old_geom != new:
+                            transitions[ident] = (old, new)
+
+                # transitions = {
+                #     ident: (existing_geom_map.get(ident), incoming_geom_map.get(ident))
+                #     for ident in set(existing_geom_map) | set(incoming_geom_map)
+                #     if existing_geom_map.get(ident) is not None
+                #     and existing_geom_map.get(ident) != incoming_geom_map.get(ident)
+                # }
+
+                # list of changed features
+                # print(transitions)
+
+                # collect layers with features for deletion
+                layer_delete_map = {}
+                layers_to_remove = []
+
+                for t_id, (old, new_geom) in transitions.items():
+                    if old:
+                        layer, fid, geom_type = old
+                        layer_delete_map.setdefault(layer, []).append(fid)
+
+                # delete previously collected fids from layers they belong to
+                # and delete layer if it has no features left
+                for layer, fids in layer_delete_map.items():
+                    if not fids:
+                        continue
+
+                    layer.startEditing()
+                    layer.deleteFeatures(fids)
+                    layer.commitChanges()
+
+                    # todo: see if solution under this loop works better
+                    # if layer.featureCount() == 0:
+                    #     # always remove empty NoGeometry layers as they are not
+                    #     # a configurable geometry type in Field Desktop
+                    #     if not create_all_layers or geom_type == "NoGeometry":
+                    #         layers_to_remove.append(layer)
+
+                # mark layers with no features for removal if create_all_layers = False
+                if not create_all_layers:
+                    for ltl in group_ref_layers_current_group.values():
+                        layer = ltl.layer()
+                        if layer.featureCount() == 0:
+                            layers_to_remove.append(layer)
+
+                # print(layers_to_remove)
+
+                for layer in layers_to_remove:
+                    # collect necessary layer information before removing
+                    # to avoid accessing the layer after deletion (crashes QGIS)
+                    source = layer.source()
+                    gpkg_path = source.split("|")[0]
+                    # print(gpkg_path)
+                    uri_str = layer.dataProvider().dataSourceUri()
+                    uri = layer.dataProvider().uri()
+
+                    # also remove from previous collected existing layers
+                    group_ref_layers_grouped[cat].pop(layer.name())
+                    self.project.removeMapLayer(layer.id())
+
+                    from osgeo import ogr
+
+                    ds = ogr.Open(gpkg_path, update=1)
+                    if ds:
+                        table_name = uri.table()
+
+                        if not table_name:
+                            # fallback parsing
+                            parts = dict(p.split("=", 1) for p in uri_str.split("|") if "=" in p)
+                            table_name = parts.get("layername")
+
+                        # print(f"table_name: {table_name}")
+
+                        ds.DeleteLayer(table_name)
+                        ds.Close()
+                        ds = None
+
             # use dynamic iteration in case geom types are added
             queue = list(features.keys())
             qi = 0
@@ -1409,9 +1622,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
 
                 # check if lay_name exists in group_ref_layer_names
-                if lay_name in group_ref_layer_names.keys():
+                if lay_name in group_ref_layers_grouped.get(cat, {}).keys():
                     layer_in_group = True
-                    existing_ltl = group_ref.findLayer(group_ref_layer_names[lay_name])
+                    existing_ltl = group_ref_layers_grouped.get(cat, {}).get(lay_name, None)
 
                     # previous layer index for insertion of new_lyr
                     # parent() should return the group the ltl is in
@@ -1961,23 +2174,31 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # add lookup layer
         if lup_layer_temp:
             lup_layer_name = lup_layer_temp.name()
-            existing_lup_layer = [
-                lyr for lyr in group_ref.findLayers() if "_lookup" in lyr.layer().name()
+
+            existing_lup_layers = [
+                ltl.layer() for ltl in group_ref.findLayers() if "_lookup" in ltl.layer().name()
             ]
-            if not import_overwrite and not existing_lup_layer:
+
+            existing_lup_layer = existing_lup_layers[0] if existing_lup_layers else None
+            existing_is_temp = existing_lup_layer.isTemporary() if existing_lup_layer else False
+
+            if not existing_lup_layer:
                 self.project.addMapLayer(lup_layer_temp, False)
-                # add lookup layer into group
                 group_ref.insertLayer(0, lup_layer_temp)
-                # self.treeRoot.insertLayer(0, lup_layer_temp)
-            if filename and not existing_lup_layer:
+                existing_lup_layer = lup_layer_temp
+                existing_is_temp = True
+
+            if filename and existing_is_temp:
                 options.actionOnExistingFile = (
                     QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
                 )
                 options.layerName = lup_layer_name
+
                 QgsVectorFileWriter.writeAsVectorFormatV3(
                     lup_layer_temp, filename, transform_context, options
                 )
-                if not import_overwrite:
+
+                if not import_overwrite or existing_is_temp:
                     lup_layer_temp.setDataSource(
                         f"{filename}|layername={options.layerName}",
                         options.layerName,
