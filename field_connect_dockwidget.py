@@ -2896,7 +2896,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # todo: output statistics after import (image count ✓, skipping already existing images etc.)
         if not self._check_connection_and_project():
             return
-        layers: list[QgsVectorLayer] = iface.layerTreeView().selectedLayers()
+        layers: list[QgsVectorLayer] = self.iface.layerTreeView().selectedLayers()
         import_layers = self.fileApiImportLayers.isChecked()
         if import_layers and not layers:
             self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
@@ -3007,7 +3007,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def file_api_export(self, *args):
         if not self._check_connection_and_project():
             return
-        selected_layers = iface.layerTreeView().selectedLayers()
+        selected_layers = self.iface.layerTreeView().selectedLayers()
         if not selected_layers:
             self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
             return
@@ -3180,12 +3180,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     button = QPushButton(self.tr("Open Logs"))
 
                     def open_logs():
-                        iface.openMessageLog(self.plugin_name)
+                        self.iface.openMessageLog(self.plugin_name)
 
                     button.clicked.connect(open_logs)
                     msg.layout().addWidget(button)
 
-                iface.messageBar().pushWidget(msg, Qgis.Info, 0)
+                self.iface.messageBar().pushWidget(msg, Qgis.Info, 0)
 
                 for m in messages:
                     QgsMessageLog.logMessage(m, self.plugin_name, Qgis.Info)
