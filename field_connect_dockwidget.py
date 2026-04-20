@@ -694,9 +694,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         uri = layer.dataProvider().dataSourceUri()
         parts = uri.split("_")
 
-        cat_name = (
-            QgsExpressionContextUtils.layerScope(layer).variable("field_category")
-            or (parts[-2] if len(parts) >= 2 else None)
+        cat_name = QgsExpressionContextUtils.layerScope(layer).variable("field_category") or (
+            parts[-2] if len(parts) >= 2 else None
         )
 
         # todo?: check if cat_name matches categories in project config?
@@ -1299,9 +1298,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Warning)
                 msg.setText(
-                    "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
+                    self.tr(
+                        "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
+                    )
                 )
-                msg.setInformativeText("Save changes before overwriting GeoPackage?")
+                msg.setInformativeText(self.tr("Save changes before overwriting GeoPackage?"))
                 msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
                 msg.setDefaultButton(QMessageBox.Cancel)
 
