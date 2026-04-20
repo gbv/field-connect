@@ -1503,7 +1503,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         QgsWkbTypes.flatType(group_ref_layer.wkbType())
                     )
                     for f in group_ref_layer.getFeatures():
-                        existing_geom_map[f["identifier"]] = (group_ref_layer, f.id(), geom_type)
+                        existing_geom_map.setdefault(f["identifier"], []).append(
+                            (group_ref_layer, f.id(), geom_type)
+                        )
 
                 # print(incoming_geom_map)
                 # print(existing_geom_map)
@@ -1515,28 +1517,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # only_incoming = set()
 
                 for ident in all_ids:
-                    old = existing_geom_map.get(ident)  # tuple (layer, fid, geom_type)
+                    old_entries = existing_geom_map.get(ident, [])  # list of tuples
                     new = incoming_geom_map.get(ident)
 
-                    old_geom = old[2] if old else None
-                    #     if old and not new:
-                    #         only_existing.add(ident)
-                    #     elif new and not old:
-                    #         only_incoming.add(ident)
-                    #     elif old != new:
-                    #         transitions[ident] = (old, new)
+                    old_geoms = {entry[2] for entry in old_entries}
 
                     # only get transitions of existing identifiers
-                    if old_geom is not None:
-                        if old_geom != new:
-                            transitions[ident] = (old, new)
-
-                # transitions = {
-                #     ident: (existing_geom_map.get(ident), incoming_geom_map.get(ident))
-                #     for ident in set(existing_geom_map) | set(incoming_geom_map)
-                #     if existing_geom_map.get(ident) is not None
-                #     and existing_geom_map.get(ident) != incoming_geom_map.get(ident)
-                # }
+                    if old_entries and new is not None:
+                        if old_geoms != {new}:
+                            transitions[ident] = (old_entries, new)
 
                 # list of changed features
                 # print(transitions)
@@ -1545,10 +1534,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 layer_delete_map = {}
                 layers_to_remove = []
 
-                for t_id, (old, new_geom) in transitions.items():
-                    if old:
-                        layer, fid, geom_type = old
-                        layer_delete_map.setdefault(layer, []).append(fid)
+                for t_id, (old_entries, new_geom) in transitions.items():
+                    for layer, fid, geom_type in old_entries:
+                        if geom_type != new_geom:
+                            layer_delete_map.setdefault(layer, []).append(fid)
 
                 # delete previously collected fids from layers they belong to
                 # and delete layer if it has no features left
