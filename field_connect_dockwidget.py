@@ -1350,6 +1350,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             msg_content = self.tr(self.labels["IMPORT_UPDATE_LAYER_VARIABLES_MISSING"])
             msg = self.mB.createMessage(msg_content)
 
+            # todo: turn into reusable button
             button = QPushButton(self.tr("Open Logs"))
 
             def open_logs():
@@ -1507,8 +1508,43 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             (group_ref_layer, f.id(), geom_type)
                         )
 
-                # print(incoming_geom_map)
-                # print(existing_geom_map)
+                # detect duplicates and warn user
+                duplicate_ids = {
+                    ident: entries
+                    for ident, entries in existing_geom_map.items()
+                    if len(entries) > 1
+                }
+
+                if duplicate_ids:
+                    msg = self.iface.messageBar().createMessage(
+                        self.plugin_name,
+                        self.tr("Duplicate identifiers detected. Check the log for details."),
+                    )
+
+                    # todo: replace with reusable button when available
+                    button = QPushButton(self.tr("Open Logs"))
+
+                    def open_logs():
+                        self.iface.openMessageLog(self.plugin_name)
+
+                    button.clicked.connect(open_logs)
+                    msg.layout().addWidget(button)
+
+                    self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
+
+                    QgsMessageLog.logMessage(
+                        self.tr("Duplicate identifiers found:"),
+                        self.plugin_name,
+                        Qgis.MessageLevel.Warning,
+                    )
+
+                    for ident, entries in duplicate_ids.items():
+                        layers = {layer.name() for layer, _, _ in entries}
+                        QgsMessageLog.logMessage(
+                            f"{ident} → {', '.join(layers)}",
+                            self.plugin_name,
+                            Qgis.MessageLevel.Warning,
+                        )
 
                 # unify old and new index and get differences/transitions
                 all_ids = set(existing_geom_map) | set(incoming_geom_map)
