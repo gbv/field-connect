@@ -1374,6 +1374,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for n in group_ref_layer_names_missing_variables:
                 QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Warning)
 
+            return
+
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
         r_geo: Response = self.api.get("/export/geojson?context=project&formatted=true")
