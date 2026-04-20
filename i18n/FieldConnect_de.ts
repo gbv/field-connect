@@ -539,7 +539,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="2280"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1910"/>
@@ -644,39 +644,41 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="205"/>
         <source>There are layers that have no field_category layer variable set. Check the log for more information.</source>
-        <translation type="unfinished"></translation>
+        <translation>Es wurden Layer gefunden, bei denen die Layer-Variable field_category nicht gesetzt ist. Weitere Informationen finden Sie im Log.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1533"/>
         <source>Open Logs</source>
-        <translation type="unfinished"></translation>
+        <translation>Log öffnen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1370"/>
         <source>List of layers without a field_category layer variable:</source>
-        <translation type="unfinished"></translation>
+        <translation>Liste der Layer ohne gesetzte Layer-Variable field_category:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1527"/>
         <source>Duplicate identifiers detected. Check the log for details.</source>
-        <translation type="unfinished"></translation>
+        <translation>Doppelte Bezeichner gefunden. Weitere Informationen finden Sie im Log.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1543"/>
         <source>Duplicate identifiers found:</source>
-        <translation type="unfinished"></translation>
+        <translation>Gefundene doppelte Bezeichner:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1300"/>
         <source>There are unsaved edits in the layer group.
 
 In order to update the GeoPackage, all changes need to be saved or discarded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Es gibt ungespeicherte Änderungen in der Layergruppe.
+
+Um das GeoPackage zu aktualisieren, müssen alle Änderungen gespeichert oder verworfen werden.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1305"/>
         <source>Save changes before overwriting GeoPackage?</source>
-        <translation type="unfinished"></translation>
+        <translation>Änderungen speichern, bevor das GeoPackage überschrieben wird?</translation>
     </message>
 </context>
 <context>
