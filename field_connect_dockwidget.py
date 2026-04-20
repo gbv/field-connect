@@ -691,11 +691,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def get_category_name_for_export(self, layer: QgsVectorLayer):
         """Extract the category name from the layer variable 'field_category' which is set on import, or
         try the dataSourceUri as fallback"""
+        uri = layer.dataProvider().dataSourceUri()
+        parts = uri.split("_")
+
         cat_name = (
             QgsExpressionContextUtils.layerScope(layer).variable("field_category")
-            or layer.dataProvider().dataSourceUri().split("_")[-2]
-            or ""
+            or (parts[-2] if len(parts) >= 2 else None)
         )
+
+        # todo?: check if cat_name matches categories in project config?
+        #     ?: Shows an unconfigured category warning from Field Desktop anyway
 
         return cat_name
 
@@ -2358,7 +2363,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     and layer.isValid()
                 ):
                     cat = self.get_category_name_for_export(layer)
-                    if not cat:
+                    if cat is None:
                         self.mB.pushWarning(
                             self.plugin_name, self.labels["CAT_NAME_EXTRACTION_FAILED"]
                         )
