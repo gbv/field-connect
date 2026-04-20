@@ -1296,28 +1296,28 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
             if group_has_modified_layers:
                 msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
+                msg.setIcon(QMessageBox.Icon.Warning)
                 msg.setText(
                     self.tr(
                         "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
                     )
                 )
                 msg.setInformativeText(self.tr("Save changes before overwriting GeoPackage?"))
-                msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-                msg.setDefaultButton(QMessageBox.Cancel)
+                msg.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
+                msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
 
-                result = msg.exec_()
+                result = msg.exec()
 
-                if result == QMessageBox.Cancel:
+                if result == QMessageBox.StandardButton.Cancel:
                     self._import_running = False
                     self.show_or_hide_progress_bar()
                     return  # abort import
 
-                if result == QMessageBox.Save:
+                if result == QMessageBox.StandardButton.Save:
                     for ltl in group_ref_vector_layers:
                         ltl.layer().commitChanges()
 
-                elif result == QMessageBox.Discard:
+                elif result == QMessageBox.StandardButton.Discard:
                     for ltl in group_ref_vector_layers:
                         ltl.layer().rollBack()
 
