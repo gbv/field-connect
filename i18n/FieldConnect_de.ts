@@ -112,7 +112,7 @@
         <translation>Jahr</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="804"/>
+        <location filename="../field_connect_dockwidget.py" line="803"/>
         <source>Period</source>
         <translation>Zeitraum</translation>
     </message>
@@ -137,37 +137,37 @@
         <translation>Keine Gruppen verfügbar</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1164"/>
+        <location filename="../field_connect_dockwidget.py" line="1163"/>
         <source>Choose categories and format</source>
         <translation>Kategorien und Format auswählen</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1248"/>
+        <location filename="../field_connect_dockwidget.py" line="1247"/>
         <source>Save GeoPackage as...</source>
         <translation>GeoPackage speichern als...</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2334"/>
+        <location filename="../field_connect_dockwidget.py" line="2335"/>
         <source>Coordinate transformation</source>
         <translation>Koordinatentransformation</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2335"/>
+        <location filename="../field_connect_dockwidget.py" line="2336"/>
         <source>The layer CRS differs from the target CRS. Do you want to transform coordinates?</source>
         <translation>Das CRS des Layers unterscheidet sich vom Ziel-CRS. Möchten Sie die Koordinaten transformieren?</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2342"/>
+        <location filename="../field_connect_dockwidget.py" line="2343"/>
         <source>Yes to all</source>
         <translation>Ja zu allem</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2345"/>
+        <location filename="../field_connect_dockwidget.py" line="2346"/>
         <source>No to all</source>
         <translation>Nein zu allem</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2346"/>
+        <location filename="../field_connect_dockwidget.py" line="2347"/>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
     </message>
@@ -207,12 +207,12 @@
         <translation>Bereit zum Verbinden</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1107"/>
+        <location filename="../field_connect_dockwidget.py" line="1106"/>
         <source>Disconnect</source>
         <translation>Verbindung beenden</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1110"/>
+        <location filename="../field_connect_dockwidget.py" line="1109"/>
         <source>Connect</source>
         <translation>Verbinden</translation>
     </message>
@@ -452,12 +452,12 @@
         <translation>Abbildung</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1390"/>
+        <location filename="../field_connect_dockwidget.py" line="1391"/>
         <source>Importing category {label} %p%</source>
         <translation>Importiere Kategorie {label} %p%</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2196"/>
+        <location filename="../field_connect_dockwidget.py" line="2197"/>
         <source>Style saved by the Field Connect plugin</source>
         <translation>Style wurde vom &quot;Field Connect&quot;-Plugin gesichert</translation>
     </message>
@@ -467,7 +467,7 @@
         <translation>Export mit Fehlern beendet!</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2490"/>
+        <location filename="../field_connect_dockwidget.py" line="2491"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation>Layer {layer} konnte nicht gespeichert werden: {errors}</translation>
     </message>
@@ -487,62 +487,62 @@
         <translation>Zum Filtern eingeben...</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="768"/>
+        <location filename="../field_connect_dockwidget.py" line="767"/>
         <source>Yes</source>
         <translation>Ja</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="768"/>
+        <location filename="../field_connect_dockwidget.py" line="767"/>
         <source>No</source>
         <translation>Nein</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="771"/>
+        <location filename="../field_connect_dockwidget.py" line="770"/>
         <source>ml</source>
         <translation>ml</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="771"/>
+        <location filename="../field_connect_dockwidget.py" line="770"/>
         <source>l</source>
         <translation>l</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="774"/>
+        <location filename="../field_connect_dockwidget.py" line="773"/>
         <source>mg</source>
         <translation>mg</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="775"/>
+        <location filename="../field_connect_dockwidget.py" line="774"/>
         <source>g</source>
         <translation>g</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="776"/>
+        <location filename="../field_connect_dockwidget.py" line="775"/>
         <source>kg</source>
         <translation>kg</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="782"/>
+        <location filename="../field_connect_dockwidget.py" line="781"/>
         <source>mm</source>
         <translation>mm</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="783"/>
+        <location filename="../field_connect_dockwidget.py" line="782"/>
         <source>cm</source>
         <translation>cm</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="784"/>
+        <location filename="../field_connect_dockwidget.py" line="783"/>
         <source>m</source>
         <translation>m</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2279"/>
+        <location filename="../field_connect_dockwidget.py" line="2280"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
         <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1909"/>
+        <location filename="../field_connect_dockwidget.py" line="1910"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
         <translation>Unterstützte Datumsformate: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</translation>
     </message>
@@ -562,47 +562,47 @@
         <translation>Keine ungespeicherten Layer vorhanden</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="795"/>
+        <location filename="../field_connect_dockwidget.py" line="794"/>
         <source>BCE</source>
         <translation>v. Chr.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="796"/>
+        <location filename="../field_connect_dockwidget.py" line="795"/>
         <source>CE</source>
         <translation>n. Chr.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="797"/>
+        <location filename="../field_connect_dockwidget.py" line="796"/>
         <source>BP</source>
         <translation>BP</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="805"/>
+        <location filename="../field_connect_dockwidget.py" line="804"/>
         <source>Single year</source>
         <translation>Einzelnes Jahr</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="806"/>
+        <location filename="../field_connect_dockwidget.py" line="805"/>
         <source>Before</source>
         <translation>Vor</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="807"/>
+        <location filename="../field_connect_dockwidget.py" line="806"/>
         <source>After</source>
         <translation>Nach</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="808"/>
+        <location filename="../field_connect_dockwidget.py" line="807"/>
         <source>Scientific</source>
         <translation>Naturwissenschaftlich</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2517"/>
+        <location filename="../field_connect_dockwidget.py" line="2518"/>
         <source>Exporting category {cat} (1/2) %p%</source>
         <translation>Exportiere Kategorie {cat} (1/2) %p%</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2556"/>
+        <location filename="../field_connect_dockwidget.py" line="2557"/>
         <source>Exporting category {cat} (2/2) %p%</source>
         <translation>Exportiere Kategorie {cat} (2/2) %p%</translation>
     </message>
@@ -617,7 +617,7 @@
         <translation>Ungültiger EPSG-Code in den Projekteigenschaften: {epsgId}. Das CRS des QGIS-Projekts wird verwendet.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2592"/>
+        <location filename="../field_connect_dockwidget.py" line="2593"/>
         <source>Exporting geodata %p%</source>
         <translation>Exportiere Geodaten %p%</translation>
     </message>
@@ -627,7 +627,7 @@
         <translation>Field Connect setzt Field Desktop 3.7.0 oder höher voraus.</translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1183"/>
+        <location filename="../field_connect_dockwidget.py" line="1182"/>
         <source>Select at least one category to continue.</source>
         <translation>Wählen Sie mindestens eine Kategorie aus, um fortzufahren.</translation>
     </message>
@@ -647,23 +647,35 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1532"/>
+        <location filename="../field_connect_dockwidget.py" line="1533"/>
         <source>Open Logs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1369"/>
+        <location filename="../field_connect_dockwidget.py" line="1370"/>
         <source>List of layers without a field_category layer variable:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1526"/>
+        <location filename="../field_connect_dockwidget.py" line="1527"/>
         <source>Duplicate identifiers detected. Check the log for details.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1542"/>
+        <location filename="../field_connect_dockwidget.py" line="1543"/>
         <source>Duplicate identifiers found:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="1300"/>
+        <source>There are unsaved edits in the layer group.
+
+In order to update the GeoPackage, all changes need to be saved or discarded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="1305"/>
+        <source>Save changes before overwriting GeoPackage?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
