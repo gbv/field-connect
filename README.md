@@ -1,16 +1,13 @@
 # Field Connect
 
-Field Connect is a [QGIS](https://qgis.org) plugin that connects QGIS with [Field](https://github.com/dainst/idai-field), a documentation software for archaeological field and find recording developed as a cooperation between the German Archaeological Institute ([DAI](https://www.dainst.org)) and the Head Office of the GBV Common Library Network ([GBV](https://en.gbv.de/)).
+*Field Connect* is a plugin for [QGIS](https://qgis.org) that establishes a connection with [Field Desktop](https://field.idai.world/download), a documentation software for archaeological field and find recording developed as a cooperation between the German Archaeological Institute ([DAI](https://www.dainst.org/en/)) and the Head Office of the GBV Common Library Network ([VZG](https://en.gbv.de)).
 
-The plugin allows importing and exporting data between a [Field Desktop](https://field.idai.world/download) application running on the same computer and a QGIS project. It can also be used to create [GeoPackage](https://www.geopackage.org) files from data recorded in Field Desktop.
+The plugin enables the exchange of data between a QGIS project and a Field Desktop installation running on the same computer. In this context, it can also be used to create [GeoPackage](https://www.geopackage.org) files from the data of a Field project.
+
+The user interface of Field Connect is available in German and English.
 
 *Please note that Field Connect is currently in development and has not yet been released.*
 
-## Features
+## User manual
 
-### Import
-* Import data from the project currently open in Field Desktop into a QGIS project either as temporary layers or by saving it as a GeoPackage file.
-* Labels for fields and valuelists defined in the project configuration can be optionally added as a layer style definition.
-
-### Export 
-* Export data from QGIS layers into the project currently open in Field Desktop.
+Please refer to the [user manual](https://gbv.github.io/field-connect/) for information on how to use the plugin.

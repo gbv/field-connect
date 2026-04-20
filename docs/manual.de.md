@@ -12,24 +12,24 @@
 
 ## Was ist Field Connect?
 
-*Field Connect* ist ein Plugin für [QGIS](https://qgis.org), das eine Verbindung mit [Field](https://field.idai.world) herstellt, einer Software zur archäologischen Grabungsdokumentation und Funderfassung, die in einer Kooperation zwischen dem Deutschen Archäologischen Institut ([DAI](https://www.dainst.org)) und der Verbundzentrale des Gemeinsamen Bibliotheksverbundes ([VZG](https://www.gbv.de)) entwickelt wird.
+*Field Connect* ist ein Plugin für [QGIS](https://qgis.org), das eine Verbindung mit [Field Desktop](https://field.idai.world/download) herstellt, einer Software zur archäologischen Grabungsdokumentation und Funderfassung, die in einer Kooperation zwischen dem Deutschen Archäologischen Institut ([DAI](https://www.dainst.org)) und der Verbundzentrale des Gemeinsamen Bibliotheksverbundes ([VZG](https://www.gbv.de)) entwickelt wird.
 
-Das Plugin ermöglicht den Austausch von Daten zwischen einer auf demselben Computer ausgeführten [Field Desktop](https://field.idai.world/download)-Anwendung und einem QGIS-Projekt. Es kann außerdem dazu verwendet werden, [GeoPackage](https://www.geopackage.org)-Dateien aus den Daten eines Field-Projekts zu erstellen.
+Das Plugin ermöglicht den Austausch von Daten zwischen einem QGIS-Projekt und einer auf demselben Computer ausgeführten Installation von Field Desktop. In diesem Zusammenhang kann es außerdem dazu verwendet werden, [GeoPackage](https://www.geopackage.org)-Dateien aus den in Field Desktop aufgenommenen Daten zu erstellen.
 
 Die Benutzeroberfläche von Field Connect ist in den Sprachen Deutsch und Englisch verfügbar.
 
 ## Voraussetzungen
 
-* QGIS 3.44 oder aktueller
-* Field Desktop 3.7.0 oder aktueller
+* QGIS 3.40 oder aktueller
+* Field Desktop 3.7 oder aktueller
 
 ## Erste Schritte
 
 Rufen Sie Field Desktop auf und öffnen Sie das Projekt, mit dem Sie in QGIS arbeiten möchten. **Wichtig**: Alle Funktionen von Field Connect arbeiten immer mit dem aktuell in Field Desktop geöffneten Projekt.
 
-Nach der Installation des Plugins erscheint in der Erweiterungwerkzeugleiste ein neuer Button mit dem Field-Logo ("Mit Field Desktop verbinden"), der das *Field Connect*-Menü öffnet.
+Nach der Installation des Plugins erscheint in der Erweiterungwerkzeugleiste in QGIS ein neuer Button mit dem Field-Logo (Tooltip: "Mit Field Desktop verbinden"), der das *Field Connect*-Menü öffnet.
 
-Geben Sie nun in das Eingabefeld *Field-Passwort* das Synchronisationspasswort Ihrer *Field Desktop*-Installation ein. Sie finden das Passwort, indem Sie in Field Desktop das Menü "Werkzeuge" ➝ "Einstellungen" (unter macOS: "Field Desktop" ➝ "Einstellungen") aufrufen. Im Abschnitt "Synchronisation" können Sie das Passwort unter "Eigenes Passwort" auslesen und ändern.
+Geben Sie nun in das Eingabefeld "Field-Passwort" das Synchronisationspasswort Ihrer *Field Desktop*-Installation ein. Sie finden das Passwort, indem Sie in Field Desktop das Menü "Werkzeuge" ➝ "Einstellungen" (unter macOS: "Field Desktop" ➝ "Einstellungen") aufrufen. Im Abschnitt "Synchronisation" können Sie das Passwort unter "Eigenes Passwort" auslesen und ändern.
 
 Über den Button "Verbinden" können Sie nun eine Verbindung mit dem in Field Desktop geöffneten Projekt herstellen. Bei bestehender Verbindung können über die Tabs "Import" und "Export" im *Field Connect*-Menü Daten zwischen QGIS und Field Desktop ausgetauscht werden.
 
@@ -37,15 +37,34 @@ Geben Sie nun in das Eingabefeld *Field-Passwort* das Synchronisationspasswort I
 
 ### Einstellungen
 
-* *Kategorien*: Dieses Auswahlmenü enthält alle Kategorien, die für das Projekt, mit dem Sie sich verbunden haben, konfiguriert sind. Wählen Sie eine oder mehrere Kategorien aus, deren Ressourcen in das aktuell geöffnete QGIS-Projekt importiert werden sollen. Mit der Option "Alle auswählen" können Sie sämtliche Ressourcen des Projekts importieren.
-* *CRS*: Wählen Sie hier das Koordinatenreferenzsystem aus, in dem die Geometriedaten gespeichert werden sollen. Standardmäßig ausgewählt ist das Koordinatenreferenzsystem, das über das Feld "EPSG-Code" in den Projekteigenschaften des Field-Projekts festgelegt wurde (Menü "Projekt" ➝ "Eigenschaften").
-* *Format*: Wählen Sie das Zielformat aus, in dem die Daten gespeichert werden sollen. Die unterstützten Formate sind:
-    * *GeoPackage*: Es wird eine GeoPackage-Datei angelegt, in der die importierten Daten gespeichert werden. Beim Start des Imports erscheint ein Dateiauswahlfenster, in dem Sie den gewünschten Speicherort festlegen können.
-    * *Temporär*: Es werden temporäre Layer im aktuell geöffneten QGIS-Projekt angelegt.
-* *Zeitzone*: Wählen Sie hier die Zeitzone aus, in der Datumsangaben in der Attributtabelle gespeichert werden sollen. Alle im Field-Projekt ausgefüllten Felder des Eingabetyps "Datum" werden in die entsprechende Zeitzone umgerechnet. Standardmäßig ist die System-Zeitzone des Computers ausgewählt, auf dem QGIS ausgeführt wird. Mit dem Button *Auf System-Zeitzone zurücksetzen* können Sie die Standardeinstellung wiederherstellen.
-* *Optionen*:
-    * *Layer für alle konfigurierten Geometrietypen anlegen*: Wenn diese Option aktiviert ist, wird pro Kategorie jeweils ein Layer für jeden in Field Desktop für diese Kategorie konfigurierten Geometrietyp angelegt, unanbhängig davon ob im Field-Projekt entsprechende Daten vorhanden sind. Andernfalls werden nur Layer angelegt, für die Daten vorhanden sind (siehe Unterkapitel "Ergebnis des Imports").
-    * *Hierarchische Relationen zusammenfassen*: Wenn diese Option aktiviert ist, werden die hierarchischen Relationen "Aufgenommen in" und "Liegt in" zur vereinfachten Relation "Übergeordnete Ressource" zusammengefasst. Diese Option sollte in der Regel aktiviert bleiben.
+#### Kategorien
+
+Dieses Auswahlmenü enthält alle Kategorien, die für das Projekt, mit dem Sie sich verbunden haben, konfiguriert sind. Wählen Sie eine oder mehrere Kategorien aus, deren Ressourcen in das aktuell geöffnete QGIS-Projekt importiert werden sollen. Mit der Option "Alle auswählen" können Sie sämtliche Ressourcen des Projekts importieren.
+
+#### CRS
+
+Wählen Sie hier das Koordinatenreferenzsystem aus, in dem die Geometriedaten gespeichert werden sollen. Standardmäßig ausgewählt ist das Koordinatenreferenzsystem, das über das Feld "EPSG-Code" in den Projekteigenschaften des Field-Projekts festgelegt wurde (Menü "Projekt" ➝ "Eigenschaften").
+
+#### Format
+
+Wählen Sie das Zielformat aus, in dem die Daten gespeichert werden sollen. Die unterstützten Formate sind:
+
+* *GeoPackage*: Es wird eine GeoPackage-Datei angelegt, in der die importierten Daten gespeichert werden. Beim Start des Imports erscheint ein Dateiauswahlfenster, in dem Sie den gewünschten Speicherort festlegen können.
+* *Temporär*: Es werden temporäre Layer im aktuell geöffneten QGIS-Projekt angelegt.
+
+#### Zeitzone
+
+Wählen Sie hier die Zeitzone aus, in der Datumsangaben in der Attributtabelle gespeichert werden sollen. Alle im Field-Projekt ausgefüllten Felder des Eingabetyps "Datum" werden in die entsprechende Zeitzone umgerechnet. Standardmäßig ist die System-Zeitzone des Computers ausgewählt, auf dem QGIS ausgeführt wird. Mit dem Button "Auf System-Zeitzone zurücksetzen" können Sie die Standardeinstellung wiederherstellen.
+
+#### Optionen
+
+##### Layer für alle konfigurierten Geometrietypen anlegen
+
+Wenn diese Option aktiviert ist, wird pro Kategorie jeweils ein Layer für jeden in Field Desktop für diese Kategorie konfigurierten Geometrietyp angelegt, unanbhängig davon ob im Field-Projekt entsprechende Daten vorhanden sind. Andernfalls werden nur Layer angelegt, für die Daten vorhanden sind (siehe Unterkapitel "Ergebnis des Imports").
+
+##### Hierarchische Relationen zusammenfassen
+
+Wenn diese Option aktiviert ist, werden die hierarchischen Relationen "Aufgenommen in" und "Liegt in" zur vereinfachten Relation "Übergeordnete Ressource" zusammengefasst. Diese Option sollte in der Regel aktiviert bleiben.
 
 ### Import starten
 
@@ -53,9 +72,9 @@ Starten Sie den Import über den Button "Import". Der Fortschritt des Importvorg
 
 ### Ergebnis des Imports
 
-Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten enthält. Die Layer sind jeweils nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point").
+Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten enthält. Die Layer sind jeweils nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point"). Für Ressourcen ohne Geometrien wird jeweils ein Layer mit Geometrietyp "NoGeometry" angelegt.
 
-Ist die Option *Layer für alle konfigurierten Geometrietypen anlegen* deaktiviert, werden ausschließlich Layer für Kategorien und Geometrietypen angelegt, für die entsprechende Daten im Field-Projekt existieren.
+Ist die Option "Layer für alle konfigurierten Geometrietypen anlegen" deaktiviert, werden ausschließlich Layer für Kategorien und Geometrietypen angelegt, für die entsprechende Daten im Field-Projekt existieren.
 
 Ist die Option hingegen aktiviert, wird die Projektkonfiguration des Field-Projekts ausgelesen: In Field Desktop können im Menü "Werkzeuge" ➝ "Projektkonfiguration" für das Geometriefeld einer Kategorie die erlaubten Geometrietypen ausgewählt werden. Mögliche Geometrietypen sind: "Polygon", "Multipolygon", "Polyline", "Multipolyline", "Punkt" und "Multipunkt". Für jeden der erlaubten Geometrietypen wird ein entsprechender Layer angelegt. Ausnahme: Ist ein Multi-Geometrietyp erlaubt, wird für diese Kategorie kein Layer für den entsprechenden Einzel-Geometrietyp angelegt (z. B. werden Polygone und Multipolygone gemeinsam in einem Layer "test_Schnitt_MultiPolygon" gespeichert).
 
@@ -65,22 +84,56 @@ Field Connect liest beim Import darüber hinaus Wertelisten, Feld- und Wertebeze
 
 Nähere Angaben zum Aufbau der Attributtabelle eines importierten Layers finden Sie im Kapitel "Die Attributtabelle".
 
+### Aktualisierung von GeoPackage-Dateien
+
+Wenn Sie eine bereits existierende GeoPackage-Datei als Ziel des Imports auswählen, so werden die entsprechenden Layer im GeoPackage aktualisiert. Wird für ein Objekt eine Ressource mit dem gleichen Bezeichner in den aus Field Desktop importierten Daten gefunden, gilt:
+* In allen Feldern werden die Feldinhalte der Importdaten eingetragen, falls die entsprechenden Felder dort vorhanden sind.
+* Felder, die in den Importdaten nicht vorhanden sind, bleiben mit ihren bisherigen Inhalten erhalten.
+
+Objekte, für die keine Ressource in den aus Field Desktop importierten Daten gefunden wird, bleiben unverändert erhalten.
+
+**Wichtig**: Objekte in Geometrie-Layern, die über keine Geometrie verfügen, werden beim Aktualisieren des GeoPackages automatisch in den entsprechenden "NoGeometry"-Layer verschoben. Gibt es noch keinen solchen Layer, so wird er angelegt.
 
 ## Export
 
 ### Einstellungen
 
-* *Layer-Gruppe*: Wählen Sie hier die Gruppe aus, deren Daten Sie nach Field Desktop exportieren möchten.
-* *Modus*: Wählen Sie hier den Export-Modus aus, der bestimmt, welche Daten übertragen werden.
-    * *Gruppe*: Alle Daten der ausgewählten Gruppe werden exportiert.
-    * *Ausgewähle(r) Layer**: Ausschließlich die Daten der aktuell selektierten Layer innerhalb der Gruppe werden exportiert.
-* *Ziel-CRS*: Wählen Sie hier das Koordinatenreferenzsystem aus, in dem die Geometriedaten im Field-Projekt gespeichert werden sollen.
-* *Zeitzone*: Wählen Sie hier die Zeitzone aus, in der Datumsangaben in der Attributtabelle angegeben sind. Standardmäßig ist die System-Zeitzone des Computers ausgewählt, auf dem QGIS ausgeführt wird. Mit dem Button *Auf System-Zeitzone zurücksetzen* können Sie die Standardeinstellung wiederherstellen.
-* *Optionen*:
-    * *Nur ungespeicherte Objekte exportieren*: Wenn diese Option aktiviert ist, werden ausschließlich neu hinzugefügte oder bearbeitete Objekte exportiert. Dazu müssen sich die entsprechenden Layer im Editierungsmodus befinden und die Änderungen noch nicht gespeichert worden sein. Diese Option kann nützlich sein, um die Exportdauer bei großen Projekten zu verkürzen, wenn lediglich wenige Änderungen in ein bestehendes Field-Projekt übertragen werden sollen.
-    * *Ungespeicherte Änderungen speichern*: Wenn diese Option aktiviert ist, werden die entsprechenden Layer beim Export gespeichert. Diese Option kann insbesondere in Kombination mit der Option *Nur ungespeicherte Objekte exportieren* nützlich sein.
-    * *Nicht konfigurierte Felder ignorieren**: Wenn diese Option aktiviert ist, wird der Exportprozess nicht abgebrochen, sobald Felder gefunden werden, die im Field-Projekt nicht konfiguriert sind. Stattdessen werden Daten in unkonfigurierten Feldern ignoriert.
-    * *Löschen von Feldern erlauben*: Wenn diese Option aktiviert ist, können Felder nicht nur bearbeitet, sondern auch gelöscht werden. Gelöscht werden alle Felder (inklusive Relationen), für die das entsprechende Feld in der Attributtabelle leer ist. Nicht in der Attributtabelle gelistete Felder bleiben unverändert.
+#### Layer-Gruppe
+
+Wählen Sie hier die Gruppe aus, deren Daten Sie nach Field Desktop exportieren möchten.
+
+#### Modus
+
+Wählen Sie hier den Export-Modus aus, der bestimmt, welche Daten übertragen werden.
+    
+* *Gruppe*: Alle Daten der ausgewählten Gruppe werden exportiert.
+* *Ausgewähle(r) Layer*: Ausschließlich die Daten der aktuell selektierten Layer innerhalb der Gruppe werden exportiert.
+
+#### Ziel-CRS
+
+Wählen Sie hier das Koordinatenreferenzsystem aus, in dem die Geometriedaten im Field-Projekt gespeichert werden sollen.
+
+#### Zeitzone
+
+Wählen Sie hier die Zeitzone aus, in der Datumsangaben in der Attributtabelle angegeben sind. Standardmäßig ist die System-Zeitzone des Computers ausgewählt, auf dem QGIS ausgeführt wird. Mit dem Button "Auf System-Zeitzone zurücksetzen" können Sie die Standardeinstellung wiederherstellen.
+
+#### Optionen
+
+##### Nur ungespeicherte Objekte exportieren
+
+Wenn diese Option aktiviert ist, werden ausschließlich neu hinzugefügte oder bearbeitete Objekte exportiert. Dazu müssen sich die entsprechenden Layer im Editierungsmodus befinden und die Änderungen noch nicht gespeichert worden sein. Diese Option kann nützlich sein, um die Exportdauer bei großen Projekten zu verkürzen, wenn lediglich wenige Änderungen in ein bestehendes Field-Projekt übertragen werden sollen.
+
+##### Ungespeicherte Änderungen speichern
+
+Wenn diese Option aktiviert ist, werden die entsprechenden Layer beim Export gespeichert. Diese Option kann insbesondere in Kombination mit der Option "Nur ungespeicherte Objekte exportieren" nützlich sein.
+
+##### Nicht konfigurierte Felder ignorieren
+
+Standardmäßig wird der Exportprozess abgebrochen, sobald Felder gefunden werden, die im Field-Projekt nicht konfiguriert sind. Wenn diese Option aktiviert ist, wird der Export stattdessen vollständig durchgeführt, wobei Daten in unkonfigurierten Feldern ignoriert werden.
+
+##### Löschen von Feldern erlauben
+
+Wenn diese Option aktiviert ist, können Felder nicht nur bearbeitet, sondern auch gelöscht werden. Gelöscht werden alle Felder (inklusive Relationen), für die das entsprechende Feld in der Attributtabelle leer ist. Nicht in der Attributtabelle gelistete Felder bleiben unverändert.
 
 ### Export starten
 
@@ -88,7 +141,7 @@ Starten Sie den Export über den Button "Export". Der Fortschritt des Exportvorg
 
 ### Ergebnis des Exports
 
-Neu hinzugekommene Objekte werden in Field Desktop als entsprechende neuen Ressourcen ergänzt. Bereits existierende Ressourcen werden aktualisiert, falls sich Daten in der Attributtabelle oder die Geometrie geändert haben.
+In QGIS neu hinzugefügte Objekte werden in Field Desktop als neue Ressourcen ergänzt. Bereits existierende Ressourcen werden aktualisiert, falls sich Daten in der Attributtabelle oder die Geometrie geändert haben.
 
 Beim Export werden die Daten der Attributtabelle durch Field Desktop geprüft. Werden dabei fehlerhafte Daten gefunden, wird der Export abgebrochen und eine entsprechende Fehlermeldung in QGIS angezeigt.
 
@@ -98,7 +151,7 @@ Beim Export werden die Daten der Attributtabelle durch Field Desktop geprüft. W
 
 #### Aufbau der Attributtabelle
 
-Empfohlen wird, dass beim Export Layer verwendet werden, die über die Importfunktion von Field Connect erstellt wurden. Möchten Sie Daten aus QGIS heraus in ein noch leeres Field-Projekt übertragen, so führen Sie zunächst einen Import mit der Option *Layer für alle konfigurierten Geometrietypen anlegen* durch, um leere Layer für alle Kategorien mit den dazugehörigen Attributtabellen zu erzeugen. Tragen Sie Ihre Daten nach Möglichkeit in diese Layer ein.
+Empfohlen wird, dass beim Export Layer verwendet werden, die über die Importfunktion von Field Connect erstellt wurden. Möchten Sie Daten aus QGIS heraus in ein noch leeres Field-Projekt übertragen, so führen Sie zunächst einen Import mit der Option "Layer für alle konfigurierten Geometrietypen anlegen" durch, um leere Layer für alle Kategorien mit den dazugehörigen Attributtabellen zu erzeugen. Tragen Sie Ihre Daten nach Möglichkeit in diese Layer ein.
 
 Selbst angelegte Layer müssen im Aufbau und Benennungsschema der Attributtabelle den durch Field Connect erzeugten Layern entsprechen (es müssen allerdings nicht sämtliche Spalten enthalten sein, und es können zusätzliche Spalten für weitere Einträge in Listenfeldern enthalten sein). Darüber hinaus muss in den Benutzereigenschaften des Layers die Variable "field_category" angelegt und der Kategoriebezeichner eingetragen werden, damit beim Export die korrekte Kategorie gesetzt werden kann.
 
@@ -108,17 +161,21 @@ Schlägt der Export fehl, dann liegt die Ursache in der Regel darin, dass Eingab
 
 In manchen Fällen kann der Export allerdings aufgrund von Datenproblemen scheitern, die anhand der Attributtabelle nicht unmittelbar nachvollziehbar sind. Prüfen Sie in diesem Fall, ob in dem Projekt bereits Warnungen vorliegen und lösen Sie diese über die Werkzeuge des Warnungsmenüs, das Sie über das Warnungs-Icon rechts oben in der Navigationsleiste von Field Desktop erreichen. Je nach Warnungstyp lassen sich die Warnungen möglicherweise auch über Änderungen in der QGIS-Attributtabelle und einen anschließenden Export nach Field Desktop beheben.
 
-Beachten Sie außerdem, dass standardmäßig keine Felddaten, auch nicht in Unterfeldern (z. B. von Feldern der Eingabetypen "Datierung" oder "Längenangabe") gelöscht werden. Wenn ein Feld in der Attributtabelle leer ist, bedeutet dies also nicht automatisch, dass es beim Export in Field Desktop gelöscht wird. Stellen Sie in diesen Fällen sicher, dass die Option *Löschen von Feldern erlauben* aktiviert ist – insbesondere wenn Sie einzelne Unterfelder löschen möchten, da es andernfalls zu Fehlern kommen kann.
+Beachten Sie außerdem, dass standardmäßig keine Felddaten, auch nicht in Unterfeldern (z. B. von Feldern der Eingabetypen "Datierung" oder "Längenangabe") gelöscht werden. Wenn ein Feld in der Attributtabelle leer ist, bedeutet dies also nicht automatisch, dass es beim Export in Field Desktop gelöscht wird. Stellen Sie in diesen Fällen sicher, dass die Option "Löschen von Feldern erlauben" aktiviert ist – insbesondere wenn Sie einzelne Unterfelder löschen möchten, da es andernfalls zu Fehlern kommen kann.
 
 ## Die Attributtabelle
 
-Die Attributtabelle eines importierten Layers enthält sämtliche Felder, die auch im Ressourceneditor von Field Desktop ausgefüllt werden können. Aufgrund des tabellarischen Datenformats gibt es allerdings Unterschiede bei der Dateneingabe: Abhängig vom Eingabetyp kann etwa mehr als eine Spalte nötig sein, um ein Feld zu beschreiben.
+Die Attributtabelle eines importierten Layers enthält sämtliche Felder, die auch im Ressourceneditor von Field Desktop ausgefüllt werden können. Aufgrund des tabellarischen Datenformats gibt es allerdings Unterschiede bei der Dateneingabe: Abhängig vom Eingabetyp kann etwa mehr als eine Spalte nötig sein, um ein Feld zu beschreiben. Weitere Informationen dazu finden Sie in den folgenden Abschnitten.
+
+Ist für das Feld in der Field-Projektkonfiguration ein Beschreibungstext in der in QGIS eingestellten Sprache hinterlegt, so wird dieser im Tooltip des Feldes in der QGIS-Attributtabelle angezeigt.
 
 Die im folgenden genannten Feldbezeichnungen beziehen sich jeweils auf den Alias, der standardmäßig in der Attributtabelle eines durch Field Connect angelegten Layers gesetzt ist. Die eigentlichen Feldnamen entsprechen den Spaltennamen, die in den von Field Desktop erstellten CSV-Dateien verwendet werden. Sie können sich dabei am Unterkapitel "CSV" des Kapitels "Import und Export" des Handbuchs von Field Desktop orientieren.
 
 ### Der Bezeichner
 
-Das Feld "Bezeichner" muss immer ausgefüllt sein. **Wichtig**: Der Bezeichner dient zur Zuordnung des Objekts zur entsprechenden Ressource in Field Desktop. Importieren Sie eine Ressource aus Field Desktop, ändern den Bezeichner und exportieren es anschließend zurück nach Field Desktop, so wird **nicht** die bestehende Ressource aktualisiert, sondern eine zusätzliche Ressource mit dem neuen Bezeichner angelegt.
+Das Feld "Bezeichner" muss immer ausgefüllt sein. **Wichtig**: Der Bezeichner dient zur Zuordnung des Objekts zur entsprechenden Ressource in Field Desktop. Importieren Sie eine Ressource aus Field Desktop nach QGIS, ändern den Bezeichner und exportieren es anschließend zurück nach Field Desktop, so wird **nicht** die bestehende Ressource aktualisiert, sondern eine zusätzliche Ressource mit dem neuen Bezeichner angelegt.
+
+Bitte beachten Sie, dass ausschließlich der Bezeichner zur eindeutigen Referenzierung eines Objekts verwendet werden sollte. Das Feld "fid", das beim Erstellen von GeoPackage-Dateien angelegt wird, ist dazu nicht geeignet, da sich die hier gesetzten Werte bei späteren Importen aus Field Desktop ändern können.
 
 ### Wertelistenfelder
 
@@ -159,7 +216,7 @@ Darüber hinaus kann (durch ein Leerzeichen getrennt) optional eine Uhrzeit im F
 
 Bei Feldern des Eingabetyps "Checkboxen" wird für das Feld nur eine einzige Spalte angelegt. Die Feldwerte können durch Checkboxen ausgewählt werden.
 
-Bei Feldern der Eingabetypen "Datierungsangabe", "Längenangabe", "Gewichtsangabe", "Volumenangabe", "Literaturangabe", "Kompositfeld" und "Einzeiliger Text (Liste)" werden **für jeden Listeneintrag** die entsprechenden Spalten für die jeweiligen Unterfelder bzw. Sprachen angelegt. Hinter den Feldnamen wird dabei (beginnend bei 0) eine Nummer zur Identifikation des jeweiligen Eintrags eingefügt.
+Bei Feldern der Eingabetypen "Datierungsangabe", "Längenangabe", "Gewichtsangabe", "Volumenangabe", "Literaturangabe", "Kompositfeld" und "Einzeiliger Text (Liste)" werden **für jeden Listeneintrag** die entsprechenden Spalten für die jeweiligen Unterfelder bzw. Sprachen angelegt. Hinter den Feldnamen wird dabei (beginnend bei 0) eine Nummer zur Identifikation des jeweiligen Eintrags angefügt.
 
 ### Relationen
 
@@ -172,6 +229,7 @@ Zusätzlich zu den Relationen, die in der Projektkonfiguration im Formular der j
 * *Wird gezeigt in* (nicht bei Bildressourcen): Verknüpft die Ressource mit einem oder mehreren Bildern.
 * *Kartenhintergrund von* (nur bei Bildressourcen): Fügt das Bild als Kartenhintergrund im Kontext der als Ziel angegebenen Ressource hinzu.
 * *Hat Kartenhintergrund* (nicht bei Bildressourcen): Fügt im Kontext dieser Ressource eines oder mehrere Bilder als Kartenhintergrund hinzu.
+* *Hat Standard-Kartenhintergrund* (nicht bei Bildressourcen): Gibt an, welche Kartenhintergünde bei der Anzeige in Field Desktop standardmäßig aktiviert sein sollen.
 
 Um Bilder mit dem Projekt zu verknüpfen oder auf Projektebene als Kartenhintergrund einzurichten, tragen Sie in der Spalte *Relation Zeigt* bzw. *Relation Kartenhintergrund von* die Projektkennung ein.
 
@@ -203,7 +261,7 @@ Felder der Eingabetypen "Längenangabe", "Gewichtsangabe" und "Volumenangabe" si
 * *Wert*: Der gemessene Zahlenwert.
 * *Endwert*: Der zweite gemessene Zahlenwert, falls es sich um einen Bereich handelt.
 * *Maßeinheit*: Mögliche Werte sind "mm", "cm", "m" (Längenangabe) / "mg", "g", "kg" (Gewichtsangabe) / "ml", "l" (Volumenangabe).
-* *Gemessen an* (Längenangabe) / *Messgerät* (Gewichtsangabe) / *Messverfahren* (Volumenangabe):     Es kann jeweils optional ein Wert aus der für das Feld konfigurierten Werteliste ausgewählt werden.
+* *Gemessen an* (Längenangabe) / *Messgerät* (Gewichtsangabe) / *Messverfahren* (Volumenangabe): Es kann jeweils optional ein Wert aus der für das Feld konfigurierten Werteliste ausgewählt werden.
 * *Kommentar*: Mehrsprachiges Textfeld (eine Spalte pro Sprache).
 * *Ungenau?*: Mögliche Werte sind "Ja", "Nein"
 
@@ -224,3 +282,11 @@ Felder des Eingabetyps "Kompositfeld" sind Listenfelder, die jeweils mehrere Ein
 ## Einschränkungen
 
 Mithilfe von Field Connect können Ressourcen der Kategorie "Bild" (sowie der entsprechenden Unterkategorien) importiert und exportiert werden. Es können allerdings über den Export keine neuen Ressourcen dieser Kategorien angelegt werden, da diese zwingend eine dazugehörige Bilddatei voraussetzen, um von Field Desktop akzeptiert zu werden. Der Import und Export von Bilddateien ist kein Bestandteil der vorliegenden Version von Field Connect.
+
+---
+
+<br>
+
+<p align="center">
+  <a href="https://www.gbv.de"><img src="./img/gbv_vzg.png" style="width: 294px; height: 70px; box-shadow: none; -webkit-box-shadow: none" alt="VZG"/></a>
+</p>

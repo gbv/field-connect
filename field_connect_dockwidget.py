@@ -65,8 +65,7 @@ from qgis.core import (
 )
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import Qt, QMetaType, QTimeZone, QTimer, pyqtSignal
-from qgis.gui import QgsMessageBar
-from qgis.utils import iface
+from qgis.gui import QgisInterface, QgsMessageBar
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -133,7 +132,9 @@ def handle_api_errors(func):
             self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushMessage(
-                f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}", Qgis.Warning, 5
+                f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}",
+                Qgis.MessageLevel.Warning,
+                5,
             )
 
         except ApiError as e:
@@ -151,7 +152,7 @@ def handle_api_errors(func):
 class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     closing_plugin = pyqtSignal()
 
-    def __init__(self, plugin_dir, locale, parent=None):
+    def __init__(self, iface: QgisInterface, plugin_dir, locale, parent=None):
         """Constructor."""
         super(FieldConnectDockWidget, self).__init__(parent)
         # Set up the user interface from Designer.
@@ -160,6 +161,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.qgis_version_int = Qgis.QGIS_VERSION_INT
+        self.iface = iface
 
         self.loc = locale
         self.CLDRLoader = CLDRLoader(plugin_dir)
@@ -177,6 +180,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.plugin_dir = plugin_dir
         self.project = QgsProject.instance()
         self.treeRoot = self.project.layerTreeRoot()
+        self.treeView = self.iface.layerTreeView()
         self.projectConfig = (
             {}
         )  # /configuration/{project} :3000, not /{project}/configuration :3001
@@ -210,6 +214,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             ),
             "IMPORT_FAILED": self.tr("Import failed!"),
             "IMPORT_SUCCESS": self.tr("Import successful!"),
+            "IMPORT_UPDATE_LAYER_VARIABLES_MISSING": self.tr(
+                "There are layers that have no field_category layer variable set. Check the log for more information."
+            ),
             "EXPORT_ERRORS": self.tr("Export finished with errors!"),
             "EXPORT_FAILED": self.tr("Export failed!"),
             "EXPORT_SUCCESS": self.tr("Export successful!"),
@@ -583,7 +590,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     ).format(epsgId=epsg_id),
                 )
 
-    def normalize_export_value(self, value, dt=None):
+    def normalize_export_value(self, value, setup_type, dt=None):
         """
         Normalize attribute values for CSV export.
 
@@ -596,7 +603,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return ""
 
         # ValueRelation multiselect
-        if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
+        if setup_type == "ValueRelation":
             inner = value[1:-1].strip()
             if not inner:
                 return ""
@@ -686,15 +693,19 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else self.progressBar.hide()
         )
 
-    def get_or_create_lookup_layer_temp(self):
+    def _get_or_create_lookup_layer_temp(self, group_ref):
         """Get existing lookup layer with the format {project_name}_lookup or
         create a temporary lookup layer for value relations for the Field Desktop input type 'checkboxes'
         """
 
-        lookup_layers = self.project.mapLayersByName(f"{self.active_project}_lookup")
-        if len(lookup_layers):
+        lookup_layers = [
+            lyr
+            for lyr in group_ref.findLayers()
+            if f"{self.active_project}_lookup" in lyr.layer().name()
+        ]
+        if lookup_layers:
             # todo?: additional checks?
-            return lookup_layers[0]
+            return lookup_layers[0].layer()
         else:
             fields = QgsFields()
             # fields.append(QgsField('id', QMetaType.Int))
@@ -866,6 +877,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         # handle relation fields
                         if data.get("inputType") == "relation":
+                            # fallback to trAttrs label in case there is one
+                            if label == fieldname:
+                                tr_attrs_label = safe_get(
+                                    self.trAttrs, "relations", fieldname, "label", default=None
+                                )
+                                if tr_attrs_label:
+                                    label = tr_attrs_label
                             result.setdefault("relations", {})[fieldname] = {
                                 "label": label,
                                 "description": description,
@@ -1221,6 +1239,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.setMaximum(len(cats))
 
         # collect ui options
+        is_import_format_gpkg = self.radioFormatGPKG.isChecked()
         create_all_layers = self.chk_layers_for_all_geom_types.isChecked()
         csv_ui_opts = {
             "combineHierarchicalRelations": self.chkCombineRel.isChecked(),
@@ -1243,9 +1262,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.progressBar.reset()
         self.show_or_hide_progress_bar()
-        csv_export_project = None
         group_ref = None
-        layer_names = []
+        group_has_modified_layers = None
+        group_ref_layer_names = {}
         lup_layer_temp = None
         processed_vmaps = []
         hard_constraint = QgsFieldConstraints.ConstraintStrengthHard
@@ -1274,17 +1293,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # update project config, in case changes have been made in field desktop
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
 
-        # takes the first group from the top if there are multiple with the same name
-        group_ref = self.treeRoot.findGroup(
-                self.active_project
-            ) or self.treeRoot.insertGroup(-1, f"{self.active_project}")
-
-        filename = None
         # check if file path exists for handling/updating existing geopackages
+        filename = None
         import_overwrite = False
-
-        if self.radioFormatGPKG.isChecked():
-            filename, filter = QFileDialog.getSaveFileName(
+        if is_import_format_gpkg:
+            filename, filefilter = QFileDialog.getSaveFileName(
                 self,
                 self.tr("Save GeoPackage as..."),
                 self.project.homePath(),
@@ -1296,52 +1309,130 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 return
             elif os.path.exists(filename):
                 import_overwrite = True
-                layer_names = [layer.name() for layer in group_ref.findLayers()]
+
+            if not filename.lower().endswith(".gpkg"):
+                filename += ".gpkg"
+            # print(filename)
+
+            # check if filename matches a groups first vectorlayer source
+            existing_groups = list(
+                filter(lambda grp: grp.name() == self.active_project, self.treeRoot.findGroups())
+            )
+            for group in existing_groups:
+                # get first vector layer in group
+                group_layers = list(
+                    filter(
+                        lambda lyr: lyr.layer().type() == QgsMapLayerType.VectorLayer,
+                        group.findLayers(),
+                    )
+                )
+                if group_layers:
+                    grp_layer: QgsVectorLayer = group_layers[0].layer()
+                    if filename in grp_layer.source() and not grp_layer.isTemporary():
+                        group_ref = group
+                        break
+
+        # insert new group if none was determined
+        if group_ref is None:
+            group_ref = self.treeRoot.insertGroup(-1, f"{self.active_project}")
+
+        group_ref_layers = group_ref.findLayers()
+        group_ref_vector_layers = [
+            ltl for ltl in group_ref_layers if ltl.layer().type() == QgsMapLayerType.VectorLayer
+        ]
+
+        # todo?: ask user to save/discard changes on group_ref or only for group_ref_layers_filtered,
+        #        as other layers may not need to be saved
+        if import_overwrite:
+            group_has_modified_layers = any(
+                [ltl.layer().isModified() for ltl in group_ref_vector_layers]
+            )
+            if group_has_modified_layers:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText(
+                    "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
+                )
+                msg.setInformativeText("Save changes before overwriting GeoPackage?")
+                msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+                msg.setDefaultButton(QMessageBox.Cancel)
+
+                result = msg.exec_()
+
+                if result == QMessageBox.Cancel:
+                    self._import_running = False
+                    self.show_or_hide_progress_bar()
+                    return  # abort import
+
+                if result == QMessageBox.Save:
+                    for ltl in group_ref_vector_layers:
+                        ltl.layer().commitChanges()
+
+                elif result == QMessageBox.Discard:
+                    for ltl in group_ref_vector_layers:
+                        ltl.layer().rollBack()
+
+        # todo: try to reuse group_ref_vector_layers and only filter _lookup
+        group_ref_layers_filtered = [
+            ltl
+            for ltl in group_ref_layers
+            if ltl.layer().type() == QgsMapLayerType.VectorLayer
+            and "_lookup" not in ltl.layer().name()
+        ]
+
+        # todo: dissolve, as it will be in group_ref_layers_grouped
+        # todo?: or build names from group_ref_layers_grouped?
+        group_ref_layer_names = dict(
+            [
+                (lr.layer().name(), lr.layer().id())
+                for lr in group_ref_layers_filtered
+                if lr.layer().type() == QgsMapLayerType.VectorLayer
+                and "_lookup" not in lr.layer().name()
+            ]
+        )
+
+        # existing layers grouped by their field_category layer variable
+        group_ref_layers_grouped = {}
+        group_ref_layer_names_missing_variables = []
+        for ltl in group_ref_layers_filtered:
+            lay = ltl.layer()
+            field_category = QgsExpressionContextUtils.layerScope(lay).variable("field_category")
+            if field_category is None:
+                group_ref_layer_names_missing_variables.append(lay.name())
+            group_ref_layers_grouped.setdefault(field_category, {})[lay.name()] = ltl
+        # print(f"group_ref_layers_grouped: {group_ref_layers_grouped}")
+
+        # log layer names with missing variables
+        if group_ref_layer_names_missing_variables:
+            msg_content = self.tr(self.labels["IMPORT_UPDATE_LAYER_VARIABLES_MISSING"])
+            msg = self.mB.createMessage(msg_content)
+
+            # todo: turn into reusable button
+            button = QPushButton(self.tr("Open Logs"))
+
+            def open_logs():
+                self.iface.openMessageLog(self.plugin_name)
+
+            button.clicked.connect(open_logs)
+            msg.layout().addWidget(button)
+
+            self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
+
+            QgsMessageLog.logMessage(
+                self.tr("List of layers without a field_category layer variable:"),
+                self.plugin_name,
+                Qgis.MessageLevel.Warning,
+            )
+            for n in group_ref_layer_names_missing_variables:
+                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Warning)
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
         r_geo: Response = self.api.get("/export/geojson?context=project&formatted=true")
         geo_json = json.loads(r_geo.text)
 
-        # todo: extract function
         # get fixed staff/campaigns lists from 'Project' csv export which are not available in the project config
-        csv_export_project = self.get_category_csv(
-            "Project", csv_ui_opts["combineHierarchicalRelations"]
-        )
-        # collect valuemaps from project csv export
-        prj_maps = {
-            "staff": {
-                "map": {},
-                "inputType": "checkboxes",
-            },
-            "campaigns": {
-                "map": {},
-                "inputType": "checkboxes",
-            },
-        }
-
-        for row in csv_export_project:
-            for key in prj_maps:
-                cell = row.get(key)
-                if not cell:
-                    continue
-
-                for val in cell.split(";"):
-                    val = val.strip()
-                    if val:
-                        prj_maps[key]["map"][val] = val
-
-        field_aliases = {
-            "staff": (
-                "processor",
-                "supervisor",
-            ),
-            "campaigns": ("campaign",),
-        }
-
-        for src_key, targets in field_aliases.items():
-            for field in targets:
-                prj_maps[field] = prj_maps[src_key]
+        prj_maps = self._get_project_value_maps(csv_ui_opts["combineHierarchicalRelations"])
         # print(prjMaps)
 
         for i, (cat, label) in enumerate(cats.items()):
@@ -1354,9 +1445,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             csv_reader = self.get_category_csv(cat, csv_ui_opts["combineHierarchicalRelations"])
             csv_header = csv_reader.fieldnames
 
-            # merge without overwriting nested items
             field_informations, valuemaps = self.collect_field_informations(cat)
-            field_informations = deep_merge(field_informations, self.trAttrs)
+            # merge without overwriting nested items
+            field_informations = deep_merge(self.trAttrs, field_informations)
             valuemaps = deep_merge(valuemaps, prj_maps)
             # print(f"fieldInformations: {field_informations}")
             # print(f'valuemaps: {valuemaps}')
@@ -1367,7 +1458,32 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # create fields here for reuse
             fields = QgsFields()
             for col in csv_header:
-                fields.append(QgsField(col, QMetaType.Type.QString))
+                # copied logic from below to set the latest description
+                # for the comment field of a QgsField early as it becomes immutable later
+                # todo: extract function/refactor
+                # todo?: move more logic from below up here?
+                desc = ""
+                paths = []
+                split = col.split(".")
+                for idx, part in enumerate(split):
+                    # skip numbers only
+                    if part.isdigit():
+                        continue
+
+                    if (
+                        len(part) == 2 or part == "unspecifiedLanguage"
+                    ) and part in field_informations:
+                        paths.append(part)
+                        continue
+
+                    # build path to look for a description
+                    paths.append(part)
+                    # set to latest description
+                    new_desc = safe_get(field_informations, *paths, "description", default=None)
+                    if new_desc is not None:
+                        desc = new_desc
+
+                fields.append(QgsField(col, QMetaType.Type.QString, comment=desc))
 
             geometry_info = field_informations.get("geometry")
 
@@ -1393,7 +1509,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if create_all_layers:
                     features = {"NoGeometry": features.get("NoGeometry", [])}
                 else:
-                    # only create layer if there are actual features
+                    # only create layer if there are features
                     if not features:
                         features = {}
 
@@ -1427,20 +1543,333 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         # only create layers that contain features
                         features = {k: v for k, v in features.items() if v}
 
-            for geom_type, feats in features.items():
+            # process NoGeometry features last
+            features = dict(sorted(features.items(), key=lambda item: item[0] == "NoGeometry"))
+
+            if import_overwrite:
+                # get differences between incoming and existing features
+                incoming_geom_map = {}
+                for geom_type, feats in features.items():
+                    for f in feats:
+                        incoming_geom_map[f["identifier"]] = geom_type
+
+                existing_geom_map = {}
+                group_ref_layers_current_group = group_ref_layers_grouped.get(cat, {})
+                for ltl in group_ref_layers_current_group.values():
+                    group_ref_layer = ltl.layer()
+                    geom_type = QgsWkbTypes.displayString(
+                        QgsWkbTypes.flatType(group_ref_layer.wkbType())
+                    )
+                    for f in group_ref_layer.getFeatures():
+                        existing_geom_map.setdefault(f["identifier"], []).append(
+                            (group_ref_layer, f.id(), geom_type)
+                        )
+
+                # detect duplicates and warn user
+                duplicate_ids = {
+                    ident: entries
+                    for ident, entries in existing_geom_map.items()
+                    if len(entries) > 1
+                }
+
+                if duplicate_ids:
+                    msg = self.iface.messageBar().createMessage(
+                        self.plugin_name,
+                        self.tr("Duplicate identifiers detected. Check the log for details."),
+                    )
+
+                    # todo: replace with reusable button when available
+                    button = QPushButton(self.tr("Open Logs"))
+
+                    def open_logs():
+                        self.iface.openMessageLog(self.plugin_name)
+
+                    button.clicked.connect(open_logs)
+                    msg.layout().addWidget(button)
+
+                    self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
+
+                    QgsMessageLog.logMessage(
+                        self.tr("Duplicate identifiers found:"),
+                        self.plugin_name,
+                        Qgis.MessageLevel.Warning,
+                    )
+
+                    for ident, entries in duplicate_ids.items():
+                        layers = {layer.name() for layer, _, _ in entries}
+                        QgsMessageLog.logMessage(
+                            f"{ident} → {', '.join(layers)}",
+                            self.plugin_name,
+                            Qgis.MessageLevel.Warning,
+                        )
+
+                # unify old and new index and get differences/transitions
+                all_ids = set(existing_geom_map) | set(incoming_geom_map)
+                transitions = {}
+                # only_existing = set()
+                # only_incoming = set()
+
+                for ident in all_ids:
+                    old_entries = existing_geom_map.get(ident, [])  # list of tuples
+                    new = incoming_geom_map.get(ident)
+
+                    old_geoms = {entry[2] for entry in old_entries}
+
+                    # only get transitions of existing identifiers
+                    if old_entries and new is not None:
+                        if old_geoms != {new}:
+                            transitions[ident] = (old_entries, new)
+
+                # list of changed features
+                # print(transitions)
+
+                # collect layers with features for deletion
+                layer_delete_map = {}
+                layers_to_remove = []
+
+                for t_id, (old_entries, new_geom) in transitions.items():
+                    for layer, fid, geom_type in old_entries:
+                        if geom_type != new_geom:
+                            layer_delete_map.setdefault(layer, []).append(fid)
+
+                # delete previously collected fids from layers they belong to
+                # and delete layer if it has no features left
+                for layer, fids in layer_delete_map.items():
+                    if not fids:
+                        continue
+
+                    layer.startEditing()
+                    layer.deleteFeatures(fids)
+                    layer.commitChanges()
+
+                    # todo: see if solution under this loop works better
+                    # if layer.featureCount() == 0:
+                    #     # always remove empty NoGeometry layers as they are not
+                    #     # a configurable geometry type in Field Desktop
+                    #     if not create_all_layers or geom_type == "NoGeometry":
+                    #         layers_to_remove.append(layer)
+
+                # mark layers with no features for removal if create_all_layers = False
+                if not create_all_layers:
+                    for ltl in group_ref_layers_current_group.values():
+                        layer = ltl.layer()
+                        if layer.featureCount() == 0:
+                            layers_to_remove.append(layer)
+
+                # print(layers_to_remove)
+
+                for layer in layers_to_remove:
+                    # collect necessary layer information before removing
+                    # to avoid accessing the layer after deletion (crashes QGIS)
+                    source = layer.source()
+                    gpkg_path = source.split("|")[0]
+                    # print(gpkg_path)
+                    uri_str = layer.dataProvider().dataSourceUri()
+                    uri = layer.dataProvider().uri()
+
+                    # also remove from previous collected existing layers
+                    group_ref_layers_grouped[cat].pop(layer.name())
+                    self.project.removeMapLayer(layer.id())
+
+                    from osgeo import ogr
+
+                    ds = ogr.Open(gpkg_path, update=1)
+                    if ds:
+                        table_name = uri.table()
+
+                        if not table_name:
+                            # fallback parsing
+                            parts = dict(p.split("=", 1) for p in uri_str.split("|") if "=" in p)
+                            table_name = parts.get("layername")
+
+                        # print(f"table_name: {table_name}")
+
+                        ds.DeleteLayer(table_name)
+                        ds.Close()
+                        ds = None
+
+            # use dynamic iteration in case geom types are added
+            queue = list(features.keys())
+            qi = 0
+
+            # incoming QgsFeature objects created from csv
+            while qi < len(queue):
+                geom_type = queue[qi]
+                csv_feats = features[geom_type]
+                # prov_type = None  # unused for now
+                layer_in_group = None
                 resolved = self._resolve_wkb_type(geom_type, geometry_types)
                 lay_type = resolved.name
                 lay_name_source = f"{self.active_project}_{cat}_{geom_type}"
                 lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
-                layer = QgsVectorLayer(lay_type, lay_name, "memory")
-                pr = layer.dataProvider()
-                layer.setCrs(crs)
-                pr.addAttributes(fields)
-                layer.updateFields()
 
-                pr.addFeatures(feats)
-                layer.updateExtents()
+                # check if lay_name exists in group_ref_layer_names
+                if lay_name in group_ref_layers_grouped.get(cat, {}).keys():
+                    layer_in_group = True
+                    existing_ltl = group_ref_layers_grouped.get(cat, {}).get(lay_name, None)
 
+                    # previous layer index for insertion of new_lyr
+                    # parent() should return the group the ltl is in
+                    existing_ltl_index = existing_ltl.parent().children().index(existing_ltl)
+                    existing_layer = existing_ltl.layer()
+
+                    # only get committed fields
+                    # saving the layer will copy fields in the buffer or discard them when not saving
+                    existing_fields = existing_layer.dataProvider().fields()
+                    existing_field_names = [f.name() for f in existing_fields]
+                    csv_field_names = [f.name() for f in fields]
+
+                    # append manually added columns to new_lyr
+                    missing_fields = {
+                        name: existing_fields[index]
+                        for index, name in enumerate(existing_field_names)
+                        if name not in csv_field_names and name != "fid"
+                    }
+
+                    fields_copy = QgsFields(fields)
+                    for fld in missing_fields.values():
+                        fields_copy.append(fld)
+
+                    # recreation of layers wouldnt be necessary if the field comments
+                    # wouldnt need a recreation of a QgsField to update
+                    new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
+                    pr = new_lyr.dataProvider()
+                    new_lyr.setCrs(crs)
+                    pr.addAttributes(fields_copy)
+                    new_lyr.updateFields()
+
+                    new_fields = new_lyr.fields()
+                    new_field_names = new_fields.names()
+
+                    value_relation_fields = {}
+
+                    editor_setup_to_add = []
+                    for field_name in new_field_names:
+                        idx = existing_fields.indexFromName(field_name)
+                        if idx != -1:
+                            setup = existing_layer.editorWidgetSetup(idx)
+                            if setup.type() == "ValueRelation":
+                                value_relation_fields[field_name] = True
+
+                            # only apply editor setup for missing fields
+                            if field_name in missing_fields.keys():
+                                new_idx = new_fields.indexFromName(field_name)
+                                editor_setup_to_add.append((new_idx, setup))
+
+                    for idex, stp in editor_setup_to_add:
+                        new_lyr.setEditorWidgetSetup(
+                            idex,
+                            stp,
+                        )
+
+                    csv_index = {f["identifier"]: f for f in csv_feats}
+                    ordered_ids = list(csv_index.keys())
+
+                    # index existing features
+                    existing_index = {}
+                    nogeom_ref = []
+                    if "NoGeometry" in features:
+                        nogeom_ref = features["NoGeometry"]
+                    nogeom_ids = {f["identifier"] for f in nogeom_ref}
+
+                    for f in existing_layer.dataProvider().getFeatures():
+                        # move features without geometry in a geometry layer
+                        # into the NoGeometry feature collection
+                        if geom_type != "NoGeometry" and f.geometry().isEmpty():
+                            if "NoGeometry" not in features:
+                                features["NoGeometry"] = []
+                                queue.append("NoGeometry")
+
+                            ident = f["identifier"]
+                            if ident not in nogeom_ids and ident not in ordered_ids:
+                                new_feat = QgsFeature(new_fields)
+                                new_feat.setGeometry(None)
+
+                                attrs = []
+                                for field_name in new_field_names:
+                                    value = None
+
+                                    if field_name in existing_field_names:
+                                        if field_name in value_relation_fields:
+                                            value = self.normalize_export_value(
+                                                f[field_name], "ValueRelation"
+                                            )
+                                        else:
+                                            value = f[field_name]
+
+                                    attrs.append(value)
+
+                                new_feat.setAttributes(attrs)
+
+                                features["NoGeometry"].append(new_feat)
+                                nogeom_ids.add(ident)
+                            continue
+
+                        existing_index[f["identifier"]] = f
+
+                    features_to_add = []
+
+                    for ident in existing_index:
+                        if ident not in csv_index:
+                            ordered_ids.append(ident)
+
+                    # append remaining existing features
+                    # get inserted after features that exist in field
+                    for ident in existing_index.keys():
+                        if ident not in ordered_ids:
+                            ordered_ids.append(ident)
+
+                    for ident in ordered_ids:
+                        old_feat = existing_index.get(ident)
+                        csv_feat = csv_index.get(ident)
+
+                        new_feat = QgsFeature(new_fields)
+
+                        # geometry priority: CSV > existing
+                        if csv_feat and csv_feat.hasGeometry():
+                            new_feat.setGeometry(csv_feat.geometry())
+                        elif old_feat:
+                            new_feat.setGeometry(old_feat.geometry())
+
+                        attrs = []
+
+                        for field_name in new_field_names:
+                            value = None
+
+                            # start with old
+                            if old_feat and field_name in existing_field_names:
+                                if field_name in value_relation_fields:
+                                    value = self.normalize_export_value(
+                                        old_feat[field_name], "ValueRelation"
+                                    )
+                                else:
+                                    value = old_feat[field_name]
+
+                            # overwrite with csv
+                            if csv_feat and field_name in csv_feat.fields().names():
+                                value = csv_feat[field_name]
+
+                            attrs.append(value)
+
+                        new_feat.setAttributes(attrs)
+                        features_to_add.append(new_feat)
+
+                    # add collected features
+                    pr.addFeatures(features_to_add)
+
+                    layer = new_lyr
+                else:
+                    layer = QgsVectorLayer(lay_type, lay_name, "memory")
+                    pr = layer.dataProvider()
+                    layer.setCrs(crs)
+                    pr.addAttributes(fields)
+                    layer.updateFields()
+
+                    pr.addFeatures(csv_feats)
+                    layer.updateExtents()
+
+                # determine providerType() memory/ogr
+                # prov_type = layer.providerType()  # unused for now
                 layer_fields = layer.fields()
 
                 # iterate through each field, split on dot and handle/translate
@@ -1460,7 +1889,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     # fieldType = field.type()  # unused for now
                     paths = []
                     parts = []
-                    desc = ""
                     setup = None
 
                     if is_composite:
@@ -1520,39 +1948,28 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                             parts.append(look_up)
 
-                        # set to latest description
-                        new_desc = safe_get(
-                            field_informations, *paths, "description", default=None
-                        )
-                        if new_desc is not None:
-                            desc = new_desc
-
-                    # todo: refactor/split up
-                    if desc or date_config:
-                        constraint_strength = date_data_type_constraint.get(
-                            date_config.get("dataType", ""), soft_constraint
-                        )
-                        exp = "true"
+                    if date_config:
                         # set constraint expression for date fields to show format warnings
                         if fname in ("date.value", "date.endValue") or (
                             date_config and is_composite and split[-1] in ("value", "endValue")
                         ):
-                            if not desc:
-                                desc = self.tr(
-                                    "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
-                                )
+                            constraint_strength = date_data_type_constraint.get(
+                                date_config.get("dataType", ""), soft_constraint
+                            )
+                            constraint_desc = self.tr(
+                                "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
+                            )
                             regex = date_regexes.get(
                                 date_config_data_type, date_regexes["optional"]
                             )
                             exp = f"regexp_match(\"{fname}\", '{regex}')"
 
-                        layer.setConstraintExpression(f_idx, exp, desc)
-                        # apply constraint by dateConfiguration
-                        layer.setFieldConstraint(
-                            f_idx,
-                            QgsFieldConstraints.ConstraintExpression,
-                            constraint_strength,
-                        )
+                            layer.setConstraintExpression(f_idx, exp, constraint_desc)
+                            layer.setFieldConstraint(
+                                f_idx,
+                                QgsFieldConstraints.ConstraintExpression,
+                                constraint_strength,
+                            )
 
                     layer.setFieldAlias(f_idx, " ".join(parts))
 
@@ -1583,6 +2000,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             # "red;blue;green" → '{"red","blue","green"}'
                             for feature in layer.getFeatures():
                                 val = feature[f_idx]
+                                if val == NULL:
+                                    # added features in qgis can contain NULL as value
+                                    val = "{}"
                                 parts = [p.strip() for p in val.split(";") if p.strip()]
                                 # escape embedded double quotes just in case
                                 parts = [p.replace('"', r"\"") for p in parts]
@@ -1594,7 +2014,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                             if not lup_layer_temp:
                                 lup_layer_temp: QgsVectorLayer = (
-                                    self.get_or_create_lookup_layer_temp()
+                                    self._get_or_create_lookup_layer_temp(group_ref)
                                 )
 
                             group_id = f"{cat}_{fname}"
@@ -1719,8 +2139,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             layer.setEditorWidgetSetup(f_idx, setup)
                             break
 
-                # python 3.12+
-                # if valuemaps: print(f'unassigned vmaps:\n{',\n'.join([f'{k}: {v}' for k,v in valuemaps.items()])}')
                 # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
                 # if valuemaps:
                 #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
@@ -1742,9 +2160,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 layer.setDisplayExpression('"identifier"')
 
                 if filename:
-                    if not filename.lower().endswith(".gpkg"):
-                        filename += ".gpkg"
-                    # print(filename)
                     options = QgsVectorFileWriter.SaveVectorOptions()
                     options.driverName = "gpkg"
                     options.layerName = f"{lay_name_source}"
@@ -1770,7 +2185,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         )
                     )
                     # make layer persistent
-                    if lay_name not in layer_names:
+                    if lay_name not in group_ref_layer_names.keys():
+                        layer.setDataSource(
+                            f"{filename}|layername={lay_name_source}",
+                            lay_name_source,
+                            "ogr",
+                            False,
+                        )
+                        layer.setName(lay_name)
+                    elif layer_in_group:
+                        self.project.removeMapLayer(existing_ltl.layerId())
                         layer.setDataSource(
                             f"{filename}|layername={lay_name_source}",
                             lay_name_source,
@@ -1779,15 +2203,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         )
                         layer.setName(lay_name)
 
-                    # print('error_code:', error_code, 'error_message:', error_message, 'new_filename:', new_filename, 'new_layer:', new_layer)
-                    # python 3.10+
-                    # match error_code:
-                    #     case 0:
-                    #         pass
-                    #     case _:
-                    #         self.mB.pushCritical(self.plugin_name, self.labels['IMPORT_FAILED'] + f': {error_message}')
-                    #         self.sB.showMessage(self.labels['IMPORT_FAILED'], 10000)
-                    #         return
                     if error_code == 0:
                         pass
                     else:
@@ -1799,46 +2214,73 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         return
 
                 if not import_overwrite:
-                    # todo? imports of existing temporary layers are not overwritten but added again in a new group
                     # add layer to group_ref
                     self.project.addMapLayer(layer, False)
                     group_ref.insertLayer(-1, layer)
                 elif group_ref:
-                    # only add layers that are not in the self.activeProject group
-                    if lay_name not in layer_names:
+                    # only add layers that are not in the self.active_project group
+                    if lay_name not in group_ref_layer_names.keys():
                         self.project.addMapLayer(layer, False)
                         group_ref.insertLayer(-1, layer)
+                    elif layer_in_group:
+                        # self.project.removeMapLayer(existing_ltl.layerId())
+                        self.project.addMapLayer(layer, False)
+                        # insert at original position
+                        group_ref.insertLayer(existing_ltl_index, layer)
+                qi += 1
+            # while end
 
             # save style to geopackage
             # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
             if filename and not import_overwrite:
-                layer.saveStyleToDatabaseV2(
-                    f"{cat}",
-                    self.tr("Style saved by the Field Connect plugin"),
-                    True,
-                    None,
-                    QgsMapLayer.StyleCategory.AllStyleCategories,
-                )
+                # versions below 3.44.7
+                if self.qgis_version_int < 34407:
+                    layer.saveStyleToDatabase(
+                        f"{cat}",
+                        self.tr("Style saved by the Field Connect plugin"),
+                        True,
+                        None,
+                        QgsMapLayer.StyleCategory.AllStyleCategories,
+                    )
+                else:
+                    layer.saveStyleToDatabaseV2(
+                        f"{cat}",
+                        self.tr("Style saved by the Field Connect plugin"),
+                        True,
+                        None,
+                        QgsMapLayer.StyleCategory.AllStyleCategories,
+                    )
             self.progressBar.setValue(i + 1)
             QApplication.processEvents()
 
-        # todo: even gets added with zero features/entries
         # add lookup layer
         if lup_layer_temp:
             lup_layer_name = lup_layer_temp.name()
-            existing_lup_layer = self.project.mapLayersByName(lup_layer_name)
-            if not import_overwrite and not existing_lup_layer:
+
+            existing_lup_layers = [
+                ltl.layer() for ltl in group_ref.findLayers() if "_lookup" in ltl.layer().name()
+            ]
+
+            existing_lup_layer = existing_lup_layers[0] if existing_lup_layers else None
+            existing_is_temp = existing_lup_layer.isTemporary() if existing_lup_layer else False
+
+            if not existing_lup_layer:
                 self.project.addMapLayer(lup_layer_temp, False)
-                self.treeRoot.insertLayer(0, lup_layer_temp)
-            if filename and not existing_lup_layer:
+                group_ref.insertLayer(0, lup_layer_temp)
+                existing_lup_layer = lup_layer_temp
+                existing_is_temp = True
+
+            if filename and existing_is_temp:
                 options.actionOnExistingFile = (
                     QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
                 )
                 options.layerName = lup_layer_name
+
                 QgsVectorFileWriter.writeAsVectorFormatV3(
                     lup_layer_temp, filename, transform_context, options
                 )
-                if not import_overwrite:
+
+                if not import_overwrite or existing_is_temp:
                     lup_layer_temp.setDataSource(
                         f"{filename}|layername={options.layerName}",
                         options.layerName,
@@ -1876,7 +2318,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "coordinateTransform": None,
             "targetCrs": self.selectExportCrs.crs(),
             "groupExport": self.radioExGroup.isChecked(),
-            "selectedLayers": iface.layerTreeView().selectedLayers(),
+            "selectedLayers": self.treeView.selectedLayers(),
             "quickExport": self.chkQuickExport.isChecked(),
             "commitSave": self.chkCommitSave.isChecked(),
             "timezone": self.selectExportTz.currentText(),
@@ -1929,6 +2371,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             cat_layers = defaultdict(list)
             for layer_tree_layer in current_data.findLayers():
                 layer: QgsVectorLayer = layer_tree_layer.layer()
+                if "_lookup" in layer.name():
+                    continue
                 layer_crs: QgsCoordinateReferenceSystem = layer.crs()
                 # ask for coordinate transformation once
                 if (
@@ -2076,12 +2520,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             val = f[field_name]
                             idx = layer.fields().indexFromName(field_name)
                             setup = layer.editorWidgetSetup(idx)
+                            setup_type = setup.type()
 
                             # todo: check if ValueRelation case still needed
-                            if setup and setup.type() == "ValueRelation":
-                                val = self.normalize_export_value(val)
+                            # todo: type handled now in normalize method
+                            if setup_type == "ValueRelation":
+                                val = self.normalize_export_value(val, setup_type)
                             else:
-                                val = self.normalize_export_value(val, dt=dt)
+                                val = self.normalize_export_value(val, setup_type, dt=dt)
 
                             row[field_name] = val
 
@@ -2403,6 +2849,45 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return False
 
         return True
+
+    def _get_project_value_maps(self, combine_relations=True):
+        csv_export_project = self.get_category_csv("Project", combine_relations)
+        # collect valuemaps from project csv export
+        prj_maps = {
+            "staff": {
+                "map": {},
+                "inputType": "checkboxes",
+            },
+            "campaigns": {
+                "map": {},
+                "inputType": "checkboxes",
+            },
+        }
+
+        for row in csv_export_project:
+            for key in prj_maps:
+                cell = row.get(key)
+                if not cell:
+                    continue
+
+                for val in cell.split(";"):
+                    val = val.strip()
+                    if val:
+                        prj_maps[key]["map"][val] = val
+
+        field_aliases = {
+            "staff": (
+                "processor",
+                "supervisor",
+            ),
+            "campaigns": ("campaign",),
+        }
+
+        for src_key, targets in field_aliases.items():
+            for field in targets:
+                prj_maps[field] = prj_maps[src_key]
+
+        return prj_maps
 
     @handle_api_errors
     def file_api_import(self, *args):
