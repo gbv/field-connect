@@ -210,7 +210,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "EXPORT_SUCCESS": self.tr("Export successful!"),
             "LAYER_VALIDATION_FAILED": self.tr("Layer validation failed!"),
             "CAT_NAME_EXTRACTION_FAILED": self.tr(
-                'Could not extract category name. Please set the layer variable "field_category" manually'
+                'Could not extract category name. Please set the layer variable "field_category" for layer {layer} manually.'
             ),
             "NO_CATS_FOUND": self.tr("No categories found"),
             "REQUEST_FAILED": self.tr("Request failed"),
@@ -2368,7 +2368,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     cat = self.get_category_name_for_export(layer)
                     if cat is None:
                         self.mB.pushWarning(
-                            self.plugin_name, self.labels["CAT_NAME_EXTRACTION_FAILED"]
+                            self.plugin_name,
+                            self.labels["CAT_NAME_EXTRACTION_FAILED"].format(layer=layer.name()),
                         )
                         return
                     # check if cat is in Field Desktop, throw error and abort if not
