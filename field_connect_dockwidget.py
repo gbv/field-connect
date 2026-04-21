@@ -222,7 +222,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "EXPORT_SUCCESS": self.tr("Export successful!"),
             "LAYER_VALIDATION_FAILED": self.tr("Layer validation failed!"),
             "CAT_NAME_EXTRACTION_FAILED": self.tr(
-                'Could not extract category name. Please set the layer variable "field_category" manually'
+                'Could not extract category name. Please set the layer variable "field_category" for layer {layer} manually.'
             ),
             "NO_CATS_FOUND": self.tr("No categories found"),
             "REQUEST_FAILED": self.tr("Request failed"),
@@ -728,11 +728,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def get_category_name_for_export(self, layer):
         """Extract the category name from the layer variable 'field_category' which is set on import, or
         try the dataSourceUri as fallback"""
-        cat_name = (
-            QgsExpressionContextUtils.layerScope(layer).variable("field_category")
-            or layer.dataProvider().dataSourceUri().split("_")[-2]
-            or ""
+        uri = layer.dataProvider().dataSourceUri()
+        parts = uri.split("_")
+
+        cat_name = QgsExpressionContextUtils.layerScope(layer).variable("field_category") or (
+            parts[-2] if len(parts) >= 2 else None
         )
+
+        # todo?: check if cat_name matches categories in project config?
+        #     ?: Shows an unconfigured category warning from Field Desktop anyway
 
         return cat_name
 
@@ -1349,26 +1353,32 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
             if group_has_modified_layers:
                 msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
+                msg.setIcon(QMessageBox.Icon.Warning)
                 msg.setText(
-                    "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
+                    self.tr(
+                        "There are unsaved edits in the layer group.\n\nIn order to update the GeoPackage, all changes need to be saved or discarded."
+                    )
                 )
-                msg.setInformativeText("Save changes before overwriting GeoPackage?")
-                msg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-                msg.setDefaultButton(QMessageBox.Cancel)
+                msg.setInformativeText(self.tr("Save changes before overwriting GeoPackage?"))
+                msg.setStandardButtons(
+                    QMessageBox.StandardButton.Save
+                    | QMessageBox.StandardButton.Discard
+                    | QMessageBox.StandardButton.Cancel
+                )
+                msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
 
-                result = msg.exec_()
+                result = msg.exec()
 
-                if result == QMessageBox.Cancel:
+                if result == QMessageBox.StandardButton.Cancel:
                     self._import_running = False
                     self.show_or_hide_progress_bar()
                     return  # abort import
 
-                if result == QMessageBox.Save:
+                if result == QMessageBox.StandardButton.Save:
                     for ltl in group_ref_vector_layers:
                         ltl.layer().commitChanges()
 
-                elif result == QMessageBox.Discard:
+                elif result == QMessageBox.StandardButton.Discard:
                     for ltl in group_ref_vector_layers:
                         ltl.layer().rollBack()
 
@@ -1416,15 +1426,19 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             button.clicked.connect(open_logs)
             msg.layout().addWidget(button)
 
-            self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
+            self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Critical, 0)
 
             QgsMessageLog.logMessage(
                 self.tr("List of layers without a field_category layer variable:"),
                 self.plugin_name,
-                Qgis.MessageLevel.Warning,
+                Qgis.MessageLevel.Critical,
             )
             for n in group_ref_layer_names_missing_variables:
-                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Warning)
+                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Critical)
+
+            self._import_running = False
+            self.show_or_hide_progress_bar()
+            return
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
         # get geojson first since its one file with all geometries
@@ -2332,6 +2346,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     "Selected timezone '{tz}' is invalid!".format(tz=export_tz.decode("utf-8"))
                 ),
             )
+            # todo: extract function for canceling an import/export
+            self._export_running = False
+            self.show_or_hide_progress_bar()
             return
         else:
             dt = DateTimeTransformer(QTimeZone(export_tz), QTimeZone(b"UTC"))
@@ -2415,16 +2432,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     and layer.isValid()
                 ):
                     cat = self.get_category_name_for_export(layer)
-                    if not cat:
+                    if cat is None:
                         self.mB.pushWarning(
-                            self.plugin_name, self.labels["CAT_NAME_EXTRACTION_FAILED"]
+                            self.plugin_name,
+                            self.labels["CAT_NAME_EXTRACTION_FAILED"].format(layer=layer.name()),
                         )
+                        self._export_running = False
+                        self.show_or_hide_progress_bar()
                         return
                     # check if cat is in Field Desktop, throw error and abort if not
                     # todo: self.getCategoryList()
                     cat_layers[cat].append(layer)
                 else:
                     self.mB.pushWarning(self.plugin_name, self.labels["LAYER_VALIDATION_FAILED"])
+                    self._export_running = False
+                    self.show_or_hide_progress_bar()
                     return
             # print(f'catLayers: {catLayers}')
 
