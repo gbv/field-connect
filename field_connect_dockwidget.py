@@ -1303,7 +1303,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     )
                 )
                 msg.setInformativeText(self.tr("Save changes before overwriting GeoPackage?"))
-                msg.setStandardButtons(QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
+                msg.setStandardButtons(
+                    QMessageBox.StandardButton.Save
+                    | QMessageBox.StandardButton.Discard
+                    | QMessageBox.StandardButton.Cancel
+                )
                 msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
 
                 result = msg.exec()
@@ -2283,6 +2287,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     "Selected timezone '{tz}' is invalid!".format(tz=export_tz.decode("utf-8"))
                 ),
             )
+            # todo: extract function for canceling an import/export
+            self._export_running = False
+            self.show_or_hide_progress_bar()
             return
         else:
             dt = DateTimeTransformer(QTimeZone(export_tz), QTimeZone(b"UTC"))
@@ -2371,12 +2378,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             self.plugin_name,
                             self.labels["CAT_NAME_EXTRACTION_FAILED"].format(layer=layer.name()),
                         )
+                        self._export_running = False
+                        self.show_or_hide_progress_bar()
                         return
                     # check if cat is in Field Desktop, throw error and abort if not
                     # todo: self.getCategoryList()
                     cat_layers[cat].append(layer)
                 else:
                     self.mB.pushWarning(self.plugin_name, self.labels["LAYER_VALIDATION_FAILED"])
+                    self._export_running = False
+                    self.show_or_hide_progress_bar()
                     return
             # print(f'catLayers: {catLayers}')
 
