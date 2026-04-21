@@ -147,27 +147,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2335"/>
+        <location filename="../field_connect_dockwidget.py" line="2342"/>
         <source>Coordinate transformation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2336"/>
+        <location filename="../field_connect_dockwidget.py" line="2343"/>
         <source>The layer CRS differs from the target CRS. Do you want to transform coordinates?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2343"/>
+        <location filename="../field_connect_dockwidget.py" line="2350"/>
         <source>Yes to all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2346"/>
+        <location filename="../field_connect_dockwidget.py" line="2353"/>
         <source>No to all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2347"/>
+        <location filename="../field_connect_dockwidget.py" line="2354"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -224,11 +224,6 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="210"/>
         <source>Export successful!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../field_connect_dockwidget.py" line="212"/>
-        <source>Could not extract category name. Please set the layer variable &quot;field_category&quot; manually</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -452,12 +447,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1391"/>
+        <location filename="../field_connect_dockwidget.py" line="1395"/>
         <source>Importing category {label} %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2197"/>
+        <location filename="../field_connect_dockwidget.py" line="2201"/>
         <source>Style saved by the Field Connect plugin</source>
         <translation type="unfinished"></translation>
     </message>
@@ -467,7 +462,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2491"/>
+        <location filename="../field_connect_dockwidget.py" line="2503"/>
         <source>Could not save layer {layer}: {errors}</source>
         <translation type="unfinished"></translation>
     </message>
@@ -537,12 +532,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2280"/>
+        <location filename="../field_connect_dockwidget.py" line="2284"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1910"/>
+        <location filename="../field_connect_dockwidget.py" line="1914"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
         <translation type="unfinished"></translation>
     </message>
@@ -597,12 +592,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2518"/>
+        <location filename="../field_connect_dockwidget.py" line="2530"/>
         <source>Exporting category {cat} (1/2) %p%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2557"/>
+        <location filename="../field_connect_dockwidget.py" line="2569"/>
         <source>Exporting category {cat} (2/2) %p%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -617,7 +612,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="2593"/>
+        <location filename="../field_connect_dockwidget.py" line="2605"/>
         <source>Exporting geodata %p%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -647,22 +642,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1533"/>
+        <location filename="../field_connect_dockwidget.py" line="1537"/>
         <source>Open Logs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1370"/>
+        <location filename="../field_connect_dockwidget.py" line="1374"/>
         <source>List of layers without a field_category layer variable:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1527"/>
+        <location filename="../field_connect_dockwidget.py" line="1531"/>
         <source>Duplicate identifiers detected. Check the log for details.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../field_connect_dockwidget.py" line="1543"/>
+        <location filename="../field_connect_dockwidget.py" line="1547"/>
         <source>Duplicate identifiers found:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -676,6 +671,11 @@ In order to update the GeoPackage, all changes need to be saved or discarded.</s
     <message>
         <location filename="../field_connect_dockwidget.py" line="1305"/>
         <source>Save changes before overwriting GeoPackage?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../field_connect_dockwidget.py" line="212"/>
+        <source>Could not extract category name. Please set the layer variable &quot;field_category&quot; for layer {layer} manually.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
