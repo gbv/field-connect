@@ -534,7 +534,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="2284"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1914"/>
@@ -639,7 +639,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="205"/>
         <source>There are layers that have no field_category layer variable set. Check the log for more information.</source>
-        <translation>Es wurden Layer gefunden, bei denen die Layer-Variable field_category nicht gesetzt ist. Weitere Informationen finden Sie im Log.</translation>
+        <translation>Es wurden Layer gefunden, bei denen die Layer-Variable &quot;field_category&quot; nicht gesetzt ist. Weitere Informationen finden Sie im Log.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1537"/>
@@ -649,7 +649,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="1374"/>
         <source>List of layers without a field_category layer variable:</source>
-        <translation>Liste der Layer ohne gesetzte Layer-Variable field_category:</translation>
+        <translation>Liste der Layer ohne gesetzte Layer-Variable &quot;field_category&quot;:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1531"/>
@@ -678,7 +678,7 @@ Um das GeoPackage zu aktualisieren, müssen alle Änderungen gespeichert oder ve
     <message>
         <location filename="../field_connect_dockwidget.py" line="212"/>
         <source>Could not extract category name. Please set the layer variable &quot;field_category&quot; for layer {layer} manually.</source>
-        <translation type="unfinished"></translation>
+        <translation>Der Kategoriebezeichner konnte nicht ermittelt werden. Bitte setzen Sie die Layer-Variable &quot;field_category&quot; für den Layer {layer} manuell.</translation>
     </message>
 </context>
 <context>
