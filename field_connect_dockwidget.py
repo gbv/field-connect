@@ -227,8 +227,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "NO_CATS_FOUND": self.tr("No categories found"),
             "REQUEST_FAILED": self.tr("Request failed"),
             "SELECT_ALL": self.tr("Select all"),
+            "INFO_NO_FOLDER_SELECTED": self.tr("No folder selected!"),
             "INFO_NO_LAYER_SELECTED": self.tr("No layer selected in the layer tree!"),
             "INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS": self.tr("No unsaved layers available"),
+            "WARNING_FOLDER_NOT_EXISTING": self.tr("The selected folder does not exist!"),
         }
 
         # manual attribute translations
@@ -2926,9 +2928,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         folder = self.fileApiDir.filePath()
         # os.path.exists dir else abort
-        if not os.path.exists(folder):
-            # todo?: message and abort, or open folder selection?
-            # self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_FOLDER_SELECTED"])
+        if folder == "":
+            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_FOLDER_SELECTED"])
+            return
+        elif not os.path.exists(folder):
+            self.mB.pushWarning(self.plugin_name, self.labels["WARNING_FOLDER_NOT_EXISTING"])
             return
         self._import_running = True
         self.progressBar.resetFormat()
