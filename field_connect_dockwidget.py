@@ -1369,16 +1369,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             button.clicked.connect(open_logs)
             msg.layout().addWidget(button)
 
-            self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
+            self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Critical, 0)
 
             QgsMessageLog.logMessage(
                 self.tr("List of layers without a field_category layer variable:"),
                 self.plugin_name,
-                Qgis.MessageLevel.Warning,
+                Qgis.MessageLevel.Critical,
             )
             for n in group_ref_layer_names_missing_variables:
-                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Warning)
+                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Critical)
 
+            self._import_running = False
+            self.show_or_hide_progress_bar()
             return
 
         crs: QgsCoordinateReferenceSystem = self.selectImportCrs.crs()
