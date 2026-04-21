@@ -3160,7 +3160,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # export
         if file_export_paths:
             task = FileApiExportTask(
-                f"{self.plugin_name} - Export images",
+                self.tr("{pn} - Export images").format(pn=self.plugin_name),
                 self.file_api,
                 file_export_paths,
                 category,
@@ -3190,7 +3190,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 )
 
                 if messages:
-                    msg_content += " Check the {pn} logs for more information."
+                    msg_content += self.tr(" Check the {pn} logs for more information.")
 
                 msg = self.mB.createMessage(
                     msg_content.format(
