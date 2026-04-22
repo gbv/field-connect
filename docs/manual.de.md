@@ -78,7 +78,7 @@ Ist die Option "Layer für alle konfigurierten Geometrietypen anlegen" deaktivie
 
 Ist die Option hingegen aktiviert, wird die Projektkonfiguration des Field-Projekts ausgelesen: In Field Desktop können im Menü "Werkzeuge" ➝ "Projektkonfiguration" für das Geometriefeld einer Kategorie die erlaubten Geometrietypen ausgewählt werden. Mögliche Geometrietypen sind: "Polygon", "Multipolygon", "Polyline", "Multipolyline", "Punkt" und "Multipunkt". Für jeden der erlaubten Geometrietypen wird ein entsprechender Layer angelegt. Ausnahme: Ist ein Multi-Geometrietyp erlaubt, wird für diese Kategorie kein Layer für den entsprechenden Einzel-Geometrietyp angelegt (z. B. werden Polygone und Multipolygone gemeinsam in einem Layer "test_Schnitt_MultiPolygon" gespeichert).
 
-In den Benutzereigenschaften jedes Layers wird in der Variable "field_category" der Kategoriebezeichner gespeichert. Diese Variable sollte **nicht gelöscht werden**, da sie beim Export des Layers zurück nach Field Desktop benötigt wird.
+In den Benutzereigenschaften jedes Layers wird in der Variable "field_category" der Kategoriebezeichner gespeichert. Diese Variable sollte **nicht gelöscht werden**, da sie beim Export des Layers zurück nach Field Desktop sowie beim Aktualisieren einer bestehenden GeoPackage-Datei benötigt wird.
 
 Field Connect liest beim Import darüber hinaus Wertelisten, Feld- und Wertebezeichnungen sowie Beschreibungstexte aus der Field-Projektkonfiguration aus und speichert diese in einem eigenen Layer mit dem Benennungsschema "Projektkennung_lookup" (z. B. "test_lookup"). Dieser Layer ist erforderlich für die Funktionalität des Plugins und sollte **nicht gelöscht werden**.
 

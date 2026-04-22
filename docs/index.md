@@ -78,7 +78,7 @@ If the option "Create layers for all configured geometry types" is disabled, lay
 
 If, however, the option is enabled, the project configuration of the Field project is considered: In Field Desktop, you can select the allowed geometry types for a category’s geometry field via the menu "Tools" ➝ "Project Configuration". Possible geometry types are: "Polygon", "Multipolygon", "Polyline", "Multipolyline", "Point" and "Multipoint". A corresponding layer is created for each of the allowed geometry types. Exception: If a multi-geometry type is permitted, no layer is created for the corresponding single-geometry type within this category (e.g. polygons and multipolygons are stored together in a layer named "test_Trench_MultiPolygon").
 
-The category identifier is stored in the variable "field_category" within the user properties of each layer. This variable should **not be deleted**, as it is needed when the layer is exported back to Field Desktop.
+The category identifier is stored in the variable "field_category" within the user properties of each layer. This variable should **not be deleted**, as it is needed when the layer is exported back to Field Desktop and when updating existing GeoPackage files.
 
 During import, Field Connect also reads valuelists, field and value labels as well as description texts from the Field project configuration and saves these in a separate layer with the naming scheme "Project identifier_lookup" (e.g. "test_lookup") . This layer is required for the plugin to function and should **not be deleted**.
 
