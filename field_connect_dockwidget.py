@@ -651,13 +651,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         row = mdl.indexFromItem(item).row()
         state = item.checkState()
         item_is_checked = state == Qt.CheckState.Checked
-        checked_items = self.selectCats.checkedItemsData()
-        any_item_in_image_cat = any(s in self.image_categories for s in checked_items)
-
-        if any_item_in_image_cat:
-            self.import_photo_form_set_enabled(True)
-        else:
-            self.import_photo_form_set_enabled(False)
 
         if row == 0:  # first de-/select all entry
             for i in range(1, self.selectCats.count()):
@@ -679,6 +672,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             mdl.item(0).setText(
                 self.labels["DESELECT_ALL"] if all_checked else self.labels["SELECT_ALL"]
             )
+
+        checked_items = self.selectCats.checkedItemsData()
+        any_item_in_image_cat = any(s in self.image_categories for s in checked_items)
+
+        if any_item_in_image_cat:
+            self.import_photo_form_set_enabled(True)
+        else:
+            self.import_photo_form_set_enabled(False)
+
         mdl.blockSignals(False)
 
     def import_photo_form_set_enabled(self, on_off):
