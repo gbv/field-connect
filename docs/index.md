@@ -23,6 +23,10 @@ The user interface of Field Connect is available in German and English.
 * QGIS 3.40 or later
 * Field Desktop 3.7 or later
 
+## Installation
+
+Field Connect can be installed from the official QGIS plugin repository (Menu: "Plugins" ➝ "Manage and Install Plugins..."). If the plugin does not yet appear in the list, stay in the window "Plugins" and select "Settings" ➝ "Reload Repository" for the official QGIS plugin repository.
+
 ## How to start
 
 Launch Field Desktop and open the project you wish to work on in QGIS. **Important**: All functionality of Field Connect always works with the project currently open in Field Desktop.

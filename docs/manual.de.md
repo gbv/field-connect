@@ -23,6 +23,10 @@ Die Benutzeroberfläche von Field Connect ist in den Sprachen Deutsch und Englis
 * QGIS 3.40 oder aktueller
 * Field Desktop 3.7 oder aktueller
 
+## Installation
+
+Field Connect kann aus dem offiziellen QGIS-Erweiterungsrepositorium installiert werden (Menü "Erweiterungen" ➝ "Erweiterungen verwalten und installieren..."). Sollte das Plugin noch nicht in der Liste auftauchen, rufen Sie im Fenster "Erweiterungen" bitte die Funktion "Einstellungen" ➝ "Repositorium neu laden" für das offizielle QGIS-Erweiterungsrepositorium auf.
+
 ## Erste Schritte
 
 Rufen Sie Field Desktop auf und öffnen Sie das Projekt, mit dem Sie in QGIS arbeiten möchten. **Wichtig**: Alle Funktionen von Field Connect arbeiten immer mit dem aktuell in Field Desktop geöffneten Projekt.
