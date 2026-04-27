@@ -6,7 +6,7 @@
     <message>
         <location filename="../field_connect.py" line="204"/>
         <source>&amp;Field Connect</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Field Connect</translation>
     </message>
     <message>
         <location filename="../field_connect.py" line="169"/>
