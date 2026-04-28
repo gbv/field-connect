@@ -259,424 +259,426 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="256"/>
         <source>Specifies the operation in which the resource has been recorded; remains empty for top-level resources.</source>
-        <translation type="unfinished"></translation>
+        <translation>Especifica la operación en la que se ha registrado el recurso; permanece en blanco para los recursos de nivel superior.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="261"/>
         <source>Lies within</source>
-        <translation type="unfinished"></translation>
+        <translation>Se encuentra en</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="262"/>
         <source>Specifies the direct parent resource in the hierarchy; remains empty for top-level resources or if the direct parent resource is an operation.</source>
-        <translation type="unfinished"></translation>
+        <translation>Especifica el recurso inmediatamente superior en la jerarquía; se deja en blanco para los recursos de nivel superior o si el recurso inmediatamente superior es una operación.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="267"/>
         <source>Depicts</source>
-        <translation type="unfinished"></translation>
+        <translation>Representa</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="271"/>
         <source>Is depicted in</source>
-        <translation type="unfinished"></translation>
+        <translation>Se representa en</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="275"/>
         <source>Is map layer of</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Es la capa de mapa de</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="281"/>
         <source>Has map layer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tiene capa de mapa</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="287"/>
         <source>Has default map layer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tiene la capa de mapa predeterminada</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="288"/>
         <source>Specifies that the linked image is a default map layer in the context of this resource.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Especifica que la imagen vinculada es una capa de mapa predeterminada en el contexto de este recurso.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="296"/>
         <source>Type</source>
-        <translation type="unfinished"></translation>
+        <translation>Tipo</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="302"/>
         <source>Beginning:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Inicio:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="303"/>
         <source>Year specification that is set for the dating type &quot;after&quot; and as the start date for the dating type &quot;range&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Especificación de año establecida para el tipo de fecha «después de» y como fecha de inicio para el tipo de fecha «intervalo».</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="318"/>
         <source>End:</source>
-        <translation type="unfinished"></translation>
+        <translation>Final:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="319"/>
         <source>Year specification that is set for the dating types &quot;single&quot;, &quot;before&quot; and &quot;scientific&quot; and as the end date for the dating type &quot;range&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Especificación del año que se establece para los tipos de datación «individual», «anterior» y «científico», y como fecha de finalización para el tipo de cita «rango».</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="324"/>
         <source>Margin</source>
-        <translation type="unfinished"></translation>
+        <translation>Margen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="325"/>
         <source>Tolerance margin in years for dating type &quot;scientific&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Margen de tolerancia en años para la datación de tipo «científico».</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="330"/>
         <source>Source</source>
-        <translation type="unfinished"></translation>
+        <translation>Fuente</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="331"/>
         <source>Source of the dating.</source>
-        <translation type="unfinished"></translation>
+        <translation>Fuente de la datación.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="359"/>
         <source>Is imprecise?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Impreciso?</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="335"/>
         <source>Specification &quot;Imprecise&quot;. Cannot be set for dating type &quot;scientific&quot;. Possible values are: true (yes), false (no).</source>
-        <translation type="unfinished"></translation>
+        <translation>Especificación &quot;Imprecisa&quot;. No se puede establecer para el tipo de datación «científica». Los valores posibles son: true (sí), false (no).</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="340"/>
         <source>Is uncertain?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Es incierto?</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="341"/>
         <source>Specification &quot;Uncertain&quot;. Cannot be set for dating type &quot;scientific&quot;. Possible values are: true (yes), false (no).</source>
-        <translation type="unfinished"></translation>
+        <translation>Especificación &quot;Incierto&quot;. No se puede establecer para el tipo de datación «científica». Los valores posibles son: true (sí), false (no).</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="349"/>
         <source>The measured numerical value.</source>
-        <translation type="unfinished"></translation>
+        <translation>El valor numérico medido.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="353"/>
         <source>The second measured numerical value, if the dimension is a range.</source>
-        <translation type="unfinished"></translation>
+        <translation>El segundo valor numérico medido, si la dimensión es un intervalo.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="357"/>
         <source>Comment</source>
-        <translation type="unfinished"></translation>
+        <translation>Comentario</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="360"/>
         <source>Specification &quot;Imprecise&quot;. Possible values are: true (yes), false (no).</source>
-        <translation type="unfinished"></translation>
+        <translation>Especificación &quot;Impreciso&quot;. Los valores posibles son: true (sí), false (no).</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="366"/>
         <source>As measured by</source>
-        <translation type="unfinished"></translation>
+        <translation>Según lo medido por</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="382"/>
         <source>Unit</source>
-        <translation type="unfinished"></translation>
+        <translation>Unidad</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="369"/>
         <source>The unit of measurement. Possible values: mm, cm, m.</source>
-        <translation type="unfinished"></translation>
+        <translation>Unidad de medida. Valores posibles: mm, cm, m.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="373"/>
         <source>Measurement device</source>
-        <translation type="unfinished"></translation>
+        <translation>Aparato de medición</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="376"/>
         <source>The unit of measurement. Possible values: mg, g, kg.</source>
-        <translation type="unfinished"></translation>
+        <translation>Unidad de medida. Valores posibles: mg, g, kg.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="380"/>
         <source>Measurement technique</source>
-        <translation type="unfinished"></translation>
+        <translation>Técnica de medición</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="383"/>
         <source>The unit of measurement. Possible values: ml, l.</source>
-        <translation type="unfinished"></translation>
+        <translation>Unidad de medida. Valores posibles: ml, l.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="387"/>
         <source>Literature quotation</source>
-        <translation type="unfinished"></translation>
+        <translation>Cita bibliográfica</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="388"/>
         <source>Zenon ID</source>
-        <translation type="unfinished"></translation>
+        <translation>ID Zenon</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="389"/>
         <source>DOI</source>
-        <translation type="unfinished"></translation>
+        <translation>DOI</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="390"/>
         <source>Page</source>
-        <translation type="unfinished"></translation>
+        <translation>Página</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="391"/>
         <source>Figure</source>
-        <translation type="unfinished"></translation>
+        <translation>Figura</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1395"/>
         <source>Importing category {label} %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Importando la categoría {label} %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2201"/>
         <source>Style saved by the Field Connect plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Estilo guardado por el plugin Field Connect</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="208"/>
         <source>Export finished with errors!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡Exportación completada con errores!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2503"/>
         <source>Could not save layer {layer}: {errors}</source>
-        <translation type="unfinished"></translation>
+        <translation>No se ha podido guardar la capa {layer}: {errors}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="292"/>
         <source>Typological classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Clasificación tipológica</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="191"/>
         <source>The active project in Field Desktop has changed! Disconnecting...</source>
-        <translation type="unfinished"></translation>
+        <translation>¡El proyecto activo en Field Desktop ha cambiado! Desconectando...</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="463"/>
         <source>Type to filter...</source>
-        <translation type="unfinished"></translation>
+        <translation>Escriba para filtrar...</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="767"/>
         <source>Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>Sí</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="767"/>
         <source>No</source>
-        <translation type="unfinished"></translation>
+        <translation>No</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="770"/>
         <source>ml</source>
-        <translation type="unfinished"></translation>
+        <translation>ml</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="770"/>
         <source>l</source>
-        <translation type="unfinished"></translation>
+        <translation>l</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="773"/>
         <source>mg</source>
-        <translation type="unfinished"></translation>
+        <translation>mg</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="774"/>
         <source>g</source>
-        <translation type="unfinished"></translation>
+        <translation>g</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="775"/>
         <source>kg</source>
-        <translation type="unfinished"></translation>
+        <translation>kg</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="781"/>
         <source>mm</source>
-        <translation type="unfinished"></translation>
+        <translation>mm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="782"/>
         <source>cm</source>
-        <translation type="unfinished"></translation>
+        <translation>cm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="783"/>
         <source>m</source>
-        <translation type="unfinished"></translation>
+        <translation>m</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2284"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡La zona horaria seleccionada «{tz}» no es válida!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1914"/>
         <source>Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</source>
-        <translation type="unfinished"></translation>
+        <translation>Formatos de fecha admitidos: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="196"/>
         <source>Field Desktop is not running.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Field Desktop no se está ejecutando.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="197"/>
         <source>Incorrect password.</source>
-        <translation type="unfinished"></translation>
+        <translation>Contraseña incorrecta.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="219"/>
         <source>No unsaved layers available</source>
-        <translation type="unfinished"></translation>
+        <translation>No hay capas sin guardar disponibles</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="794"/>
         <source>BCE</source>
-        <translation type="unfinished"></translation>
+        <translation>ANE</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="795"/>
         <source>CE</source>
-        <translation type="unfinished"></translation>
+        <translation>NE</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="796"/>
         <source>BP</source>
-        <translation type="unfinished"></translation>
+        <translation>BP</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="804"/>
         <source>Single year</source>
-        <translation type="unfinished"></translation>
+        <translation>Año único</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="805"/>
         <source>Before</source>
-        <translation type="unfinished"></translation>
+        <translation>Antes</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="806"/>
         <source>After</source>
-        <translation type="unfinished"></translation>
+        <translation>Después</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="807"/>
         <source>Scientific</source>
-        <translation type="unfinished"></translation>
+        <translation>Científica</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2530"/>
         <source>Exporting category {cat} (1/2) %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportando la categoría {cat} (1/2) %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2569"/>
         <source>Exporting category {cat} (2/2) %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportando la categoría {cat} (2/2) %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="554"/>
         <source>Missing EPSG code in project properties. Using QGIS project CRS.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Falta el código EPSG en las propiedades del proyecto. Se utiliza el CRS del proyecto de QGIS.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="563"/>
         <source>Invalid EPSG code in project properties: {epsgId}. Using QGIS project CRS.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Código EPSG no válido en las propiedades del proyecto: {epsgId}. Se utiliza el CRS del proyecto de QGIS.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2605"/>
         <source>Exporting geodata %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportando datos geográficos %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="200"/>
         <source>Field Connect requires Field Desktop 3.7.0 or later.</source>
-        <translation type="unfinished"></translation>
+        <translation>Field Connect requiere Field Desktop 3.7.0 o una versión posterior.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1182"/>
         <source>Select at least one category to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecciona al menos una categoría para continuar.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="409"/>
         <source>Unspecified language</source>
-        <translation type="unfinished"></translation>
+        <translation>Idioma no especificado</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="412"/>
         <source>QR code</source>
-        <translation type="unfinished"></translation>
+        <translation>Código QR</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="205"/>
         <source>There are layers that have no field_category layer variable set. Check the log for more information.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hay capas que no tienen definida la variable de capa &quot;field_category&quot;. Consulta el registro para obtener más información.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1537"/>
         <source>Open Logs</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir registros</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1374"/>
         <source>List of layers without a field_category layer variable:</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista de capas sin una variable de capa &quot;field_category&quot;:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1531"/>
         <source>Duplicate identifiers detected. Check the log for details.</source>
-        <translation type="unfinished"></translation>
+        <translation>Se han detectado identificadores duplicados. Consulte el registro para obtener más detalles.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1547"/>
         <source>Duplicate identifiers found:</source>
-        <translation type="unfinished"></translation>
+        <translation>Se han detectado identificadores duplicados:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1300"/>
         <source>There are unsaved edits in the layer group.
 
 In order to update the GeoPackage, all changes need to be saved or discarded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hay cambios sin guardar en el grupo de capas.
+
+Para actualizar el GeoPackage, es necesario guardar o descartar todos los cambios.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="1305"/>
         <source>Save changes before overwriting GeoPackage?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Desea guardar los cambios antes de sobrescribir el GeoPackage?</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="212"/>
         <source>Could not extract category name. Please set the layer variable &quot;field_category&quot; for layer {layer} manually.</source>
-        <translation type="unfinished"></translation>
+        <translation>No se ha podido extraer el nombre de la categoría. Configura manualmente la variable de capa &quot;field_category&quot; para la capa {layer}.</translation>
     </message>
 </context>
 <context>
@@ -684,202 +686,202 @@ In order to update the GeoPackage, all changes need to be saved or discarded.</s
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="29"/>
         <source>Field Connect</source>
-        <translation type="unfinished"></translation>
+        <translation>Field Connect</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="57"/>
         <source>http://localhost:3000/</source>
-        <translation type="unfinished"></translation>
+        <translation>http://localhost:3000/</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="164"/>
         <source>Field Version:</source>
-        <translation type="unfinished"></translation>
+        <translation>Versión de Field:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="527"/>
         <source>Import</source>
-        <translation type="unfinished"></translation>
+        <translation>Importar</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="277"/>
         <source>Format:</source>
-        <translation type="unfinished"></translation>
+        <translation>Formato:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="925"/>
         <source>Export</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportar</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="50"/>
         <source>Server Address:</source>
-        <translation type="unfinished"></translation>
+        <translation>Dirección del servidor:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="64"/>
         <source>Field Password:</source>
-        <translation type="unfinished"></translation>
+        <translation>Contraseña de Field:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="148"/>
         <source>Connect</source>
-        <translation type="unfinished"></translation>
+        <translation>Conectar</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="157"/>
         <source>Field User:</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuario de Field:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="237"/>
         <source>Categories:</source>
-        <translation type="unfinished"></translation>
+        <translation>Categorías:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="263"/>
         <source>CRS:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">CRS:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="328"/>
         <source>Temporary</source>
-        <translation type="unfinished"></translation>
+        <translation>Temporal</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="560"/>
         <source>Layer group:</source>
-        <translation type="unfinished"></translation>
+        <translation>Grupo de capas:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="668"/>
         <source>Target CRS:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">CRS de destino:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="260"/>
         <source>Coordinate reference system</source>
-        <translation type="unfinished"></translation>
+        <translation>Sistema de coordenadas de referencia</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="171"/>
         <source>Field Project:</source>
-        <translation type="unfinished"></translation>
+        <translation>Proyecto de Field:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="305"/>
         <source>GeoPackage</source>
-        <translation type="unfinished"></translation>
+        <translation>GeoPackage</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="465"/>
         <source>Combine hierarchical relations</source>
-        <translation type="unfinished"></translation>
+        <translation>Combinar relaciones jerárquicas</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="611"/>
         <source>Export all layers in the selected layer group</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportar todas las capas del grupo de capas seleccionado</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="614"/>
         <source>Group</source>
-        <translation type="unfinished"></translation>
+        <translation>Grupo</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="640"/>
         <source>Only export the layer selected in the layer tree</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Exportar únicamente la capa seleccionada en el árbol de capas</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="752"/>
         <source>Only export added or edited features in the edit buffer. Layers need to be in edit mode and unsaved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Exporta únicamente los elementos añadidos o editados en el búfer de edición. Las capas deben estar en modo de edición y sin guardar.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="863"/>
         <source>Permit field deletions</source>
-        <translation type="unfinished"></translation>
+        <translation>Permitir la eliminación de campos</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="830"/>
         <source>Ignore unconfigured fields</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignorar los campos sin configurar</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="580"/>
         <source>Mode:</source>
-        <translation type="unfinished"></translation>
+        <translation>Modo:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="860"/>
         <source>If this option is enabled, fields can not only be changed but also be deleted. Any fields (including relations) for which the corresponding field in the attribute table is empty will be deleted. Fields not listed in the attribute table remain unchanged.</source>
-        <translation type="unfinished"></translation>
+        <translation>Si se activa esta opción, los campos no solo se pueden modificar, sino también eliminar. Se eliminarán todos los campos (incluidas las relaciones) cuyo campo correspondiente en la tabla de atributos esté vacío. Los campos que no figuren en la tabla de atributos permanecerán sin cambios.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="827"/>
         <source>If this option is enabled, the export process will not be aborted if unconfigured fields are encountered. Instead, data in unconfigured fields will be ignored.</source>
-        <translation type="unfinished"></translation>
+        <translation>Si se activa esta opción, el proceso de exportación no se interrumpirá si se detectan campos sin configurar. En su lugar, se ignorarán los datos de los campos sin configurar.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="462"/>
         <source>If this option is enabled, the hierarchical relations are combined into the simplified relation &quot;isChildOf&quot;, which specifies the direct parent resource. This option should normally remain enabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>Si esta opción está activada, las relaciones jerárquicas se combinan en la relación simplificada &quot;isChildOf&quot;, que especifica el recurso superior inmediato. Por lo general, esta opción debe permanecer activada.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="643"/>
         <source>Selected layer(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>Capa(s) seleccionada(s)</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="706"/>
         <source>Timezone (IANA format, e.g. Europe/Berlin)</source>
-        <translation type="unfinished"></translation>
+        <translation>Zona horaria (formato IANA, p. ej., Europe/Berlin)</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="725"/>
         <source>Reset to system timezone</source>
-        <translation type="unfinished"></translation>
+        <translation>Restablecer la zona horaria del sistema</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="728"/>
         <source>↺</source>
-        <translation type="unfinished"></translation>
+        <translation>↺</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="682"/>
         <source>Timezone:</source>
-        <translation type="unfinished"></translation>
+        <translation>Zona horaria:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="794"/>
         <source>Save unsaved changes</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar los cambios no guardados</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="758"/>
         <source>Export only unsaved features</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportar solo los elementos no guardados</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="426"/>
         <source>If this option is enabled, layers for all geometry types that are configured for the respective category will be created, regardless of whether they contain features or not.</source>
-        <translation type="unfinished"></translation>
+        <translation>Si se activa esta opción, se crearán capas para todos los tipos de geometría configurados para la categoría correspondiente, independientemente de si contienen elementos o no.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="429"/>
         <source>Create layers for all configured geometry types</source>
-        <translation type="unfinished"></translation>
+        <translation>Crear capas para todos los tipos de geometría configurados</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="737"/>
         <source>Options:</source>
-        <translation type="unfinished"></translation>
+        <translation>Opciones:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="791"/>
         <source>Saves the layer during the export. Useful in combination with the option &quot;Export only unsaved features&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Guarda la capa durante la exportación. Resulta útil en combinación con la opción &quot;Exportar solo elementos no guardados&quot;</translation>
     </message>
 </context>
 </TS>
