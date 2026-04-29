@@ -36,6 +36,7 @@ from requests.models import Response
 from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
+from osgeo import gdal
 from qgis.core import (
     Qgis,
     QgsApplication,
@@ -175,6 +176,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.labelServerAddress.hide()
         self.lineEditServerAddress.hide()
         self.progressBar.hide()
+        # hide file import mode selector for getting images from vector layers/features
+        # for a possible implementation in the future
+        self.widget_2.hide()
 
         self.plugin_name = "Field Connect"
         self.plugin_dir = plugin_dir
@@ -491,7 +495,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.fileApiDir.lineEdit().setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.fileApiDirOpen.setIcon(QgsApplication.getThemeIcon("mActionFileOpen.svg"))
 
-        # todo: test loading/saving after object names change
         # load saved settings
         try:
             self.load_settings()
@@ -521,7 +524,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.treeRoot.nameChanged.connect(self.export_update_layer_groups)
         # file api
         # import
-        self.btnFileImport.clicked.connect(self.file_api_import)
         self.fileApiDirOpen.clicked.connect(self.file_api_open_folder_path)
         # export
         self.btnFileExport.clicked.connect(self.file_api_export)
@@ -529,6 +531,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def closeEvent(self, event):  # noqa: N802
         self.closing_plugin.emit()
         event.accept()
+
+    def create_open_logs_button(self, tab_name=""):
+        btn = QPushButton(self.tr("Open Logs"))
+        def fn(): self.iface.openMessageLog(tab_name)
+        btn.clicked.connect(fn)
+        return btn
+
+    def log_info(self, msg):
+        QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Info)
+
+    def log_warning(self, msg):
+        QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Warning)
+
+    def log_error(self, msg):
+        QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Critical)
 
     def export_update_layer_groups(self):
         self.selectExGroup.clear()
@@ -656,9 +673,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for i in range(1, self.selectCats.count()):
                 mdl.item(i).setCheckState(state)
             item.setText(
-                self.labels["DESELECT_ALL"]
-                if item_is_checked
-                else self.labels["SELECT_ALL"]
+                self.labels["DESELECT_ALL"] if item_is_checked else self.labels["SELECT_ALL"]
             )
         else:
             # update the first item to reflect whether all other items are checked
@@ -686,6 +701,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def import_photo_form_set_enabled(self, on_off):
         self.chk_file_api_import_images.setEnabled(on_off)
         self.chk_file_api_georef_only.setEnabled(on_off)
+        self.chk_file_api_overwrite_images.setEnabled(on_off)
         if not on_off:
             self.chk_file_api_import_images.setChecked(False)
 
@@ -1032,6 +1048,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 else QTimeZone.systemTimeZoneId().data().decode("utf-8")
             ),
         )
+        s.setValue(
+            f"{pn}/import/georefImagesOnly",
+            self.chk_file_api_georef_only.isChecked(),
+        )
+        s.setValue(
+            f"{pn}/import/overwriteImages",
+            self.chk_file_api_overwrite_images.isChecked(),
+        )
         # export tab
         s.setValue(
             f"{pn}/export/mode",
@@ -1081,6 +1105,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             tz_im_val
             if tz_im_val and QTimeZone(tz_im_val.encode("utf-8")).isValid()
             else QTimeZone.systemTimeZoneId().data().decode("utf-8")
+        )
+        self.chk_file_api_georef_only.setChecked(
+            s.value(f"{pn}/import/georefImagesOnly", False, bool)
+        )
+        self.chk_file_api_overwrite_images.setChecked(
+            s.value(f"{pn}/import/overwriteImages", False, bool)
         )
         # export tab
         ex_mode = s.value(f"{pn}/export/mode", "radioExGroup")
@@ -1137,7 +1167,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.fileApiDirOpen.setEnabled(on_off)
         self.fileApiImportAll.setEnabled(on_off)
         self.fileApiImportLayers.setEnabled(on_off)
-        self.btnFileImport.setEnabled(on_off)
         self.chkExportWorldfiles.setEnabled(on_off)
         self.chkReadCreatorsFromMetadata.setEnabled(on_off)
         self.btnFileExport.setEnabled(on_off)
@@ -1218,7 +1247,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.selectCats.setEnabled(True)
             # todo?: always put untranslated cat name into image_categories?
             self.image_categories = [cat for label, cat in self.get_import_categories("Image")]
-            print(self.image_categories)
+            # print(self.image_categories)
 
             self.mB.pushSuccess(self.plugin_name, self.labels["FIELD_CONNECTED"])
             self.sB.showMessage(self.tr("Choose categories and format"))
@@ -1231,6 +1260,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         if not self._check_connection_and_project():
             return
+
+        import_images = self.chk_file_api_import_images.isChecked()
 
         cats = dict(
             zip(
@@ -1247,6 +1278,21 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.setMaximum(len(cats))
 
         # collect ui options
+        if import_images:
+            image_cats = [
+                (label, name)
+                for label, name in self.get_import_categories("Image")
+                if name in cats.keys()
+            ]
+            image_folder = self.fileApiDir.filePath()
+            # os.path.exists dir else abort
+            if image_folder == "":
+                self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_FOLDER_SELECTED"])
+                return
+            elif not os.path.exists(image_folder):
+                self.mB.pushWarning(self.plugin_name, self.labels["WARNING_FOLDER_NOT_EXISTING"])
+                return
+
         is_import_format_gpkg = self.radioFormatGPKG.isChecked()
         create_all_layers = self.chk_layers_for_all_geom_types.isChecked()
         csv_ui_opts = {
@@ -1432,13 +1478,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Critical, 0)
 
-            QgsMessageLog.logMessage(
+            self.log_error(
                 self.tr("List of layers without a field_category layer variable:"),
-                self.plugin_name,
                 Qgis.MessageLevel.Critical,
             )
             for n in group_ref_layer_names_missing_variables:
-                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Critical)
+                self.log_error(n)
 
             self._import_running = False
             self.show_or_hide_progress_bar()
@@ -1607,18 +1652,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
 
-                    QgsMessageLog.logMessage(
+                    self.log_warning(
                         self.tr("Duplicate identifiers found:"),
-                        self.plugin_name,
-                        Qgis.MessageLevel.Warning,
                     )
-
                     for ident, entries in duplicate_ids.items():
                         layers = {layer.name() for layer, _, _ in entries}
-                        QgsMessageLog.logMessage(
+                        self.log_warning(
                             f"{ident} → {', '.join(layers)}",
-                            self.plugin_name,
-                            Qgis.MessageLevel.Warning,
                         )
 
                 # unify old and new index and get differences/transitions
@@ -2310,11 +2350,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.project.write(f"geopackage:{filename}?projectName={self.active_project}")
 
         # refresh layers after overwriting data
-        if import_overwrite:
-            # todo: find a better way to refresh layers
-            # layer.dataProvider().forceReload() and layer.triggerRepaint() only worked in console
-            # and iface.mapCanvas().refresh() didnt work at all
-            self.project.reloadAllLayers()
+        # if import_overwrite:
+        #     # todo: find a better way to refresh layers
+        #     #    ?: maybe not needed anymore as layers are recreated now when updating a gpkg
+        #     # layer.dataProvider().forceReload() and layer.triggerRepaint() only worked in console
+        #     # and iface.mapCanvas().refresh() didnt work at all
+        #     self.project.reloadAllLayers()
+
+        # import images
+        if import_images:
+            # pass group_ref, image folder and selected image categories
+            self.file_api_import(group_ref, image_folder, image_cats)
 
         self.mB.pushSuccess(self.plugin_name, self.labels["IMPORT_SUCCESS"])
         self.sB.showMessage(self.labels["IMPORT_SUCCESS"], 10000)
@@ -2916,27 +2962,19 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         return prj_maps
 
     @handle_api_errors
-    def file_api_import(self, *args):
-        # todo: save photo tab settings (folder path, checkboxes)
-        # todo: skip existing images (overwrite checkbox?) but add layers again if not in group
-        # todo: output statistics after import (image count ✓, skipping already existing images etc.)
+    def file_api_import(self, group_ref, image_folder, image_cats, *args):
         if not self._check_connection_and_project():
             return
+        # todo: layers are unselected as they are recreated on import.
+        #    ?:  remove option to import from selected layers anyway?
         layers: list[QgsVectorLayer] = self.iface.layerTreeView().selectedLayers()
-        import_layers = self.fileApiImportLayers.isChecked()
-        if import_layers and not layers:
+        import_from_layers = self.fileApiImportLayers.isChecked()
+        if import_from_layers and not layers:
             self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
             return
 
-        folder = self.fileApiDir.filePath()
-        # os.path.exists dir else abort
-        if folder == "":
-            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_FOLDER_SELECTED"])
-            return
-        elif not os.path.exists(folder):
-            self.mB.pushWarning(self.plugin_name, self.labels["WARNING_FOLDER_NOT_EXISTING"])
-            return
-        self._import_running = True
+        folder = image_folder
+
         self.progressBar.resetFormat()
         self.show_or_hide_progress_bar()
         _import_errors = False
@@ -2944,15 +2982,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.setValue(step)
         import_list = {}
         import_georef_only = self.chk_file_api_georef_only.isChecked()
+        overwrite_files = self.chk_file_api_overwrite_images.isChecked()
+        image_has_geotransform = False
 
-        self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
+        self.log_info(self.tr("Image import started"))
 
-        group = self.treeRoot.findGroup(self.active_project)
-        if group is None:
-            group = self.treeRoot.addGroup(self.active_project)
+        # collect statistics
+        stats_images_overwritten = 0
+        stats_images_skipped = 0
+        stats_images_written = 0
+        stats_layers_added = 0
+
+        # already handled in field_import()
+        group: QgsLayerTreeGroup = group_ref
+        group_layer_count = len(group.findLayers())
 
         # import from selected vector layers/features
-        if import_layers:
+        if import_from_layers:
             # get list of identifiers from csv export or selected layers
             for layer in layers:
                 selected_features = layer.selectedFeatures()
@@ -2964,7 +3010,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 import_list[category] = ids
         # import all from image and subcategories csv export
         else:
-            image_cats = self.get_import_categories("Image")  # [(label, name),]
             for label, cat_name in image_cats:
                 csv_reader = self.get_category_csv(cat_name)
                 ids = [row["identifier"] for row in csv_reader]
@@ -2976,60 +3021,139 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # import for both modes after collecting identifiers
         for cat, ids in import_list.items():
+            # add sub-groups at the bottom
+            group_layer_count += 1
+            cat_group_name = f"{self.active_project}_{cat}"
+            # look for existing group
+            cat_group = group.findGroup(cat_group_name)
+
+            if cat_group is None:
+                cat_group = group.insertGroup(group_layer_count, cat_group_name)
+                cat_group.setExpanded(False)
+
+            cat_group_path: Path = Path(folder) / cat
+            # create subfolders for categories
+            cat_group_path.mkdir(parents=True, exist_ok=True)
+
+            cat_group_existing_layers = {
+                ltl.layer().name(): ltl.layer().id() for ltl in cat_group.findLayers()
+            }
+
             for identifier in ids:
                 self.progressBar.setFormat("{id} %p%".format(id=identifier))
                 QApplication.processEvents()
 
-                file_path = os.path.splitext(f"{folder}/{identifier}")[0]
+                file_path: Path = cat_group_path / identifier
                 image_data, image_ext = self.file_api.get_image_data(identifier)
-                final_image_path = ".".join([file_path, image_ext])
+                final_image_path: Path = file_path.with_suffix(f".{image_ext}")
+                final_image_path_exists = final_image_path.exists()
+
+                # check if existing file has embedded georeferencing
+                gdal.FileFromMemBuffer("/vsimem/temp", image_data)
+                ds: gdal.Dataset = gdal.Open("/vsimem/temp")
+                image_has_geotransform = bool(ds.GetGeoTransform(can_return_null=True))
+                ds.Close()
 
                 worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(
                     identifier, image_ext
                 )
-                if worldfile_data:
-                    final_worldfile_path = ".".join([file_path, worldfile_ext])
-                    with open(f"{final_worldfile_path}", "w") as f:
-                        f.write(worldfile_data)
-                elif import_georef_only:
+                if worldfile_data and not image_has_geotransform:
+                    final_worldfile_path: Path = file_path.with_suffix(f".{worldfile_ext}")
+                    if overwrite_files or not final_worldfile_path.exists():
+                        with open(final_worldfile_path, "w") as f:
+                            f.write(worldfile_data)
+                elif import_georef_only and not image_has_geotransform:
+                    self.log_info(self.tr("Skipping {ident}: No embedded georeferencing or world file detected.").format(ident=identifier))
+                    stats_images_skipped += 1
+
+                    step += 1
+                    self.progressBar.setValue(step)
+                    QApplication.processEvents()
                     continue
 
                 if image_data:
-                    with open(f"{final_image_path}", "wb") as f:
-                        f.write(image_data)
+                    if overwrite_files or not final_image_path_exists:
+                        with open(final_image_path, "wb") as f:
+                            f.write(image_data)
+                            stats_images_written += 1
 
-                    raster_layer = QgsRasterLayer(final_image_path, identifier)
-                    raster_layer.setCrs(self.project.crs())
+                    if not overwrite_files and final_image_path_exists:
+                        stats_images_skipped += 1
 
-                    md = raster_layer.metadata()
-                    md.setCategories([cat])
+                    if overwrite_files and final_image_path_exists:
+                        stats_images_overwritten += 1
 
-                    raster_layer.setMetadata(md)
+                    if identifier not in cat_group_existing_layers.keys():
+                        raster_layer = QgsRasterLayer(str(final_image_path), identifier)
+                        raster_layer.setCrs(self.project.crs())
 
-                    if raster_layer.isValid():
-                        self.project.addMapLayer(raster_layer, False)
-                        node = group.insertLayer(-1, raster_layer)
-                        # collapse raster bands
-                        node.setExpanded(False)
+                        md = raster_layer.metadata()
+                        md.setCategories([cat])
+
+                        raster_layer.setMetadata(md)
+
+                        if raster_layer.isValid():
+                            self.project.addMapLayer(raster_layer, False)
+                            node = cat_group.insertLayer(-1, raster_layer)
+                            # collapse raster bands
+                            node.setExpanded(False)
+                            stats_layers_added += 1
+                        else:
+                            _import_errors = True
                     else:
-                        _import_errors = True
+                        # get existing raster layer
+                        raster_layer = cat_group.findLayer(cat_group_existing_layers[identifier])
+                        # reload layer in case file has changed
+                        # todo: check if reload really needed
+                        raster_layer.layer().reload()
 
                 step += 1
                 self.progressBar.setValue(step)
                 QApplication.processEvents()
 
-        # todo: more error handling
-        if not _import_errors:
-            self.mB.pushSuccess(
-                self.plugin_name,
-                self.tr("Successfully imported {image_count} images.").format(
-                    image_count=total_import_count
-                ),
+        log_messages = []
+        log_messages.append(
+            self.tr("Total images processed: {ip}").format(
+                ip=total_import_count,
             )
-            self.sB.showMessage(self.tr("Image import successful!"), 10000)
-            QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+        )
+        log_messages.append(
+            self.tr("Images written: {iw} ({iow} overwritten)").format(
+                iw=stats_images_written,
+                iow=stats_images_overwritten
+            )
+        )
+        log_messages.append(
+            self.tr("Images skipped: {skipped}").format(
+                skipped=stats_images_skipped
+            )
+        )
+        log_messages.append(
+            self.tr("Layers added to tree: {la}").format(
+                la=stats_layers_added
+            )
+        )
 
-        self._import_running = False
+        for m in log_messages:
+            self.log_info(m)
+
+        if not _import_errors:
+            msg_level = Qgis.MessageLevel.Success
+            msg_content = self.tr(
+                "Successfully imported {image_count} images. Check the log for more details."
+            ).format(image_count=total_import_count)
+            sb_message = self.tr("Image import successful!")
+        else:
+            msg_level = Qgis.MessageLevel.Critical
+            sb_message = self.tr("Image import finished with errors!")
+            # todo: more error details
+
+        msg = self.mB.createMessage(msg_content)
+        msg.layout().addWidget(self.create_open_logs_button(self.plugin_name))
+        self.iface.messageBar().pushWidget(msg, msg_level, 10)
+
+        self.sB.showMessage(sb_message, 10000)
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
     @handle_api_errors
     def file_api_export(self, *args):
@@ -3055,7 +3179,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # category dialog
         locked_category = None
-        categories = self.image_categories or [cat for label, cat in self.get_import_categories("Image")]
+        categories = self.image_categories or [
+            cat for label, cat in self.get_import_categories("Image")
+        ]
         categories_values = [name for label, name in categories]
 
         self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
@@ -3083,13 +3209,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                         msg.layout().addWidget(combo, 1, 1)
 
-                        use_all_btn = msg.addButton(self.tr("Use for all"), QMessageBox.YesRole)
-                        use_once_btn = msg.addButton(self.tr("Use once"), QMessageBox.AcceptRole)
+                        use_all_btn = msg.addButton(
+                            self.tr("Use for all"), QMessageBox.ButtonRole.YesRole
+                        )
+                        use_once_btn = msg.addButton(
+                            self.tr("Use once"), QMessageBox.ButtonRole.AcceptRole
+                        )
                         cancel_btn = msg.addButton(
-                            self.tr("Cancel export"), QMessageBox.RejectRole
+                            self.tr("Cancel export"), QMessageBox.ButtonRole.RejectRole
                         )
 
-                        msg.exec_()
+                        msg.exec()
 
                         clicked = msg.clickedButton()
                         selected_category = combo.currentData()
@@ -3213,10 +3343,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     button.clicked.connect(open_logs)
                     msg.layout().addWidget(button)
 
-                self.iface.messageBar().pushWidget(msg, Qgis.Info, 0)
+                self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Info, 0)
 
                 for m in messages:
-                    QgsMessageLog.logMessage(m, self.plugin_name, Qgis.Info)
+                    self.log_info(m)
 
             task.export_finished.connect(task_finished)
             QgsApplication.taskManager().addTask(task)
