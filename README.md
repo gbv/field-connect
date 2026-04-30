@@ -6,8 +6,6 @@ The plugin enables the exchange of data between a QGIS project and a Field Deskt
 
 The user interface of Field Connect is available in German and English.
 
-*Please note that Field Connect is currently in development and has not yet been released.*
-
 ## User manual
 
 Please refer to the [user manual](https://gbv.github.io/field-connect/) for information on how to use the plugin.
