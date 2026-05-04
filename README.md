@@ -4,8 +4,14 @@
 
 The plugin enables the exchange of data between a QGIS project and a Field Desktop installation running on the same computer. In this context, it can also be used to create [GeoPackage](https://www.geopackage.org) files from the data of a Field project.
 
-The user interface of Field Connect is available in German and English.
+## Installation and usage
 
-## User manual
+Field Connect can be installed from the official QGIS plugin repository.
 
-Please refer to the [user manual](https://gbv.github.io/field-connect/) for information on how to use the plugin.
+Please refer to the [user manual](https://gbv.github.io/field-connect/) for information on how to install and use the plugin.
+
+## Translations
+
+The user interface is currently available in German and English.
+
+If you'd like to provide translations for another language, please create a GitHub issue. The translation process takes place via the platform [Weblate](https://weblate.dainst.org) maintained by the DAI. 
