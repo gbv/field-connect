@@ -1,18 +1,31 @@
 import json
+from pathlib import Path
+
+from .exceptions import ApiBadRequestError, ImageNotFoundError
 from .api_client import ApiClient
 
 
 class FileApiClient:
     def __init__(self, api_client: ApiClient):
         self.api_client = api_client
+        self.supported_image_formats = ["jpg", "tif", "png"]
+        # <first letter of extension> + <last letter of extension> + "w"
         self.worldfile_ext = {
-            "jpg": "jgw",
-            "tif": "tfw",
-            "png": "pgw",
+            fmt: f"{fmt[0]}{fmt[2]}w" for fmt in self.supported_image_formats if len(fmt) > 2
         }
 
     def get_image_data(self, identifier):
-        r = self.api_client.get(f"/fileExport/image/{identifier}")
+        try:
+            r = self.api_client.get(f"/fileExport/image/{identifier}")
+        except ApiBadRequestError as e:
+            message = str(e)
+
+            # continue if image missing or identifier not found
+            if "ENOENT" in message or "Could not find image" in message:
+                raise ImageNotFoundError(message)
+
+            raise
+
         content_type, ext = r.headers["Content-Type"].split("/")
         if ext == "jpeg":
             ext = "jpg"
@@ -46,3 +59,29 @@ class FileApiClient:
             "/fileImport", headers={"Content-Type": "application/json"}, data=payload
         )
         return r
+
+    def worldfile_candidates(self, path: Path):
+        """Generate a list of path candidates to look for a worldfile
+
+        Args:
+            path (Path): A Path object pointing to an image file
+
+        Returns:
+            list: A list of possible worldfile paths to check for
+        """
+        suffix = path.suffix.lower().lstrip(".")
+
+        candidates = set()
+
+        if suffix in self.supported_image_formats:
+            candidates.add(f".{self.worldfile_ext[suffix]}")
+
+        # common alternatives
+        candidates.update(
+            {
+                ".wld",
+                f".{suffix}w",  # e.g. .jpgw, .tifw
+            }
+        )
+
+        return [path.with_suffix(ext) for ext in candidates]

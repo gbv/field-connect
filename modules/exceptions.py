@@ -1,3 +1,7 @@
+class ImageNotFoundError(Exception):
+    pass
+
+
 class ApiError(Exception):
     """Base class for all API errors."""
 
