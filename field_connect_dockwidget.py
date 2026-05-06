@@ -28,6 +28,7 @@ from pathlib import Path
 import re
 import csv
 import json
+import tempfile
 import urllib
 import uuid
 import webbrowser
@@ -199,6 +200,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.connected = False
         self._import_running = False
         self._export_running = False
+
+        # keep references to temporary directories so they dont get deleted in asynchronous tasks (file_api_export)
+        self._temp_dirs = []
 
         # weblate/linguist translation labels
         # extraction with pylupdate5 -noobsolete -verbose field_connect.pro
@@ -3077,7 +3081,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     if not _import_errors:
                         _import_errors = True
                 if not image_data:
-                    # self.log_warning(message)
                     stats_images_import_errors += 1
                     step += 1
                     self.progressBar.setValue(step)
@@ -3090,7 +3093,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 gdal.FileFromMemBuffer("/vsimem/temp", image_data)
                 ds: gdal.Dataset = gdal.Open("/vsimem/temp")
                 image_has_geotransform = bool(ds.GetGeoTransform(can_return_null=True))
-                ds.Close()
+
+                ds = None
+                gdal.Unlink("/vsimem/temp")
 
                 worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(
                     identifier, image_ext
@@ -3341,7 +3346,59 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if worldfile_path:
                     worldfile_count += 1
                     file_export_paths.append(str(worldfile_path))
-                # todo: check for geotransform with gdal and create a temp worldfile with embedded data for upload
+                # check for geotransform with gdal and create a temp worldfile with embedded data for upload
+                else:
+                    # read original file as bytes
+                    with open(path, "rb") as f:
+                        data = f.read()
+
+                    vsimem_path = f"/vsimem/{path.name}"
+                    gdal.FileFromMemBuffer(vsimem_path, data)
+
+                    ds: gdal.Dataset = gdal.Open(vsimem_path)
+                    gt = ds.GetGeoTransform(can_return_null=True)
+
+                    if gt:
+                        # create temporary directory
+                        tmp_dir_obj = tempfile.TemporaryDirectory()
+                        tmp_dir = Path(tmp_dir_obj.name)
+
+                        # world file must match original base name
+                        worldfile_path = tmp_dir / f"{path.stem}.wld"
+
+                        # convert GDAL corner origin to world file center origin (shift by half pixel)
+                        # example file:
+                        # 0.08819443529800908
+                        # 0
+                        # 0
+                        # -0.08819443529823931
+                        # 564714.1347972176
+                        # 5923862.159405351
+                        #
+                        # example gdal.GetGeoTransform():
+                        # (564714.0907, 0.08819443529800908, 0.0, 5923862.203502568, 0.0, -0.08819443529823931)
+                        center_x, center_y = gdal.ApplyGeoTransform(gt, 0.5, 0.5)
+
+                        # write worldfile content
+                        with open(worldfile_path, "w", encoding="utf-8") as f:
+                            f.write(
+                                f"{gt[1]}\n"  # pixel size x
+                                f"{gt[4]}\n"  # rotation y
+                                f"{gt[2]}\n"  # rotation x
+                                f"{gt[5]}\n"  # pixel size y (usually negative)
+                                f"{center_x}\n"  # top left x (center)
+                                f"{center_y}\n"  # top left y (center)
+                            )
+
+                        # keep reference to prevent premature cleanup
+                        self._temp_dirs.append(tmp_dir_obj)
+
+                        file_export_paths.append(str(worldfile_path))
+                        worldfile_count += 1
+
+                    # cleanup GDAL memory file
+                    ds = None
+                    gdal.Unlink(vsimem_path)
 
         # print(file_export_paths)
         # export
@@ -3364,6 +3421,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             task.progress_text.connect(update_current)
 
             def task_finished(result):
+                # remove temporary directories that may have been created
+                self._cleanup_temp_dirs()
                 msg_level = Qgis.MessageLevel.Info
                 self._export_running = False
                 QTimer.singleShot(2000, self.show_or_hide_progress_bar)
@@ -3418,3 +3477,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             # todo: message
             return
+
+    def _cleanup_temp_dirs(self):
+        for tmp in self._temp_dirs:
+            tmp.cleanup()
+
+        self._temp_dirs = []
