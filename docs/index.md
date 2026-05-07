@@ -14,7 +14,7 @@
 
 *Field Connect* is a plugin for [QGIS](https://qgis.org) that establishes a connection with [Field Desktop](https://field.idai.world/download), a documentation software for archaeological field and find recording developed as a cooperation between the German Archaeological Institute ([DAI](https://www.dainst.org/en/)) and the Head Office of the GBV Common Library Network ([VZG](https://en.gbv.de)).
 
-The plugin enables the exchange of data between a QGIS project and a Field Desktop installation running on the same computer. In this context, it can also be used to create [GeoPackage](https://www.geopackage.org) files from data recorded in Field Desktop.
+The plugin enables the exchange of data (including image files) between a QGIS project and a Field Desktop installation running on the same computer. In this context, it can also be used to create [GeoPackage](https://www.geopackage.org) files from data recorded in Field Desktop.
 
 The user interface of Field Connect is available in German and English.
 
@@ -70,13 +70,33 @@ If this option is enabled, one layer is created per category for each geometry t
 
 If this option is enabled, the hierarchical relations "Is recorded in" and "Lies within" are combined into the simplified relation "Is child of". This option should normally remain enabled.
 
+#### Images
+
+##### Folder
+
+Select the folder where image files and world files imported from Field Desktop are to be saved. During import, a subdirectory is automatically created within this folder for each image category.
+
+##### Import images
+
+If this option is enabled, image files and world files (for georeferenced images) will be imported from Field Desktop for all selected image categories. Please note that this option can only be enabled if at least one image category has been selected in the dropdown menu "Categories".
+
+**Important**: Images can only be imported if the corresponding original image files are present in the image directory of Field Desktop. Images for which no original versions are available will be ignored during import. You can check whether original image files are missing either in the QGIS log after import or at any time in the menu "Project" ➝ "Data overview" in Field Desktop. First download the missing image files using the synchronization feature in Field Desktop so that you can then import them into QGIS.
+
+##### Import georeferenced images only
+
+If this option is enabled, only image files for which georeferencing information is available will be imported. Other image files will be ignored during import.
+
+##### Overwrite existing files
+
+If this option is enabled, existing files with the same name in the destination folder will be overwritten. Otherwise, the corresponding files will be ignored during import.
+
 ### Start import
 
 Start the import by clicking the button "Import". The progress of the import process is shown by a progress bar in QGIS. The Field Desktop interface is blocked while this is taking place.
 
 ### Import results
 
-Field Connect creates a new group in the currently open QGIS project with the same name as the Field project, which contains all layers with the imported data. The layers are named according to the scheme "Project identifier_Category identifier_Geometry type" (e.g. "test_Find_Point"). For resources without a geometry, a layer with the geometry type "NoGeometry" is created.
+Field Connect creates a new group in the currently open QGIS project with the same name as the Field project, which contains all layers with the imported data, as well as the imported images (grouped by image category). The layers are named according to the scheme "Project identifier_Category identifier_Geometry type" (e.g. "test_Find_Point"). For resources without a geometry, a layer with the geometry type "NoGeometry" is created.
 
 If the option "Create layers for all configured geometry types" is disabled, layers are created only for categories and geometry types for which corresponding data exists in the Field project.
 
@@ -138,6 +158,20 @@ By default, the export process is cancelled as soon as fields are found that are
 ##### Permit field deletions
 
 If this option is enabled, fields can not only be edited but also deleted. All fields (including relations) for which the corresponding field in the attribute table is empty will be deleted. Fields not listed in the attribute table remain unchanged.
+
+#### Images
+
+##### Export images
+
+If this option is enabled, image files will be exported to Field Desktop. Please note that images which already exist in Field Desktop under the same identifier or original filename cannot be overwritten.
+
+##### Export world files
+
+If this option is enabled, world files will be exported to Field Desktop. To ensure that georeferencing information can be assigned correctly during the export process, the world file must have the same name (excluding the file extension) as the corresponding image file.
+
+##### Populate field "Creator" from metadata
+
+If this option is enabled, the metadata of exported image files is read to automatically populate the field "Creator" of the image resource in Field Desktop.
 
 ### Start export
 
@@ -282,10 +316,6 @@ Fields of the input type "Bibliographic reference" are list fields, each of whic
 ### Composite fields
 
 Fields of the input type "Composite field" are list fields, each of which can contain several entries. One column is created per entry for each configured subfield (for multilingual text fields, one column for each language). The display name of the subfield is shown in the column header.
-
-## Limitations
-
-Field Connect allows resources of the category "Image" (and its subcategories) to be imported and exported. However, new resources in these categories cannot be created via the export tool, as they must come with an associated image file to be accepted by Field Desktop. The import and export of image files is not included in this version of Field Connect.
 
 ---
 

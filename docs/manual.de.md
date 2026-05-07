@@ -14,7 +14,7 @@
 
 *Field Connect* ist ein Plugin für [QGIS](https://qgis.org), das eine Verbindung mit [Field Desktop](https://field.idai.world/download) herstellt, einer Software zur archäologischen Grabungsdokumentation und Funderfassung, die in einer Kooperation zwischen dem Deutschen Archäologischen Institut ([DAI](https://www.dainst.org)) und der Verbundzentrale des Gemeinsamen Bibliotheksverbundes ([VZG](https://www.gbv.de)) entwickelt wird.
 
-Das Plugin ermöglicht den Austausch von Daten zwischen einem QGIS-Projekt und einer auf demselben Computer ausgeführten Installation von Field Desktop. In diesem Zusammenhang kann es außerdem dazu verwendet werden, [GeoPackage](https://www.geopackage.org)-Dateien aus den in Field Desktop aufgenommenen Daten zu erstellen.
+Das Plugin ermöglicht den Austausch von Daten (inklusive Bilddateien) zwischen einem QGIS-Projekt und einer auf demselben Computer ausgeführten Installation von Field Desktop. In diesem Zusammenhang kann es außerdem dazu verwendet werden, [GeoPackage](https://www.geopackage.org)-Dateien aus den in Field Desktop aufgenommenen Daten zu erstellen.
 
 Die Benutzeroberfläche von Field Connect ist in den Sprachen Deutsch und Englisch verfügbar.
 
@@ -70,13 +70,33 @@ Wenn diese Option aktiviert ist, wird pro Kategorie jeweils ein Layer für jeden
 
 Wenn diese Option aktiviert ist, werden die hierarchischen Relationen "Aufgenommen in" und "Liegt in" zur vereinfachten Relation "Übergeordnete Ressource" zusammengefasst. Diese Option sollte in der Regel aktiviert bleiben.
 
+#### Bilder
+
+##### Verzeichnis
+
+Wählen Sie hier das Verzeichnis aus, in dem aus Field Desktop importierte Bilddateien und World-Files gespeichert werden sollen. Innerhalb dieses Verzeichnisses wird beim Import automatisch ein Unterverzeichnis für jede Bildkategorie angelegt.
+
+##### Bilder importieren
+
+Wenn diese Option aktiviert ist, werden Bilddateien und World-Files (bei georeferenzierten Bildern) aus Field Desktop für alle ausgewählten Bildkategorien importiert. Bitte beachten Sie, dass diese Option nur aktiviert werden kann, wenn im Auswahlmenü "Kategorien" mindestens eine Bildkategorie ausgewählt wurde.
+
+**Wichtig**: Bilder können nur importiert werden, wenn die entsprechenden Original-Bilddateien im Bilderverzeichnis von Field Desktop vorhanden sind. Bilder, für die keine Originalversionen vorliegen, werden beim Import ignoriert. Ob Original-Bilddateien fehlen, können Sie nach dem Import im QGIS-Log oder jederzeit im Menü "Projekt" ➝ "Datenübersicht" in Field Desktop nachschauen. Laden Sie die fehlenden Bilddateien zunächst mithilfe der Synchronisationsfunktionalität von Field Desktop herunter, um sie anschließend nach QGIS importieren zu können.
+
+##### Nur georeferenzierte Bilder importieren
+
+Wenn diese Option aktiviert ist, werden ausschließlich Bilddateien importiert, für die Georeferenzierungsinformationen vorhanden sind. Andere Bilddateien werden in diesem Fall beim Import ignoriert.
+
+##### Existierende Dateien überschreiben
+
+Wenn diese Option aktiviert ist, werden gleichnamige, bereits existierende Dateien im Zielverzeichnis überschrieben. Andernfalls werden die entsprechenden Dateien beim Import ignoriert.
+
 ### Import starten
 
 Starten Sie den Import über den Button "Import". Der Fortschritt des Importvorgangs wird durch einen Balken in QGIS angezeigt. Die Benutzeroberfläche von Field Desktop ist währenddessen blockiert.
 
 ### Ergebnis des Imports
 
-Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten enthält. Die Layer sind jeweils nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point"). Für Ressourcen ohne Geometrien wird jeweils ein Layer mit Geometrietyp "NoGeometry" angelegt.
+Field Connect legt im aktuell geöffneten QGIS-Projekt eine neue Gruppe mit dem Namen des Field-Projekts an, die alle Layer mit den importierten Daten sowie die importierten Bilder (gruppiert nach Bildkategorie) enthält. Die Layer sind nach dem Schema "Projektkennung_Kategoriebezeichner_Geometrietyp" benannt (z. B. "test_Fund_Point"). Für Ressourcen ohne Geometrien wird jeweils ein Layer mit Geometrietyp "NoGeometry" angelegt.
 
 Ist die Option "Layer für alle konfigurierten Geometrietypen anlegen" deaktiviert, werden ausschließlich Layer für Kategorien und Geometrietypen angelegt, für die entsprechende Daten im Field-Projekt existieren.
 
@@ -138,6 +158,20 @@ Standardmäßig wird der Exportprozess abgebrochen, sobald Felder gefunden werde
 ##### Löschen von Feldern erlauben
 
 Wenn diese Option aktiviert ist, können Felder nicht nur bearbeitet, sondern auch gelöscht werden. Gelöscht werden alle Felder (inklusive Relationen), für die das entsprechende Feld in der Attributtabelle leer ist. Nicht in der Attributtabelle gelistete Felder bleiben unverändert.
+
+#### Bilder
+
+##### Bilder exportieren
+
+Wenn diese Option aktiviert ist, werden Bilddateien nach Field Desktop exportiert. Bitte beachten Sie, dass Bilder, die in Field Desktop bereits unter dem gleichen Bezeichner bzw. ursprünglichen Dateinamen vorhanden sind, nicht überschrieben werden können.
+
+##### World-Files exportieren
+
+Wenn diese Option aktiviert ist, werden World-Files nach Field Desktop exportiert. Damit Georeferenzierungsinformationen während des Exports korrekt zugeordnet werden können, muss das World-File (vor der Dateiendung) jeweils den gleichen Namen wie die entsprechende Bilddatei haben.
+
+##### Feld "Bildersteller/Bilderstellerin" aus Metadaten befüllen
+
+Wenn diese Option aktiviert ist, werden die Metadaten exportierter Bilddateien ausgelesen, um das Feld "Bildersteller/Bilderstellerin" der Bildressource in Field Desktop automatisch auszufüllen.
 
 ### Export starten
 
@@ -282,10 +316,6 @@ Felder des Eingabetyps "Literaturangabe" sind Listenfelder, die jeweils mehrere 
 ### Kompositfelder
 
 Felder des Eingabetyps "Kompositfeld" sind Listenfelder, die jeweils mehrere Einträge enthalten können. Für jedes konfigurierte Unterfeld wird pro Eintrag eine Spalte angelegt (bei mehrsprachigen Textfeldern entsprechend eine Spalte für jede Sprache). Im Spaltenkopf wird jeweils der Anzeigename des Unterfelds angegeben.
-
-## Einschränkungen
-
-Mithilfe von Field Connect können Ressourcen der Kategorie "Bild" (sowie der entsprechenden Unterkategorien) importiert und exportiert werden. Es können allerdings über den Export keine neuen Ressourcen dieser Kategorien angelegt werden, da diese zwingend eine dazugehörige Bilddatei voraussetzen, um von Field Desktop akzeptiert zu werden. Der Import und Export von Bilddateien ist kein Bestandteil der vorliegenden Version von Field Connect.
 
 ---
 
