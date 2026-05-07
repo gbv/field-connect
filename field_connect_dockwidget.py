@@ -2476,7 +2476,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for ltl in current_data.findLayers():
                 layer: QgsVectorLayer = ltl.layer()
                 # skip lookup and non vectorlayer type layers
-                if "_lookup" in layer.name() or layer.type != QgsMapLayerType.VectorLayer:
+                if "_lookup" in layer.name() or layer.type() != QgsMapLayerType.VectorLayer:
                     continue
                 layer_crs: QgsCoordinateReferenceSystem = layer.crs()
                 # ask for coordinate transformation once
