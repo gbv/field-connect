@@ -3429,7 +3429,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QApplication.processEvents()
 
                 resp = self.file_api.post_images(
-                    file_export_paths[cat], category, read_creators_from_metadata)
+                    file_export_paths[cat], cat, read_creators_from_metadata)
                 result = resp.json()
 
                 # todo: when could that happen?
