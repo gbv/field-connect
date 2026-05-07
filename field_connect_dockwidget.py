@@ -112,13 +112,14 @@ def handle_api_errors(func):
             return func(self, *args, **kwargs)
 
         except ApiConnectionError:
+            self.field_disconnect()
             self.mB.pushCritical(self.plugin_name, self.labels["CONNECTION_REFUSED"])
 
         except ApiTimeoutError:
+            self.field_disconnect()
             self.mB.pushCritical(self.plugin_name, self.labels["CONNECTION_REFUSED"])
 
         except ApiUnauthorizedError:
-            self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushWarning(self.plugin_name, self.labels["CONNECTION_UNAUTHORIZED"])
 
@@ -130,7 +131,6 @@ def handle_api_errors(func):
             self.mB.pushWarning(self.plugin_name, message)
 
         except ApiRequestFailedError as e:
-            self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushMessage(
                 f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}",
@@ -2948,7 +2948,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         active_project_from_server = safe_get(data, "activeProject", default=False)
 
         if self.active_project != active_project_from_server:
-            self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushCritical(self.plugin_name, self.labels["ACTIVE_PROJECT_CHANGED"])
             return False
