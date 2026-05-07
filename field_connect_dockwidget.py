@@ -528,6 +528,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # file api
         # import
         self.fileApiDirOpen.clicked.connect(self.file_api_open_folder_path)
+        self.chk_file_api_import_images.stateChanged.connect(self.file_api_import_images_checkbox_set_enabled)
         # export
         self.chk_file_api_export_images.stateChanged.connect(self.file_api_export_images_form_set_enabled)
 
@@ -706,10 +707,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def file_api_import_images_form_set_enabled(self, on_off):
         self.chk_file_api_import_images.setEnabled(on_off)
-        self.chk_file_api_georef_only.setEnabled(on_off)
-        self.chk_file_api_overwrite_images.setEnabled(on_off)
         if not on_off:
             self.chk_file_api_import_images.setChecked(False)
+
+    def file_api_import_images_checkbox_set_enabled(self, on_off):
+        self.chk_file_api_georef_only.setEnabled(on_off)
+        self.chk_file_api_overwrite_images.setEnabled(on_off)
 
     def file_api_export_images_form_set_enabled(self, on_off):
         self.chkExportWorldfiles.setEnabled(on_off)
@@ -1198,6 +1201,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.btnConnect.setText(self.tr("Disconnect"))
             self.selectCats.setEnabled(on_off)
         else:
+            self.chk_file_api_import_images.setEnabled(on_off)
+            self.chk_file_api_import_images.setChecked(on_off)
             self.btnConnect.setText(self.tr("Connect"))
             self.selectCats.setEnabled(on_off)
             self.projectConfig = {}
