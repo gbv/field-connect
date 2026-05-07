@@ -81,7 +81,6 @@ from qgis.PyQt.QtWidgets import (
     QSizePolicy,
     QStatusBar,
 )
-from .workers.file_api_export_task import FileApiExportTask
 
 from .modules.api_client import ApiClient
 from .modules.file_api_client import FileApiClient
@@ -530,6 +529,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # import
         self.fileApiDirOpen.clicked.connect(self.file_api_open_folder_path)
         # export
+        self.chk_file_api_export_images.stateChanged.connect(self.file_api_export_images_form_set_enabled)
 
     def closeEvent(self, event):  # noqa: N802
         self.closing_plugin.emit()
@@ -698,18 +698,22 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         any_item_in_image_cat = any(s in self.image_categories for s in checked_items)
 
         if any_item_in_image_cat:
-            self.import_photo_form_set_enabled(True)
+            self.file_api_import_images_form_set_enabled(True)
         else:
-            self.import_photo_form_set_enabled(False)
+            self.file_api_import_images_form_set_enabled(False)
 
         mdl.blockSignals(False)
 
-    def import_photo_form_set_enabled(self, on_off):
+    def file_api_import_images_form_set_enabled(self, on_off):
         self.chk_file_api_import_images.setEnabled(on_off)
         self.chk_file_api_georef_only.setEnabled(on_off)
         self.chk_file_api_overwrite_images.setEnabled(on_off)
         if not on_off:
             self.chk_file_api_import_images.setChecked(False)
+
+    def file_api_export_images_form_set_enabled(self, on_off):
+        self.chkExportWorldfiles.setEnabled(on_off)
+        self.chkReadCreatorsFromMetadata.setEnabled(on_off)
 
     def show_or_hide_progress_bar(self):
         """Shows the progress bar if an import/export is actively running or hides it if not"""
@@ -1185,9 +1189,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.fileApiDirOpen.setEnabled(on_off)
         self.fileApiImportAll.setEnabled(on_off)
         self.fileApiImportLayers.setEnabled(on_off)
-        self.chkExportWorldfiles.setEnabled(on_off)
-        self.chkReadCreatorsFromMetadata.setEnabled(on_off)
         self.chk_file_api_export_images.setEnabled(on_off)
+        if self.chk_file_api_export_images.isChecked():
+            self.chkExportWorldfiles.setEnabled(on_off)
+            self.chkReadCreatorsFromMetadata.setEnabled(on_off)
         # on or off only
         if on_off:
             self.btnConnect.setText(self.tr("Disconnect"))
@@ -3226,10 +3231,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         read_creators_from_metadata = self.chkReadCreatorsFromMetadata.isChecked()
 
         raster_layer = None
-        file_export_paths = []
+        step = 0
+        file_export_paths = defaultdict(list)
         raster_count = 0  # total number of images processed
         worldfile_count = 0
         stats_warnings = 0
+
+        # api export result values
+        field_imported_images = 0
+        field_imported_worldfiles = 0
+        field_messages = False
 
         # category dialog
         locked_category = None
@@ -3244,7 +3255,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if layer.type() == QgsMapLayerType.RasterLayer:
                 md_categories: list = layer.metadata().categories()
                 match_cat = next((cat for label, cat in categories if cat in md_categories), None)
-                # if there is no category, make a selection box with load_import_categories("Image")
+                # if there is no category, make a selection box
                 if not md_categories or not match_cat:
                     if locked_category is None:
                         msg = QMessageBox(self)
@@ -3297,7 +3308,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         layer.setMetadata(md)
                 elif match_cat:
                     category = match_cat
-                file_export_paths.append(layer.source())
+                file_export_paths[category].append(layer.source())
                 raster_count += 1
 
             # for "Selected layers" mode
@@ -3333,142 +3344,154 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             )
                             continue
                         if raster_layer.type() == QgsMapLayerType.RasterLayer:
-                            file_export_paths.append(raster_layer.source())
+                            file_export_paths[category].append(raster_layer.source())
 
-        collected_paths = file_export_paths.copy()
+        collected_paths = {
+            k: v.copy()
+            for k, v in file_export_paths.items()
+        }
         # find worldfiles for collected paths
         if export_worldfiles:
-            for file_path in collected_paths:
-                path = Path(file_path)
-                worldfile_candidates = self.file_api.worldfile_candidates(path)
-                # should return None for embedded georeferenced data which need to be checked with gdal afterwards
-                worldfile_path = next((f for f in worldfile_candidates if f.exists()), None)
-                if worldfile_path:
-                    worldfile_count += 1
-                    file_export_paths.append(str(worldfile_path))
-                # check for geotransform with gdal and create a temp worldfile with embedded data for upload
-                else:
-                    # read original file as bytes
-                    with open(path, "rb") as f:
-                        data = f.read()
-
-                    vsimem_path = f"/vsimem/{path.name}"
-                    gdal.FileFromMemBuffer(vsimem_path, data)
-
-                    ds: gdal.Dataset = gdal.Open(vsimem_path)
-                    gt = ds.GetGeoTransform(can_return_null=True)
-
-                    if gt:
-                        # create temporary directory
-                        tmp_dir_obj = tempfile.TemporaryDirectory()
-                        tmp_dir = Path(tmp_dir_obj.name)
-
-                        # world file must match original base name
-                        worldfile_path = tmp_dir / f"{path.stem}.wld"
-
-                        # convert GDAL corner origin to world file center origin (shift by half pixel)
-                        # example file:
-                        # 0.08819443529800908
-                        # 0
-                        # 0
-                        # -0.08819443529823931
-                        # 564714.1347972176
-                        # 5923862.159405351
-                        #
-                        # example gdal.GetGeoTransform():
-                        # (564714.0907, 0.08819443529800908, 0.0, 5923862.203502568, 0.0, -0.08819443529823931)
-                        center_x, center_y = gdal.ApplyGeoTransform(gt, 0.5, 0.5)
-
-                        # write worldfile content
-                        with open(worldfile_path, "w", encoding="utf-8") as f:
-                            f.write(
-                                f"{gt[1]}\n"  # pixel size x
-                                f"{gt[4]}\n"  # rotation y
-                                f"{gt[2]}\n"  # rotation x
-                                f"{gt[5]}\n"  # pixel size y (usually negative)
-                                f"{center_x}\n"  # top left x (center)
-                                f"{center_y}\n"  # top left y (center)
-                            )
-
-                        # keep reference to prevent premature cleanup
-                        self._temp_dirs.append(tmp_dir_obj)
-
-                        file_export_paths.append(str(worldfile_path))
+            for cat in collected_paths:
+                for file_path in collected_paths[cat]:
+                    path = Path(file_path)
+                    worldfile_candidates = self.file_api.worldfile_candidates(path)
+                    # should return None for embedded georeferenced data which need to be checked with gdal afterwards
+                    worldfile_path = next((f for f in worldfile_candidates if f.exists()), None)
+                    if worldfile_path:
                         worldfile_count += 1
+                        file_export_paths[cat].append(str(worldfile_path))
+                    # check for geotransform with gdal and create a temp worldfile with embedded data for upload
+                    else:
+                        # read original file as bytes
+                        with open(path, "rb") as f:
+                            data = f.read()
 
-                    # cleanup GDAL memory file
-                    ds = None
-                    gdal.Unlink(vsimem_path)
+                        vsimem_path = f"/vsimem/{path.name}"
+                        gdal.FileFromMemBuffer(vsimem_path, data)
 
-        # print(file_export_paths)
+                        ds: gdal.Dataset = gdal.Open(vsimem_path)
+                        gt = ds.GetGeoTransform(can_return_null=True)
+
+                        if gt:
+                            # create temporary directory
+                            tmp_dir_obj = tempfile.TemporaryDirectory()
+                            tmp_dir = Path(tmp_dir_obj.name)
+
+                            # world file must match original base name
+                            worldfile_path = tmp_dir / f"{path.stem}.wld"
+
+                            # convert GDAL corner origin to world file center origin (shift by half pixel)
+                            # example file:
+                            # 0.08819443529800908
+                            # 0
+                            # 0
+                            # -0.08819443529823931
+                            # 564714.1347972176
+                            # 5923862.159405351
+                            #
+                            # example gdal.GetGeoTransform():
+                            # (564714.0907, 0.08819443529800908, 0.0, 5923862.203502568, 0.0, -0.08819443529823931)
+                            center_x, center_y = gdal.ApplyGeoTransform(gt, 0.5, 0.5)
+
+                            # write worldfile content
+                            with open(worldfile_path, "w", encoding="utf-8") as f:
+                                f.write(
+                                    f"{gt[1]}\n"  # pixel size x
+                                    f"{gt[4]}\n"  # rotation y
+                                    f"{gt[2]}\n"  # rotation x
+                                    f"{gt[5]}\n"  # pixel size y (usually negative)
+                                    f"{center_x}\n"  # top left x (center)
+                                    f"{center_y}\n"  # top left y (center)
+                                )
+
+                            # keep reference to prevent premature cleanup
+                            self._temp_dirs.append(tmp_dir_obj)
+
+                            file_export_paths[cat].append(str(worldfile_path))
+                            worldfile_count += 1
+
+                        # cleanup GDAL memory file
+                        ds = None
+                        gdal.Unlink(vsimem_path)
+
         # export
         if file_export_paths:
-            task = FileApiExportTask(
-                self.tr("{pn} - Export images").format(pn=self.plugin_name),
-                self.file_api,
-                file_export_paths,
-                category,
-                read_creators_from_metadata,
-                raster_count,
-                worldfile_count,
-            )
+            collected_cat_count = len(file_export_paths.keys())
+            self.progressBar.setMaximum(collected_cat_count)
 
-            task.progressChanged.connect(lambda p: self.progressBar.setValue(int(p)))
+            for cat in file_export_paths:
+                self.log_info(self.tr("Exporting category {cat}").format(cat=cat))
 
-            def update_current(name):
-                self.progressBar.setFormat("{id} %p%".format(id=name))
+                self.progressBar.setValue(step)
+                self.progressBar.setFormat(
+                    self.tr("Exporting images for category {cat} %p%").format(cat=cat)
+                )
+                QApplication.processEvents()
 
-            task.progress_text.connect(update_current)
+                resp = self.file_api.post_images(
+                    file_export_paths[cat], category, read_creators_from_metadata)
+                result = resp.json()
 
-            def task_finished(result):
-                # remove temporary directories that may have been created
-                self._cleanup_temp_dirs()
-                msg_level = Qgis.MessageLevel.Info
-                self._export_running = False
-                QTimer.singleShot(2000, self.show_or_hide_progress_bar)
-
+                # todo: when could that happen?
                 if not result:
-                    return 1
+                    self.log_info("No response for category {cat}".format(cat=cat))  # debug
+                    continue
 
-                imported_images, imported_worldfiles, messages = task.result.values()
+                imported_images, imported_worldfiles, messages = result.values()
+                field_imported_images += imported_images
+                field_imported_worldfiles += imported_worldfiles
+                if not field_messages and messages:
+                    field_messages = True
+                for msg in messages:
+                    self.log_info(msg)
 
-                msg_content = self.tr(
-                    "Exported images: {ii}/{rc}, Exported worldfiles: {iw}/{wc}."
-                )
+                step += 1
+                self.progressBar.setValue(step)
+                QApplication.processEvents()
 
-                if stats_warnings:
-                    msg_level = Qgis.MessageLevel.Warning
-                    msg_content += self.tr(" There have been problems during the export.")
+        # remove temporary directories that may have been created
+        self._cleanup_temp_dirs()
+        msg_level = Qgis.MessageLevel.Info
+        self._export_running = False
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
-                if messages or stats_warnings:
-                    msg_content += self.tr(" Check the {pn} logs for more information.")
+        msg_content = self.tr(
+            "Exported images: {ii}/{rc}"
+        )
 
-                msg = self.mB.createMessage(
-                    msg_content.format(
-                        ii=imported_images,
-                        rc=raster_count,
-                        iw=imported_worldfiles,
-                        wc=worldfile_count,
-                        pn=self.plugin_name,
-                    )
-                )
+        if field_imported_worldfiles:
+            msg_content += self.tr(", Exported worldfiles: {iw}/{wc}")
 
-                if messages:
-                    button = QPushButton(self.tr("Open Logs"))
+        msg_content += "."
 
-                    def open_logs():
-                        self.iface.openMessageLog(self.plugin_name)
+        if stats_warnings:
+            msg_level = Qgis.MessageLevel.Warning
+            msg_content += self.tr(" There have been problems during the export.")
 
-                    button.clicked.connect(open_logs)
-                    msg.layout().addWidget(button)
+        if field_messages or stats_warnings:
+            msg_content += self.tr(" Check the {pn} logs for more information.")
 
-                self.iface.messageBar().pushWidget(msg, msg_level, 10)
+        msg = self.mB.createMessage(
+            msg_content.format(
+                ii=field_imported_images,
+                rc=raster_count,
+                iw=field_imported_worldfiles,
+                wc=worldfile_count,
+                pn=self.plugin_name,
+            )
+        )
 
-                for m in messages:
-                    self.log_info(m)
+        if field_messages:
+            button = QPushButton(self.tr("Open Logs"))
 
-            task.export_finished.connect(task_finished)
-            QgsApplication.taskManager().addTask(task)
+            def open_logs():
+                self.iface.openMessageLog(self.plugin_name)
+
+            button.clicked.connect(open_logs)
+            msg.layout().addWidget(button)
+
+        self.iface.messageBar().pushWidget(msg, msg_level, 10)
 
     def file_api_open_folder_path(self):
         path = self.project.readPath(self.fileApiDir.filePath())
