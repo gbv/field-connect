@@ -759,7 +759,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>An image category has to be selected in the categories field, to be able to import images.</string>
+                 <string>At least one image category has to be selected in the dropdown menu "Categories" to be able to import images.</string>
                 </property>
                 <property name="text">
                  <string>Import images</string>
@@ -816,7 +816,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="toolTip">
-                 <string>Overwrites or skips existing images and worldfiles.</string>
+                 <string>Overwrites existing images and world files. If not enabled, these files are skipped during import.</string>
                 </property>
                 <property name="text">
                  <string>Overwrite existing files</string>
@@ -1235,7 +1235,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>Export worldfiles</string>
+                 <string>Export world files</string>
                 </property>
                </widget>
               </item>
@@ -1265,7 +1265,7 @@ border: 1px solid #555;</string>
                  <bool>false</bool>
                 </property>
                 <property name="text">
-                 <string>readCreatorsFromMetadata</string>
+                 <string>Populate field "Creator" from image metadata</string>
                 </property>
                </widget>
               </item>
