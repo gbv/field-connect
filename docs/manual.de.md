@@ -169,7 +169,7 @@ Wenn diese Option aktiviert ist, werden Bilddateien nach Field Desktop exportier
 
 Wenn diese Option aktiviert ist, werden World-Files nach Field Desktop exportiert. Damit Georeferenzierungsinformationen während des Exports korrekt zugeordnet werden können, muss das World-File (vor der Dateiendung) jeweils den gleichen Namen wie die entsprechende Bilddatei haben.
 
-##### Feld "Bildersteller/Bilderstellerin" aus Metadaten befüllen
+##### Feld "Bildersteller/Bilderstellerin" aus Bildmetadaten befüllen
 
 Wenn diese Option aktiviert ist, werden die Metadaten exportierter Bilddateien ausgelesen, um das Feld "Bildersteller/Bilderstellerin" der Bildressource in Field Desktop automatisch auszufüllen.
 

@@ -169,7 +169,7 @@ If this option is enabled, image files will be exported to Field Desktop. Please
 
 If this option is enabled, world files will be exported to Field Desktop. To ensure that georeferencing information can be assigned correctly during the export process, the world file must have the same name (excluding the file extension) as the corresponding image file.
 
-##### Populate field "Creator" from metadata
+##### Populate field "Creator" from image metadata
 
 If this option is enabled, the metadata of exported image files is read to automatically populate the field "Creator" of the image resource in Field Desktop.
 
