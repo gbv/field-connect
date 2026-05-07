@@ -1532,6 +1532,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             csv_reader = self.get_category_csv(cat, csv_ui_opts["combineHierarchicalRelations"])
             csv_header = csv_reader.fieldnames
 
+            # ignore specific fields for image categories
+            if cat in image_cats:
+                ignored_fields = {"height", "width", "originalFilename"}
+
+                csv_header = [
+                    field for field in csv_header
+                    if field not in ignored_fields
+                ]
+
             field_informations, valuemaps = self.collect_field_informations(cat)
             # merge without overwriting nested items
             field_informations = deep_merge(self.trAttrs, field_informations)
