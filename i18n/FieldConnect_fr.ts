@@ -29,7 +29,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="195"/>
         <source>Connection lost!</source>
-        <translation>Connection perdue!</translation>
+        <translation>Perte de la connexion !</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="198"/>
@@ -259,7 +259,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="256"/>
         <source>Specifies the operation in which the resource has been recorded; remains empty for top-level resources.</source>
-        <translation type="unfinished"></translation>
+        <translation>Indique l&apos;opération dans laquelle la ressource a été enregistrée ; reste vide pour les ressources de niveau supérieur.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="261"/>
@@ -269,12 +269,12 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="262"/>
         <source>Specifies the direct parent resource in the hierarchy; remains empty for top-level resources or if the direct parent resource is an operation.</source>
-        <translation type="unfinished"></translation>
+        <translation>Indique la ressource parente directe dans la hiérarchie ; reste vide pour les ressources de niveau supérieur ou si la ressource parente directe est une opération.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="267"/>
         <source>Depicts</source>
-        <translation type="unfinished"></translation>
+        <translation>Représente</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="271"/>
