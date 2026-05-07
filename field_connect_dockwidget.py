@@ -1306,6 +1306,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.setMaximum(len(cats))
 
         # collect ui options
+        image_cats = {}
         if import_images:
             image_cats = {
                 name: label
