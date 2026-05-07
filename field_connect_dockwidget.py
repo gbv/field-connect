@@ -2981,6 +2981,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         field_aliases = {
             "staff": (
+                "draughtsmen",
                 "processor",
                 "supervisor",
             ),
