@@ -10,13 +10,13 @@
     <x>0</x>
     <y>0</y>
     <width>439</width>
-    <height>763</height>
+    <height>873</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>439</width>
-    <height>763</height>
+    <height>873</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -33,6 +33,13 @@
     <property name="sizeConstraint">
      <enum>QLayout::SetDefaultConstraint</enum>
     </property>
+    <item row="8" column="0">
+     <widget class="Line" name="hzLine">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0">
      <layout class="QFormLayout" name="formLayout">
       <property name="sizeConstraint">
@@ -187,6 +194,29 @@ border: 1px solid #555;</string>
       </item>
      </layout>
     </item>
+    <item row="6" column="0">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="7" column="0">
+     <widget class="QProgressBar" name="progressBar">
+      <property name="maximum">
+       <number>100</number>
+      </property>
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
     <item row="2" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -279,82 +309,105 @@ border: 1px solid #555;</string>
              </widget>
             </item>
             <item row="3" column="1">
-             <layout class="QHBoxLayout" name="hzLay_format">
-              <property name="rightMargin">
-               <number>0</number>
+             <widget class="QWidget" name="widget" native="true">
+              <property name="font">
+               <font>
+                <kerning>true</kerning>
+               </font>
               </property>
-              <item>
-               <spacer name="hzSpacer_format1">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="radioFormatGPKG">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>GeoPackage</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hzSpacer_format2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="radioFormatMemory">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Temporary</string>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hzSpacer_format3">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+              <layout class="QHBoxLayout" name="horizontalLayout_7">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <layout class="QHBoxLayout" name="hzLay_format">
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <spacer name="hzSpacer_format1">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioFormatGPKG">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>GeoPackage</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="hzSpacer_format2">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioFormatMemory">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>Temporary</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="hzSpacer_format3">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
             </item>
-            <item row="4" column="0">
+            <item row="5" column="0">
              <widget class="QLabel" name="label">
               <property name="text">
                <string>Timezone:</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
+            <item row="5" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_11">
               <property name="rightMargin">
                <number>0</number>
@@ -405,14 +458,14 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="6" column="0">
+            <item row="7" column="0">
              <widget class="QLabel" name="label_2">
               <property name="text">
                <string>Options:</string>
               </property>
              </widget>
             </item>
-            <item row="7" column="1">
+            <item row="8" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_8">
               <property name="rightMargin">
                <number>0</number>
@@ -448,7 +501,7 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="8" column="1">
+            <item row="9" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <property name="leftMargin">
                <number>0</number>
@@ -484,7 +537,172 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="9" column="1">
+            <item row="10" column="0">
+             <widget class="QLabel" name="label_12">
+              <property name="text">
+               <string>Images:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_15">
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Folder:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QgsFileWidget" name="fileApiDir">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="storageMode">
+                 <enum>QgsFileWidget::GetDirectory</enum>
+                </property>
+                <property name="relativeStorage">
+                 <enum>QgsFileWidget::RelativeProject</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="fileApiDirOpen">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>25</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>25</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Open folder path</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="12" column="1">
+             <widget class="QWidget" name="widget_2" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_17">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_16">
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="label_8">
+                   <property name="text">
+                    <string>Mode:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_17">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="fileApiImportAll">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="toolTip">
+                    <string>Import all images from the projects configured image categories in Field Desktop.</string>
+                   </property>
+                   <property name="text">
+                    <string>All photos</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_18">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="fileApiImportLayers">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="toolTip">
+                    <string>Imports images from a selected vector layer. Selection can be narrowed down by selecting features in the attribute table.</string>
+                   </property>
+                   <property name="text">
+                    <string>Selected layer(s)</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_16">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="16" column="1">
              <spacer name="verticalSpacer_3">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
@@ -497,7 +715,7 @@ border: 1px solid #555;</string>
               </property>
              </spacer>
             </item>
-            <item row="10" column="1">
+            <item row="17" column="1">
              <layout class="QHBoxLayout" name="hzLay_import">
               <property name="topMargin">
                <number>0</number>
@@ -527,6 +745,96 @@ border: 1px solid #555;</string>
                  <string>Import</string>
                 </property>
                </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="13" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chk_file_api_import_images">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>At least one image category has to be selected in the dropdown menu "Categories" to be able to import images.</string>
+                </property>
+                <property name="text">
+                 <string>Import images</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="14" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_18">
+              <item>
+               <widget class="QCheckBox" name="chk_file_api_georef_only">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Import georeferenced images only</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_14">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="15" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_19">
+              <item>
+               <widget class="QCheckBox" name="chk_file_api_overwrite_images">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="toolTip">
+                 <string>Overwrites existing images and world files. If not enabled, these files are skipped during import.</string>
+                </property>
+                <property name="text">
+                 <string>Overwrite existing files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_19">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
@@ -879,20 +1187,104 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
-            <item row="11" column="1">
-             <spacer name="verticalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
+            <item row="17" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>Images:</string>
               </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
+             </widget>
             </item>
-            <item row="12" column="1">
+            <item row="18" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_22">
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chk_file_api_export_images">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Export images</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_15">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="19" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_20">
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chkExportWorldfiles">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Export world files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_20">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="20" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_21">
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="chkReadCreatorsFromMetadata">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Populate field "Creator" from image metadata</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_21">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item row="22" column="1">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <property name="leftMargin">
                <number>0</number>
@@ -928,6 +1320,19 @@ border: 1px solid #555;</string>
               </item>
              </layout>
             </item>
+            <item row="21" column="1">
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
          </layout>
@@ -935,36 +1340,6 @@ border: 1px solid #555;</string>
        </layout>
       </widget>
      </widget>
-    </item>
-    <item row="4" column="0">
-     <widget class="QProgressBar" name="progressBar">
-      <property name="maximum">
-       <number>100</number>
-      </property>
-      <property name="value">
-       <number>0</number>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0">
-     <widget class="Line" name="hzLine">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>40</height>
-       </size>
-      </property>
-     </spacer>
     </item>
    </layout>
   </widget>
@@ -974,6 +1349,11 @@ border: 1px solid #555;</string>
    <class>QgsCheckableComboBox</class>
    <extends>QComboBox</extends>
    <header>qgscheckablecombobox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsFileWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsfilewidget.h</header>
   </customwidget>
   <customwidget>
    <class>QgsProjectionSelectionWidget</class>

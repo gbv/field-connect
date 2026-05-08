@@ -24,17 +24,23 @@
 
 import io
 import os
+from pathlib import Path
 import re
 import csv
 import json
+import tempfile
+import urllib
 import uuid
+import webbrowser
 
 from requests.models import Response
 from urllib.parse import urlparse, ParseResult
 from collections import defaultdict
 
+from osgeo import gdal
 from qgis.core import (
     Qgis,
+    QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -52,6 +58,7 @@ from qgis.core import (
     QgsMapLayerType,
     QgsMessageLog,
     QgsProject,
+    QgsRasterLayer,
     QgsSettings,
     QgsVectorFileWriter,
     QgsVectorLayer,
@@ -64,6 +71,7 @@ from qgis.gui import QgisInterface, QgsMessageBar
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
+    QComboBox,
     QFileDialog,
     QFormLayout,
     QGraphicsDropShadowEffect,
@@ -75,6 +83,7 @@ from qgis.PyQt.QtWidgets import (
 )
 
 from .modules.api_client import ApiClient
+from .modules.file_api_client import FileApiClient
 from .modules.cldr_loader import CLDRLoader
 from .modules.datetime_transformer import DateTimeTransformer
 from .modules.exceptions import (
@@ -84,12 +93,12 @@ from .modules.exceptions import (
     ApiUnauthorizedError,
     ApiBadRequestError,
     ApiRequestFailedError,
+    ImageNotFoundError,
 )
 from .utils.helpers import deep_merge, safe_get
 
 from . import resources  # noqa:F401
 from functools import partial, wraps
-
 
 FORM_CLASS, _ = uic.loadUiType(
     os.path.join(os.path.dirname(__file__), "field_connect_dockwidget_base.ui")
@@ -103,13 +112,14 @@ def handle_api_errors(func):
             return func(self, *args, **kwargs)
 
         except ApiConnectionError:
+            self.field_disconnect()
             self.mB.pushCritical(self.plugin_name, self.labels["CONNECTION_REFUSED"])
 
         except ApiTimeoutError:
+            self.field_disconnect()
             self.mB.pushCritical(self.plugin_name, self.labels["CONNECTION_REFUSED"])
 
         except ApiUnauthorizedError:
-            self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushWarning(self.plugin_name, self.labels["CONNECTION_UNAUTHORIZED"])
 
@@ -121,7 +131,6 @@ def handle_api_errors(func):
             self.mB.pushWarning(self.plugin_name, message)
 
         except ApiRequestFailedError as e:
-            self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushMessage(
                 f"{self.plugin_name}: {self.labels['REQUEST_FAILED']}: {e.reason}",
@@ -160,10 +169,16 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.CLDRLoader = CLDRLoader(plugin_dir)
         self.CLDRTranslations = self.CLDRLoader.load_language_for(self.loc)
 
+        self.api = None
+        self.file_api = None
+
         # hide server address input in ui for now
         self.labelServerAddress.hide()
         self.lineEditServerAddress.hide()
         self.progressBar.hide()
+        # hide file import mode selector for getting images from vector layers/features
+        # for a possible implementation in the future
+        self.widget_2.hide()
 
         self.plugin_name = "Field Connect"
         self.plugin_dir = plugin_dir
@@ -174,6 +189,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             {}
         )  # /configuration/{project} :3000, not /{project}/configuration :3001
         self.projectConfigCategories = {}
+        self.image_categories = None
 
         # show field information after connecting
         self.field_user = ""
@@ -183,6 +199,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.connected = False
         self._import_running = False
         self._export_running = False
+
+        # keep references to temporary directories so they dont get deleted in asynchronous tasks (file_api_export)
+        self._temp_dirs = []
 
         # weblate/linguist translation labels
         # extraction with pylupdate5 -noobsolete -verbose field_connect.pro
@@ -215,8 +234,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "NO_CATS_FOUND": self.tr("No categories found"),
             "REQUEST_FAILED": self.tr("Request failed"),
             "SELECT_ALL": self.tr("Select all"),
+            "INFO_NO_FOLDER_SELECTED": self.tr("No folder selected!"),
             "INFO_NO_LAYER_SELECTED": self.tr("No layer selected in the layer tree!"),
             "INFO_QUICK_EXPORT_NO_UNSAVED_LAYERS": self.tr("No unsaved layers available"),
+            "WARNING_FOLDER_NOT_EXISTING": self.tr("The selected folder does not exist!"),
         }
 
         # manual attribute translations
@@ -444,6 +465,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QFormLayout.ItemRole.SpanningRole,
             self.hzLineSettings,
         )
+        self.fileApiDir.setOptions(QFileDialog.Option.ShowDirsOnly)
         # add fullwidth for category selection
         # self.formLayout.setWidget(self.formLayout.getWidgetPosition(self.selectCats)[0], QFormLayout.SpanningRole, self.selectCats)
 
@@ -471,8 +493,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.selectCats.view().setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         # export tab
         self.export_update_layer_groups()
+        # file api tab
+        # prevents editing the folder path, but keeps the option to clear the field
+        self.fileApiDir.lineEdit().setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.fileApiDirOpen.setIcon(QgsApplication.getThemeIcon("mActionFileOpen.svg"))
 
-        # todo: test loading/saving after object names change
         # load saved settings
         try:
             self.load_settings()
@@ -500,10 +525,34 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.treeRoot.addedChildren.connect(self.export_update_layer_groups)
         self.treeRoot.removedChildren.connect(self.export_update_layer_groups)
         self.treeRoot.nameChanged.connect(self.export_update_layer_groups)
+        # file api
+        # import
+        self.fileApiDirOpen.clicked.connect(self.file_api_open_folder_path)
+        self.chk_file_api_import_images.stateChanged.connect(self.file_api_import_images_checkbox_set_enabled)
+        # export
+        self.chk_file_api_export_images.stateChanged.connect(self.file_api_export_images_form_set_enabled)
 
     def closeEvent(self, event):  # noqa: N802
         self.closing_plugin.emit()
         event.accept()
+
+    def create_open_logs_button(self, tab_name=""):
+        btn = QPushButton(self.tr("Open Logs"))
+
+        def fn():
+            self.iface.openMessageLog(tab_name)
+
+        btn.clicked.connect(fn)
+        return btn
+
+    def log_info(self, msg):
+        QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Info)
+
+    def log_warning(self, msg):
+        QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Warning)
+
+    def log_error(self, msg):
+        QgsMessageLog.logMessage(msg, self.plugin_name, Qgis.MessageLevel.Critical)
 
     def export_update_layer_groups(self):
         self.selectExGroup.clear()
@@ -624,15 +673,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         mdl = self.selectCats.model()
         mdl.blockSignals(True)
         row = mdl.indexFromItem(item).row()
-        # print(row)
+        state = item.checkState()
+        item_is_checked = state == Qt.CheckState.Checked
+
         if row == 0:  # first de-/select all entry
-            state = item.checkState()
             for i in range(1, self.selectCats.count()):
                 mdl.item(i).setCheckState(state)
             item.setText(
-                self.labels["DESELECT_ALL"]
-                if state == Qt.CheckState.Checked
-                else self.labels["SELECT_ALL"]
+                self.labels["DESELECT_ALL"] if item_is_checked else self.labels["SELECT_ALL"]
             )
         else:
             # update the first item to reflect whether all other items are checked
@@ -646,7 +694,29 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             mdl.item(0).setText(
                 self.labels["DESELECT_ALL"] if all_checked else self.labels["SELECT_ALL"]
             )
+
+        checked_items = self.selectCats.checkedItemsData()
+        any_item_in_image_cat = any(s in self.image_categories for s in checked_items)
+
+        if any_item_in_image_cat:
+            self.file_api_import_images_form_set_enabled(True)
+        else:
+            self.file_api_import_images_form_set_enabled(False)
+
         mdl.blockSignals(False)
+
+    def file_api_import_images_form_set_enabled(self, on_off):
+        self.chk_file_api_import_images.setEnabled(on_off)
+        if not on_off:
+            self.chk_file_api_import_images.setChecked(False)
+
+    def file_api_import_images_checkbox_set_enabled(self, on_off):
+        self.chk_file_api_georef_only.setEnabled(on_off)
+        self.chk_file_api_overwrite_images.setEnabled(on_off)
+
+    def file_api_export_images_form_set_enabled(self, on_off):
+        self.chkExportWorldfiles.setEnabled(on_off)
+        self.chkReadCreatorsFromMetadata.setEnabled(on_off)
 
     def show_or_hide_progress_bar(self):
         """Shows the progress bar if an import/export is actively running or hides it if not"""
@@ -688,7 +758,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return lup_layer
 
     # dataSourceUri: .gpkg|layername=.*_CategoryName'
-    def get_category_name_for_export(self, layer: QgsVectorLayer):
+    def get_category_name_for_export(self, layer):
         """Extract the category name from the layer variable 'field_category' which is set on import, or
         try the dataSourceUri as fallback"""
         uri = layer.dataProvider().dataSourceUri()
@@ -703,10 +773,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         return cat_name
 
-    def load_import_categories(self):
+    def get_import_categories(self, sub_cat=None):
         """Loads available categories for import with translated labels
         and their original name as userData."""
-        self.selectCats.clear()
         cats = []
 
         def collect_categories(node):
@@ -732,27 +801,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 for sub in trees:
                     collect_categories(sub)
 
-        categories = self.projectConfig.get("categories")
+        categories = self.projectConfigCategories
+        if sub_cat:
+            match = next((c for c in categories if c.get("item", {}).get("name") == sub_cat), None)
+            if match:
+                categories = match
         if isinstance(categories, dict):
             collect_categories(categories)
         elif isinstance(categories, list):
             for cat in categories:
                 collect_categories(cat)
 
-        if cats:
-            self.selectCats.addItem(self.labels["SELECT_ALL"])
-            for label, name in cats:
-                self.selectCats.addItem(label, name)
-        else:
-            self.selectCats.model().blockSignals(True)
-            self.selectCats.clear()
-            self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
-            self.selectCats.setCurrentIndex(0)
-            self.selectCats.setItemCheckState(0, Qt.CheckState.Checked)
-            self.selectCats.setEnabled(False)
-            self.selectCats.model().blockSignals(False)
-            return
-        self.selectCats.setEnabled(True)
+        return cats
 
     def collect_field_informations(self, cat):
         """Extract translations and relevant informations from the project config.
@@ -1001,6 +1061,14 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 else QTimeZone.systemTimeZoneId().data().decode("utf-8")
             ),
         )
+        s.setValue(
+            f"{pn}/import/georefImagesOnly",
+            self.chk_file_api_georef_only.isChecked(),
+        )
+        s.setValue(
+            f"{pn}/import/overwriteImages",
+            self.chk_file_api_overwrite_images.isChecked(),
+        )
         # export tab
         s.setValue(
             f"{pn}/export/mode",
@@ -1025,6 +1093,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 and self.selectExportTz.currentText()
                 else QTimeZone.systemTimeZoneId().data().decode("utf-8")
             ),
+        )
+        s.setValue(f"{pn}/export/exportImages", self.chk_file_api_export_images.isChecked())
+        s.setValue(f"{pn}/export/exportWorldfiles", self.chkExportWorldfiles.isChecked())
+        s.setValue(
+            f"{pn}/export/readCreatorsFromMetadata", self.chkReadCreatorsFromMetadata.isChecked()
         )
 
     def load_settings(self):
@@ -1051,6 +1124,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if tz_im_val and QTimeZone(tz_im_val.encode("utf-8")).isValid()
             else QTimeZone.systemTimeZoneId().data().decode("utf-8")
         )
+        self.chk_file_api_georef_only.setChecked(
+            s.value(f"{pn}/import/georefImagesOnly", False, bool)
+        )
+        self.chk_file_api_overwrite_images.setChecked(
+            s.value(f"{pn}/import/overwriteImages", False, bool)
+        )
         # export tab
         ex_mode = s.value(f"{pn}/export/mode", "radioExGroup")
         next(
@@ -1069,6 +1148,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             tz_ex_val
             if tz_ex_val and QTimeZone(tz_ex_val.encode("utf-8")).isValid()
             else QTimeZone.systemTimeZoneId().data().decode("utf-8")
+        )
+        self.chk_file_api_export_images.setChecked(
+            s.value(f"{pn}/export/exportImages", False, bool)
+        )
+        self.chkExportWorldfiles.setChecked(s.value(f"{pn}/export/exportWorldfiles", False, bool))
+        self.chkReadCreatorsFromMetadata.setChecked(
+            s.value(f"{pn}/export/readCreatorsFromMetadata", False, bool)
         )
 
     def remove_settings(self):
@@ -1101,11 +1187,22 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.btnExport.setEnabled(on_off)
         self.selectExportTz.setEnabled(on_off)
         self.selectExportTzReset.setEnabled(on_off)
+        # file api options
+        self.fileApiDir.setEnabled(on_off)
+        self.fileApiDirOpen.setEnabled(on_off)
+        self.fileApiImportAll.setEnabled(on_off)
+        self.fileApiImportLayers.setEnabled(on_off)
+        self.chk_file_api_export_images.setEnabled(on_off)
+        if self.chk_file_api_export_images.isChecked():
+            self.chkExportWorldfiles.setEnabled(on_off)
+            self.chkReadCreatorsFromMetadata.setEnabled(on_off)
         # on or off only
         if on_off:
             self.btnConnect.setText(self.tr("Disconnect"))
             self.selectCats.setEnabled(on_off)
         else:
+            self.chk_file_api_import_images.setEnabled(on_off)
+            self.chk_file_api_import_images.setChecked(on_off)
             self.btnConnect.setText(self.tr("Connect"))
             self.selectCats.setEnabled(on_off)
             self.projectConfig = {}
@@ -1113,6 +1210,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.field_user = ""
             self.field_version = ""
             self.active_project = ""
+            self.image_categories = None
             self._import_running = False
             self._export_running = False
 
@@ -1130,9 +1228,10 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # create session
         self.api = ApiClient(
-            u.password or self.lineEditPassword.text(),
-            f"{scheme}://{hostname}:{port}",
+            u.password or self.lineEditPassword.text(), f"{scheme}://{hostname}:{port}"
         )
+        self.file_api = FileApiClient(self.api)
+
         project_info = self.api.get("/info")
         if project_info:
             project_info_json = project_info.json()
@@ -1157,7 +1256,26 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             # get config from active project as json
             self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
             self.projectConfigCategories = safe_get(self.projectConfig, "categories")
-            self.load_import_categories()
+
+            self.selectCats.clear()
+            cats = self.get_import_categories()
+            if cats:
+                self.selectCats.addItem(self.labels["SELECT_ALL"])
+                for label, name in cats:
+                    self.selectCats.addItem(label, name)
+            else:
+                self.selectCats.model().blockSignals(True)
+                self.selectCats.clear()
+                self.selectCats.addItem(self.labels["NO_CATS_FOUND"])
+                self.selectCats.setCurrentIndex(0)
+                self.selectCats.setItemCheckState(0, Qt.CheckState.Checked)
+                self.selectCats.setEnabled(False)
+                self.selectCats.model().blockSignals(False)
+                # return?
+            self.selectCats.setEnabled(True)
+            # todo?: always put untranslated cat name into image_categories?
+            self.image_categories = [cat for label, cat in self.get_import_categories("Image")]
+            # print(self.image_categories)
 
             self.mB.pushSuccess(self.plugin_name, self.labels["FIELD_CONNECTED"])
             self.sB.showMessage(self.tr("Choose categories and format"))
@@ -1170,6 +1288,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         """
         if not self._check_connection_and_project():
             return
+
+        import_images = self.chk_file_api_import_images.isChecked()
 
         cats = dict(
             zip(
@@ -1186,6 +1306,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.setMaximum(len(cats))
 
         # collect ui options
+        image_cats = {}
+        if import_images:
+            image_cats = {
+                name: label
+                for label, name in self.get_import_categories("Image")
+                if name in cats.keys()
+            }
+            # use readPath to resolve relative paths which can happen when a project was previously saved
+            image_folder = self.project.readPath(self.fileApiDir.filePath())
+            # os.path.exists dir else abort
+            if image_folder == "":
+                self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_FOLDER_SELECTED"])
+                return
+            elif not os.path.exists(image_folder):
+                self.mB.pushWarning(self.plugin_name, self.labels["WARNING_FOLDER_NOT_EXISTING"])
+                return
+
         is_import_format_gpkg = self.radioFormatGPKG.isChecked()
         create_all_layers = self.chk_layers_for_all_geom_types.isChecked()
         csv_ui_opts = {
@@ -1371,13 +1508,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Critical, 0)
 
-            QgsMessageLog.logMessage(
+            self.log_error(
                 self.tr("List of layers without a field_category layer variable:"),
-                self.plugin_name,
                 Qgis.MessageLevel.Critical,
             )
             for n in group_ref_layer_names_missing_variables:
-                QgsMessageLog.logMessage(n, self.plugin_name, Qgis.MessageLevel.Critical)
+                self.log_error(n)
 
             self._import_running = False
             self.show_or_hide_progress_bar()
@@ -1401,6 +1537,15 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             csv_reader = self.get_category_csv(cat, csv_ui_opts["combineHierarchicalRelations"])
             csv_header = csv_reader.fieldnames
+
+            # ignore specific fields for image categories
+            if cat in image_cats:
+                ignored_fields = {"height", "width", "originalFilename"}
+
+                csv_header = [
+                    field for field in csv_header
+                    if field not in ignored_fields
+                ]
 
             field_informations, valuemaps = self.collect_field_informations(cat)
             # merge without overwriting nested items
@@ -1546,18 +1691,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                     self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
 
-                    QgsMessageLog.logMessage(
+                    self.log_warning(
                         self.tr("Duplicate identifiers found:"),
-                        self.plugin_name,
-                        Qgis.MessageLevel.Warning,
                     )
-
                     for ident, entries in duplicate_ids.items():
                         layers = {layer.name() for layer, _, _ in entries}
-                        QgsMessageLog.logMessage(
+                        self.log_warning(
                             f"{ident} → {', '.join(layers)}",
-                            self.plugin_name,
-                            Qgis.MessageLevel.Warning,
                         )
 
                 # unify old and new index and get differences/transitions
@@ -1647,566 +1787,568 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             # use dynamic iteration in case geom types are added
             queue = list(features.keys())
+            # print(f"queue: {queue}")
             qi = 0
 
-            # incoming QgsFeature objects created from csv
-            while qi < len(queue):
-                geom_type = queue[qi]
-                csv_feats = features[geom_type]
-                # prov_type = None  # unused for now
-                layer_in_group = None
-                resolved = self._resolve_wkb_type(geom_type, geometry_types)
-                lay_type = resolved.name
-                lay_name_source = f"{self.active_project}_{cat}_{geom_type}"
-                lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
+            if queue:
+                # incoming QgsFeature objects created from csv
+                while qi < len(queue):
+                    geom_type = queue[qi]
+                    csv_feats = features[geom_type]
+                    # prov_type = None  # unused for now
+                    layer_in_group = None
+                    resolved = self._resolve_wkb_type(geom_type, geometry_types)
+                    lay_type = resolved.name
+                    lay_name_source = f"{self.active_project}_{cat}_{geom_type}"
+                    lay_name = re.sub(r"\s+", "_", f"{self.active_project}_{label}_{geom_type}")
 
-                # check if lay_name exists in group_ref_layer_names
-                if lay_name in group_ref_layers_grouped.get(cat, {}).keys():
-                    layer_in_group = True
-                    existing_ltl = group_ref_layers_grouped.get(cat, {}).get(lay_name, None)
+                    # check if lay_name exists in group_ref_layer_names
+                    if lay_name in group_ref_layers_grouped.get(cat, {}).keys():
+                        layer_in_group = True
+                        existing_ltl = group_ref_layers_grouped.get(cat, {}).get(lay_name, None)
 
-                    # previous layer index for insertion of new_lyr
-                    # parent() should return the group the ltl is in
-                    existing_ltl_index = existing_ltl.parent().children().index(existing_ltl)
-                    existing_layer = existing_ltl.layer()
+                        # previous layer index for insertion of new_lyr
+                        # parent() should return the group the ltl is in
+                        existing_ltl_index = existing_ltl.parent().children().index(existing_ltl)
+                        existing_layer = existing_ltl.layer()
 
-                    # only get committed fields
-                    # saving the layer will copy fields in the buffer or discard them when not saving
-                    existing_fields = existing_layer.dataProvider().fields()
-                    existing_field_names = [f.name() for f in existing_fields]
-                    csv_field_names = [f.name() for f in fields]
+                        # only get committed fields
+                        # saving the layer will copy fields in the buffer or discard them when not saving
+                        existing_fields = existing_layer.dataProvider().fields()
+                        existing_field_names = [f.name() for f in existing_fields]
+                        csv_field_names = [f.name() for f in fields]
 
-                    # append manually added columns to new_lyr
-                    missing_fields = {
-                        name: existing_fields[index]
-                        for index, name in enumerate(existing_field_names)
-                        if name not in csv_field_names and name != "fid"
-                    }
+                        # append manually added columns to new_lyr
+                        missing_fields = {
+                            name: existing_fields[index]
+                            for index, name in enumerate(existing_field_names)
+                            if name not in csv_field_names and name != "fid"
+                        }
 
-                    fields_copy = QgsFields(fields)
-                    for fld in missing_fields.values():
-                        fields_copy.append(fld)
+                        fields_copy = QgsFields(fields)
+                        for fld in missing_fields.values():
+                            fields_copy.append(fld)
 
-                    # recreation of layers wouldnt be necessary if the field comments
-                    # wouldnt need a recreation of a QgsField to update
-                    new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
-                    pr = new_lyr.dataProvider()
-                    new_lyr.setCrs(crs)
-                    pr.addAttributes(fields_copy)
-                    new_lyr.updateFields()
+                        # recreation of layers wouldnt be necessary if the field comments
+                        # wouldnt need a recreation of a QgsField to update
+                        new_lyr = QgsVectorLayer(lay_type, lay_name, "memory")
+                        pr = new_lyr.dataProvider()
+                        new_lyr.setCrs(crs)
+                        pr.addAttributes(fields_copy)
+                        new_lyr.updateFields()
 
-                    new_fields = new_lyr.fields()
-                    new_field_names = new_fields.names()
+                        new_fields = new_lyr.fields()
+                        new_field_names = new_fields.names()
 
-                    value_relation_fields = {}
+                        value_relation_fields = {}
 
-                    editor_setup_to_add = []
-                    for field_name in new_field_names:
-                        idx = existing_fields.indexFromName(field_name)
-                        if idx != -1:
-                            setup = existing_layer.editorWidgetSetup(idx)
-                            if setup.type() == "ValueRelation":
-                                value_relation_fields[field_name] = True
-
-                            # only apply editor setup for missing fields
-                            if field_name in missing_fields.keys():
-                                new_idx = new_fields.indexFromName(field_name)
-                                editor_setup_to_add.append((new_idx, setup))
-
-                    for idex, stp in editor_setup_to_add:
-                        new_lyr.setEditorWidgetSetup(
-                            idex,
-                            stp,
-                        )
-
-                    csv_index = {f["identifier"]: f for f in csv_feats}
-                    ordered_ids = list(csv_index.keys())
-
-                    # index existing features
-                    existing_index = {}
-                    nogeom_ref = []
-                    if "NoGeometry" in features:
-                        nogeom_ref = features["NoGeometry"]
-                    nogeom_ids = {f["identifier"] for f in nogeom_ref}
-
-                    for f in existing_layer.dataProvider().getFeatures():
-                        # move features without geometry in a geometry layer
-                        # into the NoGeometry feature collection
-                        if geom_type != "NoGeometry" and f.geometry().isEmpty():
-                            if "NoGeometry" not in features:
-                                features["NoGeometry"] = []
-                                queue.append("NoGeometry")
-
-                            ident = f["identifier"]
-                            if ident not in nogeom_ids and ident not in ordered_ids:
-                                new_feat = QgsFeature(new_fields)
-                                new_feat.setGeometry(None)
-
-                                attrs = []
-                                for field_name in new_field_names:
-                                    value = None
-
-                                    if field_name in existing_field_names:
-                                        if field_name in value_relation_fields:
-                                            value = self.normalize_export_value(
-                                                f[field_name], "ValueRelation"
-                                            )
-                                        else:
-                                            value = f[field_name]
-
-                                    attrs.append(value)
-
-                                new_feat.setAttributes(attrs)
-
-                                features["NoGeometry"].append(new_feat)
-                                nogeom_ids.add(ident)
-                            continue
-
-                        existing_index[f["identifier"]] = f
-
-                    features_to_add = []
-
-                    for ident in existing_index:
-                        if ident not in csv_index:
-                            ordered_ids.append(ident)
-
-                    # append remaining existing features
-                    # get inserted after features that exist in field
-                    for ident in existing_index.keys():
-                        if ident not in ordered_ids:
-                            ordered_ids.append(ident)
-
-                    for ident in ordered_ids:
-                        old_feat = existing_index.get(ident)
-                        csv_feat = csv_index.get(ident)
-
-                        new_feat = QgsFeature(new_fields)
-
-                        # geometry priority: CSV > existing
-                        if csv_feat and csv_feat.hasGeometry():
-                            new_feat.setGeometry(csv_feat.geometry())
-                        elif old_feat:
-                            new_feat.setGeometry(old_feat.geometry())
-
-                        attrs = []
-
+                        editor_setup_to_add = []
                         for field_name in new_field_names:
-                            value = None
+                            idx = existing_fields.indexFromName(field_name)
+                            if idx != -1:
+                                setup = existing_layer.editorWidgetSetup(idx)
+                                if setup.type() == "ValueRelation":
+                                    value_relation_fields[field_name] = True
 
-                            # start with old
-                            if old_feat and field_name in existing_field_names:
-                                if field_name in value_relation_fields:
-                                    value = self.normalize_export_value(
-                                        old_feat[field_name], "ValueRelation"
-                                    )
-                                else:
-                                    value = old_feat[field_name]
+                                # only apply editor setup for missing fields
+                                if field_name in missing_fields.keys():
+                                    new_idx = new_fields.indexFromName(field_name)
+                                    editor_setup_to_add.append((new_idx, setup))
 
-                            # overwrite with csv
-                            if csv_feat and field_name in csv_feat.fields().names():
-                                value = csv_feat[field_name]
+                        for idex, stp in editor_setup_to_add:
+                            new_lyr.setEditorWidgetSetup(
+                                idex,
+                                stp,
+                            )
 
-                            attrs.append(value)
+                        csv_index = {f["identifier"]: f for f in csv_feats}
+                        ordered_ids = list(csv_index.keys())
 
-                        new_feat.setAttributes(attrs)
-                        features_to_add.append(new_feat)
+                        # index existing features
+                        existing_index = {}
+                        nogeom_ref = []
+                        if "NoGeometry" in features:
+                            nogeom_ref = features["NoGeometry"]
+                        nogeom_ids = {f["identifier"] for f in nogeom_ref}
 
-                    # add collected features
-                    pr.addFeatures(features_to_add)
+                        for f in existing_layer.dataProvider().getFeatures():
+                            # move features without geometry in a geometry layer
+                            # into the NoGeometry feature collection
+                            if geom_type != "NoGeometry" and f.geometry().isEmpty():
+                                if "NoGeometry" not in features:
+                                    features["NoGeometry"] = []
+                                    queue.append("NoGeometry")
 
-                    layer = new_lyr
-                else:
-                    layer = QgsVectorLayer(lay_type, lay_name, "memory")
-                    pr = layer.dataProvider()
-                    layer.setCrs(crs)
-                    pr.addAttributes(fields)
-                    layer.updateFields()
+                                ident = f["identifier"]
+                                if ident not in nogeom_ids and ident not in ordered_ids:
+                                    new_feat = QgsFeature(new_fields)
+                                    new_feat.setGeometry(None)
 
-                    pr.addFeatures(csv_feats)
-                    layer.updateExtents()
+                                    attrs = []
+                                    for field_name in new_field_names:
+                                        value = None
 
-                # determine providerType() memory/ogr
-                # prov_type = layer.providerType()  # unused for now
-                layer_fields = layer.fields()
+                                        if field_name in existing_field_names:
+                                            if field_name in value_relation_fields:
+                                                value = self.normalize_export_value(
+                                                    f[field_name], "ValueRelation"
+                                                )
+                                            else:
+                                                value = f[field_name]
 
-                # iterate through each field, split on dot and handle/translate
-                for f_idx, field in enumerate(layer_fields):
-                    fname = field.name()
-                    f_idx = layer.fields().indexFromName(fname)
-                    split = fname.split(".")  # dating 0 begin inputType
-                    # print(split)
-                    input_type = safe_get(field_informations, split[0], "inputType", default="")
-                    sub_type = None
+                                        attrs.append(value)
 
-                    date_config = safe_get(
-                        field_informations, split[0], "dateConfiguration", default={}
-                    )
-                    date_config_data_type = date_config.get("dataType", None)
-                    is_composite = input_type == "composite"
-                    # fieldType = field.type()  # unused for now
-                    paths = []
-                    parts = []
-                    setup = None
+                                    new_feat.setAttributes(attrs)
 
-                    if is_composite:
-                        sub_type = safe_get(
-                            field_informations, split[0], split[2], "inputType", default=None
+                                    features["NoGeometry"].append(new_feat)
+                                    nogeom_ids.add(ident)
+                                continue
+
+                            existing_index[f["identifier"]] = f
+
+                        features_to_add = []
+
+                        for ident in existing_index:
+                            if ident not in csv_index:
+                                ordered_ids.append(ident)
+
+                        # append remaining existing features
+                        # get inserted after features that exist in field
+                        for ident in existing_index.keys():
+                            if ident not in ordered_ids:
+                                ordered_ids.append(ident)
+
+                        for ident in ordered_ids:
+                            old_feat = existing_index.get(ident)
+                            csv_feat = csv_index.get(ident)
+
+                            new_feat = QgsFeature(new_fields)
+
+                            # geometry priority: CSV > existing
+                            if csv_feat and csv_feat.hasGeometry():
+                                new_feat.setGeometry(csv_feat.geometry())
+                            elif old_feat:
+                                new_feat.setGeometry(old_feat.geometry())
+
+                            attrs = []
+
+                            for field_name in new_field_names:
+                                value = None
+
+                                # start with old
+                                if old_feat and field_name in existing_field_names:
+                                    if field_name in value_relation_fields:
+                                        value = self.normalize_export_value(
+                                            old_feat[field_name], "ValueRelation"
+                                        )
+                                    else:
+                                        value = old_feat[field_name]
+
+                                # overwrite with csv
+                                if csv_feat and field_name in csv_feat.fields().names():
+                                    value = csv_feat[field_name]
+
+                                attrs.append(value)
+
+                            new_feat.setAttributes(attrs)
+                            features_to_add.append(new_feat)
+
+                        # add collected features
+                        pr.addFeatures(features_to_add)
+
+                        layer = new_lyr
+                    else:
+                        layer = QgsVectorLayer(lay_type, lay_name, "memory")
+                        pr = layer.dataProvider()
+                        layer.setCrs(crs)
+                        pr.addAttributes(fields)
+                        layer.updateFields()
+
+                        pr.addFeatures(csv_feats)
+                        layer.updateExtents()
+
+                    # determine providerType() memory/ogr
+                    # prov_type = layer.providerType()  # unused for now
+                    layer_fields = layer.fields()
+
+                    # iterate through each field, split on dot and handle/translate
+                    for f_idx, field in enumerate(layer_fields):
+                        fname = field.name()
+                        f_idx = layer.fields().indexFromName(fname)
+                        split = fname.split(".")  # dating 0 begin inputType
+                        # print(split)
+                        input_type = safe_get(field_informations, split[0], "inputType", default="")
+                        sub_type = None
+
+                        date_config = safe_get(
+                            field_informations, split[0], "dateConfiguration", default={}
                         )
-                    # print(f"sub_type: {sub_type}")
+                        date_config_data_type = date_config.get("dataType", None)
+                        is_composite = input_type == "composite"
+                        # fieldType = field.type()  # unused for now
+                        paths = []
+                        parts = []
+                        setup = None
 
-                    for idx, part in enumerate(split):
-                        # skip numbers only
-                        if part.isdigit():
-                            parts.append(part)
-                            continue
+                        if is_composite:
+                            sub_type = safe_get(
+                                field_informations, split[0], split[2], "inputType", default=None
+                            )
+                        # print(f"sub_type: {sub_type}")
 
-                        if (
-                            len(part) == 2 or part == "unspecifiedLanguage"
-                        ) and part in field_informations:
-                            parts.append(safe_get(field_informations, part, "label", default=part))
+                        for idx, part in enumerate(split):
+                            # skip numbers only
+                            if part.isdigit():
+                                parts.append(part)
+                                continue
+
+                            if (
+                                len(part) == 2 or part == "unspecifiedLanguage"
+                            ) and part in field_informations:
+                                parts.append(safe_get(field_informations, part, "label", default=part))
+                                paths.append(part)
+                                continue
+
+                            # build path to look for a translation - dating, dating.begin, dating.begin.inputType etc.
                             paths.append(part)
-                            continue
+                            # skip first two parts (dimensionLength.0)
+                            if (idx > 1) and input_type in (
+                                "dimension",
+                                "volume",
+                                "weight",
+                                "dating",
+                                "literature",
+                            ):
+                                # get translation from {inputType} or measurement key, if available in self.trAttrs
+                                parts.append(
+                                    safe_get(
+                                        field_informations,
+                                        input_type,
+                                        *paths[1:],
+                                        "label",
+                                        default=False,
+                                    )
+                                    or safe_get(
+                                        field_informations,
+                                        "measurement",
+                                        part,
+                                        "label",
+                                        default=part,
+                                    )
+                                )
+                            else:
+                                look_up = safe_get(field_informations, *paths, "label", default=part)
 
-                        # build path to look for a translation - dating, dating.begin, dating.begin.inputType etc.
-                        paths.append(part)
-                        # skip first two parts (dimensionLength.0)
-                        if (idx > 1) and input_type in (
-                            "dimension",
-                            "volume",
-                            "weight",
-                            "dating",
-                            "literature",
-                        ):
-                            # get translation from {inputType} or measurement key, if available in self.trAttrs
-                            parts.append(
-                                safe_get(
-                                    field_informations,
-                                    input_type,
-                                    *paths[1:],
-                                    "label",
-                                    default=False,
+                                # look for composite field translation by its nested input_type (sub_type)
+                                if sub_type and look_up == part:
+                                    look_up = safe_get(
+                                        field_informations, sub_type, part, "label", default=part
+                                    )
+
+                                parts.append(look_up)
+
+                        if date_config:
+                            # set constraint expression for date fields to show format warnings
+                            if fname in ("date.value", "date.endValue") or (
+                                date_config and is_composite and split[-1] in ("value", "endValue")
+                            ):
+                                constraint_strength = date_data_type_constraint.get(
+                                    date_config.get("dataType", ""), soft_constraint
                                 )
-                                or safe_get(
-                                    field_informations,
-                                    "measurement",
-                                    part,
-                                    "label",
-                                    default=part,
+                                constraint_desc = self.tr(
+                                    "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
                                 )
+                                regex = date_regexes.get(
+                                    date_config_data_type, date_regexes["optional"]
+                                )
+                                exp = f"regexp_match(\"{fname}\", '{regex}')"
+
+                                layer.setConstraintExpression(f_idx, exp, constraint_desc)
+                                layer.setFieldConstraint(
+                                    f_idx,
+                                    QgsFieldConstraints.ConstraintExpression,
+                                    constraint_strength,
+                                )
+
+                        layer.setFieldAlias(f_idx, " ".join(parts))
+
+                        # determine field type (composite subfield, nested or field itself) and get the value map
+                        if input_type == "composite" and split[-1] in valuemaps:
+                            vmap_source = valuemaps.get(split[-1], {})  # composite subfield
+                            vmap_input_type = vmap_source.get("inputType", input_type)
+                        # get manually added nested map
+                        elif safe_get(valuemaps, *paths, default=False):
+                            vmap_source = safe_get(valuemaps, *paths, default={})
+                            vmap_input_type = safe_get(
+                                valuemaps, *paths, "inputType", default=input_type
                             )
                         else:
-                            look_up = safe_get(field_informations, *paths, "label", default=part)
+                            vmap_source = valuemaps.get(fname, {})  # regular field
+                            vmap_input_type = input_type
+                        # print(vmap_input_type)
 
-                            # look for composite field translation by its nested input_type (sub_type)
-                            if sub_type and look_up == part:
-                                look_up = safe_get(
-                                    field_informations, sub_type, part, "label", default=part
-                                )
-
-                            parts.append(look_up)
-
-                    if date_config:
-                        # set constraint expression for date fields to show format warnings
-                        if fname in ("date.value", "date.endValue") or (
-                            date_config and is_composite and split[-1] in ("value", "endValue")
-                        ):
-                            constraint_strength = date_data_type_constraint.get(
-                                date_config.get("dataType", ""), soft_constraint
-                            )
-                            constraint_desc = self.tr(
-                                "Supported date formats: YYYY, DD.YYYY, DD.MM.YYYY, DD.MM.YYYY HH:mm"
-                            )
-                            regex = date_regexes.get(
-                                date_config_data_type, date_regexes["optional"]
-                            )
-                            exp = f"regexp_match(\"{fname}\", '{regex}')"
-
-                            layer.setConstraintExpression(f_idx, exp, constraint_desc)
-                            layer.setFieldConstraint(
-                                f_idx,
-                                QgsFieldConstraints.ConstraintExpression,
-                                constraint_strength,
-                            )
-
-                    layer.setFieldAlias(f_idx, " ".join(parts))
-
-                    # determine field type (composite subfield, nested or field itself) and get the value map
-                    if input_type == "composite" and split[-1] in valuemaps:
-                        vmap_source = valuemaps.get(split[-1], {})  # composite subfield
-                        vmap_input_type = vmap_source.get("inputType", input_type)
-                    # get manually added nested map
-                    elif safe_get(valuemaps, *paths, default=False):
-                        vmap_source = safe_get(valuemaps, *paths, default={})
-                        vmap_input_type = safe_get(
-                            valuemaps, *paths, "inputType", default=input_type
-                        )
-                    else:
-                        vmap_source = valuemaps.get(fname, {})  # regular field
-                        vmap_input_type = input_type
-                    # print(vmap_input_type)
-
-                    # assign value map
-                    if vmap_source:
-                        # print(vmap_source)
-                        # handle checkboxes here
-                        # todo: check if input type valuelistMultiInput is always a checkbox
-                        if vmap_input_type in ("checkboxes", "valuelistMultiInput"):
-                            lup_entries = []
-                            updates = {}
-                            # convert values to value relation compatible ones like
-                            # "red;blue;green" → '{"red","blue","green"}'
-                            for feature in layer.getFeatures():
-                                val = feature[f_idx]
-                                if val == NULL:
-                                    # added features in qgis can contain NULL as value
-                                    val = "{}"
-                                parts = [p.strip() for p in val.split(";") if p.strip()]
-                                # escape embedded double quotes just in case
-                                parts = [p.replace('"', r"\"") for p in parts]
-                                new_val = "{" + ",".join(f'"{p}"' for p in parts) + "}"
-                                updates[feature.id()] = {f_idx: new_val}
-
-                            if updates:
-                                layer.dataProvider().changeAttributeValues(updates)
-
-                            if not lup_layer_temp:
-                                lup_layer_temp: QgsVectorLayer = (
-                                    self._get_or_create_lookup_layer_temp(group_ref)
-                                )
-
-                            group_id = f"{cat}_{fname}"
-
-                            # check if group already exists
-                            request = (
-                                QgsFeatureRequest()
-                                .setSubsetOfAttributes(["group_id"], lup_layer_temp.fields())
-                                .setFilterExpression(f"\"group_id\" = '{group_id}'")
-                            )
-                            group_exists = any(lup_layer_temp.getFeatures(request))
-
-                            if group_id not in processed_vmaps and not group_exists:
-                                processed_vmaps.append(group_id)
-
+                        # assign value map
+                        if vmap_source:
+                            # print(vmap_source)
+                            # handle checkboxes here
+                            # todo: check if input type valuelistMultiInput is always a checkbox
+                            if vmap_input_type in ("checkboxes", "valuelistMultiInput"):
                                 lup_entries = []
+                                updates = {}
+                                # convert values to value relation compatible ones like
+                                # "red;blue;green" → '{"red","blue","green"}'
+                                for feature in layer.getFeatures():
+                                    val = feature[f_idx]
+                                    if val == NULL:
+                                        # added features in qgis can contain NULL as value
+                                        val = "{}"
+                                    parts = [p.strip() for p in val.split(";") if p.strip()]
+                                    # escape embedded double quotes just in case
+                                    parts = [p.replace('"', r"\"") for p in parts]
+                                    new_val = "{" + ",".join(f'"{p}"' for p in parts) + "}"
+                                    updates[feature.id()] = {f_idx: new_val}
 
-                                for k, v in vmap_source.get("map", {}).items():
-                                    f = QgsFeature()
-                                    f.setFields(lup_layer_temp.fields())
-                                    f["group_id"] = group_id
-                                    f["key"] = k
-                                    f["value"] = v
-                                    f["description"] = ""
-                                    lup_entries.append(f)
+                                if updates:
+                                    layer.dataProvider().changeAttributeValues(updates)
 
-                                lup_layer_temp.dataProvider().addFeatures(lup_entries)
-                                lup_layer_temp.updateExtents()
-                            # create value relation
-                            vrel_config = {
-                                "Layer": lup_layer_temp.id(),
-                                "Key": "key",
-                                "Value": "value",
-                                "FilterExpression": f"\"group_id\" = '{group_id}'",
-                                "AllowMulti": True,
-                                "UseCompleter": False,
-                            }
-                            layer.setEditorWidgetSetup(
-                                f_idx,
-                                QgsEditorWidgetSetup("ValueRelation", vrel_config),
-                            )
+                                if not lup_layer_temp:
+                                    lup_layer_temp: QgsVectorLayer = (
+                                        self._get_or_create_lookup_layer_temp(group_ref)
+                                    )
+
+                                group_id = f"{cat}_{fname}"
+
+                                # check if group already exists
+                                request = (
+                                    QgsFeatureRequest()
+                                    .setSubsetOfAttributes(["group_id"], lup_layer_temp.fields())
+                                    .setFilterExpression(f"\"group_id\" = '{group_id}'")
+                                )
+                                group_exists = any(lup_layer_temp.getFeatures(request))
+
+                                if group_id not in processed_vmaps and not group_exists:
+                                    processed_vmaps.append(group_id)
+
+                                    lup_entries = []
+
+                                    for k, v in vmap_source.get("map", {}).items():
+                                        f = QgsFeature()
+                                        f.setFields(lup_layer_temp.fields())
+                                        f["group_id"] = group_id
+                                        f["key"] = k
+                                        f["value"] = v
+                                        f["description"] = ""
+                                        lup_entries.append(f)
+
+                                    lup_layer_temp.dataProvider().addFeatures(lup_entries)
+                                    lup_layer_temp.updateExtents()
+                                # create value relation
+                                vrel_config = {
+                                    "Layer": lup_layer_temp.id(),
+                                    "Key": "key",
+                                    "Value": "value",
+                                    "FilterExpression": f"\"group_id\" = '{group_id}'",
+                                    "AllowMulti": True,
+                                    "UseCompleter": False,
+                                }
+                                layer.setEditorWidgetSetup(
+                                    f_idx,
+                                    QgsEditorWidgetSetup("ValueRelation", vrel_config),
+                                )
+                                continue
+                            else:
+                                setup = QgsEditorWidgetSetup("ValueMap", vmap_source)
+                                layer.setEditorWidgetSetup(f_idx, setup)
+                                continue
+                        # todo: extract function / refactor
+                        # setup = editor_setup_for_field(inputType, split, valuemaps)
+                        # handle type dropdownRange which has the subfields value and endValue
+                        elif input_type == "dropdownRange":
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[split[0]])
+                        elif input_type == "boolean":
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "date" and any(s in ("isRange",) for s in split):
+                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "dating":
+                            if any(
+                                s
+                                in (
+                                    "isImprecise",
+                                    "isUncertain",
+                                )
+                                for s in split
+                            ):
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                            elif "inputType" in split and {"begin", "end"} & set(split):
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap",
+                                    safe_get(
+                                        valuemaps,
+                                        "dating",
+                                        "begin",
+                                        "inputType",
+                                        default={},
+                                    ),
+                                )
+                            elif "type" in split:
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap",
+                                    safe_get(valuemaps, "dating", "type", default={}),
+                                )
+                        elif input_type == "volume":
+                            if "inputUnit" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":volInputUnit"])
+                            elif "isImprecise" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "weight":
+                            if "inputUnit" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":weightInputUnit"])
+                            elif "isImprecise" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                        elif input_type == "dimension":
+                            if "inputUnit" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":dimInputUnit"])
+                            if "isImprecise" in split:
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+
+                        if setup:
+                            layer.setEditorWidgetSetup(f_idx, setup)
                             continue
+
+                        # lookups for vmaps
+                        lup = {
+                            # assign the valuemap with the key volume to the subfield measurementTechnique - info not in project config?
+                            "volume": ["measurementTechnique"],
+                            # 'period': ['value', 'endValue'],  # assigned in inputType dropdownRange
+                            "weight": ["measurementDevice"],
+                            "dimensionOther": ["measurementPosition"],
+                            "dimensionHeight": ["measurementPosition"],
+                            "dimensionDiameter": ["measurementPosition"],
+                            "dimensionWidth": ["measurementPosition"],
+                            "dimensionLength": ["measurementPosition"],
+                            "dimensionVerticalExtent": ["measurementPosition"],
+                            "dimensionThickness": ["measurementPosition"],
+                            "dimensionDepth": ["measurementPosition"],
+                            "dimensionPerimeter": ["measurementPosition"],
+                        }
+
+                        for base, sub in lup.items():
+                            if base in valuemaps and base in split and any(s in split for s in sub):
+                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[base])
+                                layer.setEditorWidgetSetup(f_idx, setup)
+                                break
+
+                    # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
+                    # if valuemaps:
+                    #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
+                    #     print(f'unassigned vmaps:\n{joined}')
+
+                    # write category to layer variables
+                    # !gets lost outside a saved project
+                    QgsExpressionContextUtils.setLayerVariable(layer, "field_category", cat)
+
+                    # set layer definition to avoid writing NULL values which field rejects
+                    for j in range(len(fields)):
+                        layer.setDefaultValueDefinition(j, QgsDefaultValue("''", False))
+
+                    # apply layer properties
+                    # change opacity
+                    if layer.wkbType() != QgsWkbTypes.Type.NoGeometry:
+                        layer.renderer().symbol().setOpacity(0.7)
+
+                    layer.setDisplayExpression('"identifier"')
+
+                    if filename:
+                        options = QgsVectorFileWriter.SaveVectorOptions()
+                        options.driverName = "gpkg"
+                        options.layerName = f"{lay_name_source}"
+                        options.fileEncoding = "UTF-8"
+                        # primary key field needs to be of type integer
+                        # options.layerOptions = ['FID=identifier']  # sets the primary key field for gpkg to prevent default fid field
+
+                        transform_context = self.project.transformContext()
+
+                        # CreateOrOverwriteFile needed first, after that CreateOrOverwriteLayer works
+                        if not os.path.exists(filename):
+                            options.actionOnExistingFile = (
+                                QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
+                            )
                         else:
-                            setup = QgsEditorWidgetSetup("ValueMap", vmap_source)
-                            layer.setEditorWidgetSetup(f_idx, setup)
-                            continue
-                    # todo: extract function / refactor
-                    # setup = editor_setup_for_field(inputType, split, valuemaps)
-                    # handle type dropdownRange which has the subfields value and endValue
-                    elif input_type == "dropdownRange":
-                        setup = QgsEditorWidgetSetup("ValueMap", valuemaps[split[0]])
-                    elif input_type == "boolean":
-                        setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
-                    elif input_type == "date" and any(s in ("isRange",) for s in split):
-                        setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
-                    elif input_type == "dating":
-                        if any(
-                            s
-                            in (
-                                "isImprecise",
-                                "isUncertain",
+                            options.actionOnExistingFile = (
+                                QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
                             )
-                            for s in split
-                        ):
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
-                        elif "inputType" in split and {"begin", "end"} & set(split):
-                            setup = QgsEditorWidgetSetup(
-                                "ValueMap",
-                                safe_get(
-                                    valuemaps,
-                                    "dating",
-                                    "begin",
-                                    "inputType",
-                                    default={},
-                                ),
+
+                        error_code, error_message, new_filename, new_layer = (
+                            QgsVectorFileWriter.writeAsVectorFormatV3(
+                                layer, filename, transform_context, options
                             )
-                        elif "type" in split:
-                            setup = QgsEditorWidgetSetup(
-                                "ValueMap",
-                                safe_get(valuemaps, "dating", "type", default={}),
+                        )
+                        # make layer persistent
+                        if lay_name not in group_ref_layer_names.keys():
+                            layer.setDataSource(
+                                f"{filename}|layername={lay_name_source}",
+                                lay_name_source,
+                                "ogr",
+                                False,
                             )
-                    elif input_type == "volume":
-                        if "inputUnit" in split:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":volInputUnit"])
-                        elif "isImprecise" in split:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
-                    elif input_type == "weight":
-                        if "inputUnit" in split:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":weightInputUnit"])
-                        elif "isImprecise" in split:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
-                    elif input_type == "dimension":
-                        if "inputUnit" in split:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":dimInputUnit"])
-                        if "isImprecise" in split:
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
+                            layer.setName(lay_name)
+                        elif layer_in_group:
+                            self.project.removeMapLayer(existing_ltl.layerId())
+                            layer.setDataSource(
+                                f"{filename}|layername={lay_name_source}",
+                                lay_name_source,
+                                "ogr",
+                                False,
+                            )
+                            layer.setName(lay_name)
 
-                    if setup:
-                        layer.setEditorWidgetSetup(f_idx, setup)
-                        continue
+                        if error_code == 0:
+                            pass
+                        else:
+                            self.mB.pushCritical(
+                                self.plugin_name,
+                                self.labels["IMPORT_FAILED"] + f": {error_message}",
+                            )
+                            self.sB.showMessage(self.labels["IMPORT_FAILED"], 10000)
+                            return
 
-                    # lookups for vmaps
-                    lup = {
-                        # assign the valuemap with the key volume to the subfield measurementTechnique - info not in project config?
-                        "volume": ["measurementTechnique"],
-                        # 'period': ['value', 'endValue'],  # assigned in inputType dropdownRange
-                        "weight": ["measurementDevice"],
-                        "dimensionOther": ["measurementPosition"],
-                        "dimensionHeight": ["measurementPosition"],
-                        "dimensionDiameter": ["measurementPosition"],
-                        "dimensionWidth": ["measurementPosition"],
-                        "dimensionLength": ["measurementPosition"],
-                        "dimensionVerticalExtent": ["measurementPosition"],
-                        "dimensionThickness": ["measurementPosition"],
-                        "dimensionDepth": ["measurementPosition"],
-                        "dimensionPerimeter": ["measurementPosition"],
-                    }
-
-                    for base, sub in lup.items():
-                        if base in valuemaps and base in split and any(s in split for s in sub):
-                            setup = QgsEditorWidgetSetup("ValueMap", valuemaps[base])
-                            layer.setEditorWidgetSetup(f_idx, setup)
-                            break
-
-                # todo: compare valuemaps to processed_vmaps to find unassigned vmaps
-                # if valuemaps:
-                #     joined = ',\n'.join([f'{k}: {v}' for k, v in valuemaps.items()])
-                #     print(f'unassigned vmaps:\n{joined}')
-
-                # write category to layer variables
-                # !gets lost outside a saved project
-                QgsExpressionContextUtils.setLayerVariable(layer, "field_category", cat)
-
-                # set layer definition to avoid writing NULL values which field rejects
-                for j in range(len(fields)):
-                    layer.setDefaultValueDefinition(j, QgsDefaultValue("''", False))
-
-                # apply layer properties
-                # change opacity
-                if layer.wkbType() != QgsWkbTypes.Type.NoGeometry:
-                    layer.renderer().symbol().setOpacity(0.7)
-
-                layer.setDisplayExpression('"identifier"')
-
-                if filename:
-                    options = QgsVectorFileWriter.SaveVectorOptions()
-                    options.driverName = "gpkg"
-                    options.layerName = f"{lay_name_source}"
-                    options.fileEncoding = "UTF-8"
-                    # primary key field needs to be of type integer
-                    # options.layerOptions = ['FID=identifier']  # sets the primary key field for gpkg to prevent default fid field
-
-                    transform_context = self.project.transformContext()
-
-                    # CreateOrOverwriteFile needed first, after that CreateOrOverwriteLayer works
-                    if not os.path.exists(filename):
-                        options.actionOnExistingFile = (
-                            QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteFile
-                        )
-                    else:
-                        options.actionOnExistingFile = (
-                            QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
-                        )
-
-                    error_code, error_message, new_filename, new_layer = (
-                        QgsVectorFileWriter.writeAsVectorFormatV3(
-                            layer, filename, transform_context, options
-                        )
-                    )
-                    # make layer persistent
-                    if lay_name not in group_ref_layer_names.keys():
-                        layer.setDataSource(
-                            f"{filename}|layername={lay_name_source}",
-                            lay_name_source,
-                            "ogr",
-                            False,
-                        )
-                        layer.setName(lay_name)
-                    elif layer_in_group:
-                        self.project.removeMapLayer(existing_ltl.layerId())
-                        layer.setDataSource(
-                            f"{filename}|layername={lay_name_source}",
-                            lay_name_source,
-                            "ogr",
-                            False,
-                        )
-                        layer.setName(lay_name)
-
-                    if error_code == 0:
-                        pass
-                    else:
-                        self.mB.pushCritical(
-                            self.plugin_name,
-                            self.labels["IMPORT_FAILED"] + f": {error_message}",
-                        )
-                        self.sB.showMessage(self.labels["IMPORT_FAILED"], 10000)
-                        return
-
-                if not import_overwrite:
-                    # add layer to group_ref
-                    self.project.addMapLayer(layer, False)
-                    group_ref.insertLayer(-1, layer)
-                elif group_ref:
-                    # only add layers that are not in the self.active_project group
-                    if lay_name not in group_ref_layer_names.keys():
+                    if not import_overwrite:
+                        # add layer to group_ref
                         self.project.addMapLayer(layer, False)
                         group_ref.insertLayer(-1, layer)
-                    elif layer_in_group:
-                        # self.project.removeMapLayer(existing_ltl.layerId())
-                        self.project.addMapLayer(layer, False)
-                        # insert at original position
-                        group_ref.insertLayer(existing_ltl_index, layer)
-                qi += 1
-            # while end
+                    elif group_ref:
+                        # only add layers that are not in the self.active_project group
+                        if lay_name not in group_ref_layer_names.keys():
+                            self.project.addMapLayer(layer, False)
+                            group_ref.insertLayer(-1, layer)
+                        elif layer_in_group:
+                            # self.project.removeMapLayer(existing_ltl.layerId())
+                            self.project.addMapLayer(layer, False)
+                            # insert at original position
+                            group_ref.insertLayer(existing_ltl_index, layer)
+                    qi += 1
+                # while end
 
-            # save style to geopackage
-            # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
-            if filename and not import_overwrite:
-                # versions below 3.44.7
-                if self.qgis_version_int < 34407:
-                    layer.saveStyleToDatabase(
-                        f"{cat}",
-                        self.tr("Style saved by the Field Connect plugin"),
-                        True,
-                        None,
-                        QgsMapLayer.StyleCategory.AllStyleCategories,
-                    )
-                else:
-                    layer.saveStyleToDatabaseV2(
-                        f"{cat}",
-                        self.tr("Style saved by the Field Connect plugin"),
-                        True,
-                        None,
-                        QgsMapLayer.StyleCategory.AllStyleCategories,
-                    )
+                # save style to geopackage
+                # returns a tuple: flags representing whether QML or SLD storing was successful, msgError: a descriptive error message if any occurs
+                if filename and not import_overwrite:
+                    # versions below 3.44.7
+                    if self.qgis_version_int < 34407:
+                        layer.saveStyleToDatabase(
+                            f"{cat}",
+                            self.tr("Style saved by the Field Connect plugin"),
+                            True,
+                            None,
+                            QgsMapLayer.StyleCategory.AllStyleCategories,
+                        )
+                    else:
+                        layer.saveStyleToDatabaseV2(
+                            f"{cat}",
+                            self.tr("Style saved by the Field Connect plugin"),
+                            True,
+                            None,
+                            QgsMapLayer.StyleCategory.AllStyleCategories,
+                        )
             self.progressBar.setValue(i + 1)
             QApplication.processEvents()
 
@@ -2249,11 +2391,17 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.project.write(f"geopackage:{filename}?projectName={self.active_project}")
 
         # refresh layers after overwriting data
-        if import_overwrite:
-            # todo: find a better way to refresh layers
-            # layer.dataProvider().forceReload() and layer.triggerRepaint() only worked in console
-            # and iface.mapCanvas().refresh() didnt work at all
-            self.project.reloadAllLayers()
+        # if import_overwrite:
+        #     # todo: find a better way to refresh layers
+        #     #    ?: maybe not needed anymore as layers are recreated now when updating a gpkg
+        #     # layer.dataProvider().forceReload() and layer.triggerRepaint() only worked in console
+        #     # and iface.mapCanvas().refresh() didnt work at all
+        #     self.project.reloadAllLayers()
+
+        # import images
+        if import_images:
+            # pass group_ref, image folder and selected image categories
+            self.file_api_import(group_ref, image_folder, image_cats)
 
         self.mB.pushSuccess(self.plugin_name, self.labels["IMPORT_SUCCESS"])
         self.sB.showMessage(self.labels["IMPORT_SUCCESS"], 10000)
@@ -2279,6 +2427,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "quickExport": self.chkQuickExport.isChecked(),
             "commitSave": self.chkCommitSave.isChecked(),
             "timezone": self.selectExportTz.currentText(),
+            "exportImages": self.chk_file_api_export_images.isChecked(),
         }
 
         export_tz = opts["timezone"].encode("utf-8")
@@ -2315,6 +2464,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "No geometry",
         )  # Other possible values: Unknown geometry, Invalid geometry
         # use layer group or create group with currently active layer
+        # todo: rename current_data to group_ref or something similar
         if opts["groupExport"]:
             current_data = self.selectExGroup.currentData()
         elif opts["selectedLayers"]:
@@ -2325,13 +2475,25 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
             current_data = None
+            self._export_running = False
+            QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+            return
+
+        # todo: disable option if no raster layer in group or selection
+        # export images first as they need to exist before importing the csvs into field desktop
+        if opts["exportImages"]:
+            if self.file_api_export(current_data, opts["groupExport"]):
+                return
+
+        # export block
         if current_data:
             # create dict with category and list of layers - cat:[*QgsVectorLayer]
             # todo?: get count for progress bar here?
             cat_layers = defaultdict(list)
-            for layer_tree_layer in current_data.findLayers():
-                layer: QgsVectorLayer = layer_tree_layer.layer()
-                if "_lookup" in layer.name():
+            for ltl in current_data.findLayers():
+                layer: QgsVectorLayer = ltl.layer()
+                # skip lookup and non vectorlayer type layers
+                if "_lookup" in layer.name() or layer.type() != QgsMapLayerType.VectorLayer:
                     continue
                 layer_crs: QgsCoordinateReferenceSystem = layer.crs()
                 # ask for coordinate transformation once
@@ -2391,7 +2553,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self._export_running = False
                     self.show_or_hide_progress_bar()
                     return
-            # print(f'catLayers: {catLayers}')
 
             csv_exp_rows, gj_exp_geoms = defaultdict(list), defaultdict(list)
             # set geojson base structure
@@ -2662,22 +2823,18 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         glow.setBlurRadius(15)
         glow.setOffset(0, 0)
         if self.connected:
-            self.labelConnectStatus.setStyleSheet(
-                """
+            self.labelConnectStatus.setStyleSheet("""
                     background-color: green;
                     border-radius: 6px;
                     border: 1px solid #555;
-                """
-            )
+                """)
             glow.setColor(QColor("green"))
         else:
-            self.labelConnectStatus.setStyleSheet(
-                """
+            self.labelConnectStatus.setStyleSheet("""
                     background-color: red;
                     border-radius: 6px;
                     border: 1px solid #555;
-                """
-            )
+                """)
             glow.setColor(QColor("red"))
 
         self.labelConnectStatus.setGraphicsEffect(glow)
@@ -2808,7 +2965,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         active_project_from_server = safe_get(data, "activeProject", default=False)
 
         if self.active_project != active_project_from_server:
-            self.set_connection_enabled(False)
             self.field_disconnect()
             self.mB.pushCritical(self.plugin_name, self.labels["ACTIVE_PROJECT_CHANGED"])
             return False
@@ -2842,6 +2998,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         field_aliases = {
             "staff": (
+                "draughtsmen",
                 "processor",
                 "supervisor",
             ),
@@ -2853,3 +3010,523 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 prj_maps[field] = prj_maps[src_key]
 
         return prj_maps
+
+    @handle_api_errors
+    def file_api_import(self, group_ref, image_folder, image_cats: dict, *args):
+        if not self._check_connection_and_project():
+            return
+        # todo: layers are unselected as they are recreated on import.
+        #    ?:  remove option to import from selected layers anyway?
+        layers: list[QgsVectorLayer] = self.iface.layerTreeView().selectedLayers()
+        import_from_layers = self.fileApiImportLayers.isChecked()
+        if import_from_layers and not layers:
+            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
+            return
+
+        folder = image_folder
+
+        self.progressBar.resetFormat()
+        self.show_or_hide_progress_bar()
+        _import_errors = False
+        _import_images_not_found = False
+        step = 0
+        self.progressBar.setValue(step)
+        import_list = {}
+        import_georef_only = self.chk_file_api_georef_only.isChecked()
+        overwrite_files = self.chk_file_api_overwrite_images.isChecked()
+        image_has_geotransform = False
+
+        self.log_info(self.tr("Image import started"))
+
+        # collect statistics
+        stats_images_not_found = 0
+        stats_images_import_errors = 0
+        stats_images_overwritten = 0
+        stats_images_skipped = 0
+        stats_images_written = 0
+        stats_layers_added = 0
+
+        # already handled in field_import()
+        group: QgsLayerTreeGroup = group_ref
+        group_layer_count = len(group.findLayers())
+
+        # import from selected vector layers/features
+        if import_from_layers:
+            # get list of identifiers from csv export or selected layers
+            for layer in layers:
+                selected_features = layer.selectedFeatures()
+                if not selected_features:
+                    selected_features = layer.getFeatures()
+                category = self.get_category_name_for_export(layer)
+                ids = [feature["identifier"] for feature in selected_features]
+
+                import_list[category] = ids
+        # import all from image and subcategories csv export
+        else:
+            for cat_name, label in image_cats.items():
+                csv_reader = self.get_category_csv(cat_name)
+                ids = [row["identifier"] for row in csv_reader]
+                import_list[cat_name] = ids
+
+        # get identifier count of finished import_list
+        total_import_count = sum(len(v) for v in import_list.values())
+        self.progressBar.setMaximum(total_import_count)
+
+        # import for both modes after collecting identifiers
+        for cat, ids in import_list.items():
+            # add sub-groups at the bottom
+            group_layer_count += 1
+            cat_group_name = f"{self.active_project}_{image_cats[cat]}"
+            # look for existing group
+            cat_group = group.findGroup(cat_group_name)
+
+            if cat_group is None:
+                cat_group = group.insertGroup(group_layer_count, cat_group_name)
+                cat_group.setExpanded(False)
+
+            cat_group_path: Path = Path(folder) / cat
+            # create subfolders for categories
+            cat_group_path.mkdir(parents=True, exist_ok=True)
+
+            cat_group_existing_layers = {
+                ltl.layer().name(): ltl.layer().id() for ltl in cat_group.findLayers()
+            }
+
+            for identifier in ids:
+                image_data, image_ext = None, None
+                self.progressBar.setFormat("{id} %p%".format(id=identifier))
+                QApplication.processEvents()
+
+                file_path: Path = cat_group_path / identifier
+                try:
+                    image_data, image_ext = self.file_api.get_image_data(identifier)
+                except ImageNotFoundError as e:
+                    stats_images_not_found += 1
+                    self.log_warning(str(e))
+                    if not _import_images_not_found:
+                        _import_images_not_found = True
+                if not image_data:
+                    step += 1
+                    self.progressBar.setValue(step)
+                    QApplication.processEvents()
+                    continue
+                final_image_path: Path = file_path.with_suffix(f".{image_ext}")
+                final_image_path_exists = final_image_path.exists()
+
+                # check if existing file has embedded georeferencing
+                gdal.FileFromMemBuffer("/vsimem/temp", image_data)
+                ds: gdal.Dataset = gdal.Open("/vsimem/temp")
+                image_has_geotransform = bool(ds.GetGeoTransform(can_return_null=True))
+
+                ds = None
+                gdal.Unlink("/vsimem/temp")
+
+                worldfile_data, worldfile_ext = self.file_api.get_worldfile_data(
+                    identifier, image_ext
+                )
+                if worldfile_data and not image_has_geotransform:
+                    final_worldfile_path: Path = file_path.with_suffix(f".{worldfile_ext}")
+                    if overwrite_files or not final_worldfile_path.exists():
+                        with open(final_worldfile_path, "w") as f:
+                            f.write(worldfile_data)
+                elif import_georef_only and not image_has_geotransform:
+                    self.log_info(
+                        self.tr(
+                            "Skipping {ident}: No embedded georeferencing or world file detected."
+                        ).format(ident=identifier)
+                    )
+                    stats_images_skipped += 1
+
+                    step += 1
+                    self.progressBar.setValue(step)
+                    QApplication.processEvents()
+                    continue
+
+                if image_data:
+                    if overwrite_files or not final_image_path_exists:
+                        with open(final_image_path, "wb") as f:
+                            f.write(image_data)
+                            stats_images_written += 1
+
+                    if not overwrite_files and final_image_path_exists:
+                        stats_images_skipped += 1
+
+                    if overwrite_files and final_image_path_exists:
+                        stats_images_overwritten += 1
+
+                    if identifier not in cat_group_existing_layers.keys():
+                        raster_layer = QgsRasterLayer(str(final_image_path), identifier)
+                        raster_layer.setCrs(self.project.crs())
+
+                        md = raster_layer.metadata()
+                        md.setCategories([cat])
+
+                        raster_layer.setMetadata(md)
+
+                        if raster_layer.isValid():
+                            self.project.addMapLayer(raster_layer, False)
+                            node = cat_group.insertLayer(-1, raster_layer)
+                            # collapse raster bands
+                            node.setExpanded(False)
+                            stats_layers_added += 1
+                        else:
+                            stats_images_import_errors += 1
+                            if not _import_errors:
+                                _import_errors = True
+                    else:
+                        # get existing raster layer
+                        raster_layer = cat_group.findLayer(cat_group_existing_layers[identifier])
+                        # reload layer in case file has changed
+                        raster_layer.layer().reload()
+
+                step += 1
+                self.progressBar.setValue(step)
+                QApplication.processEvents()
+
+        log_messages = []
+        log_messages.append(
+            self.tr("Total images processed: {ip}").format(
+                ip=total_import_count,
+            )
+        )
+        log_messages.append(
+            self.tr("Images written: {iw} ({iow} overwritten)").format(
+                iw=stats_images_written, iow=stats_images_overwritten
+            )
+        )
+        log_messages.append(
+            self.tr("Images skipped: {skipped}").format(skipped=stats_images_skipped)
+        )
+        log_messages.append(
+            self.tr("Image import errors: {ec}").format(ec=stats_images_import_errors)
+        )
+        log_messages.append(self.tr("Layers added to tree: {la}").format(la=stats_layers_added))
+
+        for m in log_messages:
+            self.log_info(m)
+
+        if _import_images_not_found:
+            self.log_warning(self.tr("{nf} original image file(s) are not present in the Field image directory and therefore could not be imported.").format(nf=stats_images_not_found))
+
+        if not _import_errors:
+            msg_level = Qgis.MessageLevel.Success
+            msg_content = self.tr(
+                "Successfully processed {image_count} image(s). Check the log for more details."
+            ).format(image_count=total_import_count)
+            sb_message = self.tr("Image import successful!")
+        else:
+            msg_level = Qgis.MessageLevel.Warning
+            msg_content = self.tr(
+                "Import finished with {ec} error(s). Check the log for more details."
+            ).format(ec=stats_images_import_errors)
+            sb_message = self.tr("Image import finished with errors!")
+
+        msg = self.mB.createMessage(msg_content)
+        msg.layout().addWidget(self.create_open_logs_button(self.plugin_name))
+        self.iface.messageBar().pushWidget(msg, msg_level, 10)
+
+        self.sB.showMessage(sb_message, 10000)
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+
+    @handle_api_errors
+    def file_api_export(self, group_ref, is_group_export, *args):
+        if not self._check_connection_and_project():
+            return
+        # field_export already brings either a group reference or creates a temporary group
+        # with the selected layers
+        group: QgsLayerTreeGroup = group_ref
+
+        # sort raster layers before vector layers
+        sorted_group_layers = sorted(
+            group.findLayers(), key=lambda lyr: lyr.layer().type() != QgsMapLayerType.RasterLayer
+        )
+
+        if not sorted_group_layers:
+            # todo: message - "No raster layers selected or found"
+            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
+            return 1
+
+        self._export_running = True
+        self.progressBar.resetFormat()
+        self.show_or_hide_progress_bar()
+
+        # ui opts
+        export_worldfiles = self.chkExportWorldfiles.isChecked()
+        read_creators_from_metadata = self.chkReadCreatorsFromMetadata.isChecked()
+
+        raster_layer = None
+        step = 0
+        file_export_paths = defaultdict(list)
+        raster_count = 0  # total number of images processed
+        worldfile_count = 0
+        stats_warnings = 0
+
+        # api export result values
+        field_imported_images = 0
+        field_imported_worldfiles = 0
+        field_messages = False
+
+        # category dialog
+        locked_category = None
+        # todo: reuse self.image_categories - categories currently expects (label, name)
+        categories = self.get_import_categories("Image")
+
+        self.projectConfig = self.api.get(f"/configuration/{self.active_project}").json()
+
+        for ltl in sorted_group_layers:
+            layer: QgsVectorLayer = ltl.layer()
+            lay_name = layer.name()
+            if layer.type() == QgsMapLayerType.RasterLayer:
+                md_categories: list = layer.metadata().categories()
+                match_cat = next((cat for label, cat in categories if cat in md_categories), None)
+                # if there is no category, make a selection box
+                if not md_categories or not match_cat:
+                    if locked_category is None:
+                        msg = QMessageBox(self)
+                        msg.setWindowTitle(self.tr("Image export"))
+                        msg.setText(
+                            self.tr(
+                                "No category found.\n\n"
+                                "Please select the category the image '{image_name}' belongs to."
+                            ).format(image_name=lay_name)
+                        )
+
+                        combo = QComboBox(msg)
+
+                        for label, data in categories:
+                            combo.addItem(label, data)
+
+                        msg.layout().addWidget(combo, 1, 1)
+
+                        use_all_btn = msg.addButton(
+                            self.tr("Use for all"), QMessageBox.ButtonRole.YesRole
+                        )
+                        use_once_btn = msg.addButton(
+                            self.tr("Use once"), QMessageBox.ButtonRole.AcceptRole
+                        )
+                        cancel_btn = msg.addButton(
+                            self.tr("Cancel export"), QMessageBox.ButtonRole.RejectRole
+                        )
+
+                        msg.exec()
+
+                        clicked = msg.clickedButton()
+                        selected_category = combo.currentData()
+
+                        if clicked == use_all_btn:
+                            category = combo.currentData()
+                            locked_category = category
+
+                        elif clicked == use_once_btn:
+                            category = selected_category
+
+                        elif clicked == cancel_btn:
+                            self._export_running = False
+                            self.show_or_hide_progress_bar()
+                            return 1
+                    # check if category in metadata and add if not
+                    md = layer.metadata()
+                    md_cats = md.categories()
+                    if category not in md_cats:
+                        md.setCategories([category, *md_cats])
+                        layer.setMetadata(md)
+                elif match_cat:
+                    category = match_cat
+                file_export_paths[category].append(layer.source())
+                raster_count += 1
+
+            # for "Selected layers" mode
+            elif not is_group_export:
+                if "_lookup" not in lay_name and layer.type() == QgsMapLayerType.VectorLayer:
+                    category = self.get_category_name_for_export(layer)
+
+                    # skip selected layer if its category is not an image category
+                    if category not in self.image_categories:
+                        continue
+
+                    selected_features = layer.selectedFeatures()
+                    if not selected_features:
+                        selected_features = layer.getFeatures()
+
+                    for f in selected_features:
+                        # todo: handle KeyError
+                        identifier = f["identifier"]
+                        # find raster layer by name - .source() always has an extension
+                        # and could add duplicate images
+                        layers_by_name = self.project.mapLayersByName(identifier)
+                        if layers_by_name:
+                            raster_layer = layers_by_name[0]
+                            raster_count += 1
+                        else:
+                            # raster layer with identifier extracted from vector layer was not found
+                            raster_count += 1
+                            stats_warnings += 1
+                            self.log_warning(
+                                self.tr(
+                                    "Raster layer {ident} not found, but was selected in layer {lyr}."
+                                ).format(ident=identifier, lyr=lay_name)
+                            )
+                            continue
+                        if raster_layer.type() == QgsMapLayerType.RasterLayer:
+                            file_export_paths[category].append(raster_layer.source())
+
+        collected_paths = {
+            k: v.copy()
+            for k, v in file_export_paths.items()
+        }
+        # find worldfiles for collected paths
+        if export_worldfiles:
+            for cat in collected_paths:
+                for file_path in collected_paths[cat]:
+                    path = Path(file_path)
+                    worldfile_candidates = self.file_api.worldfile_candidates(path)
+                    # should return None for embedded georeferenced data which need to be checked with gdal afterwards
+                    worldfile_path = next((f for f in worldfile_candidates if f.exists()), None)
+                    if worldfile_path:
+                        worldfile_count += 1
+                        file_export_paths[cat].append(str(worldfile_path))
+                    # check for geotransform with gdal and create a temp worldfile with embedded data for upload
+                    else:
+                        # read original file as bytes
+                        with open(path, "rb") as f:
+                            data = f.read()
+
+                        vsimem_path = f"/vsimem/{path.name}"
+                        gdal.FileFromMemBuffer(vsimem_path, data)
+
+                        ds: gdal.Dataset = gdal.Open(vsimem_path)
+                        gt = ds.GetGeoTransform(can_return_null=True)
+
+                        if gt:
+                            # create temporary directory
+                            tmp_dir_obj = tempfile.TemporaryDirectory()
+                            tmp_dir = Path(tmp_dir_obj.name)
+
+                            # world file must match original base name
+                            worldfile_path = tmp_dir / f"{path.stem}.wld"
+
+                            # convert GDAL corner origin to world file center origin (shift by half pixel)
+                            # example file:
+                            # 0.08819443529800908
+                            # 0
+                            # 0
+                            # -0.08819443529823931
+                            # 564714.1347972176
+                            # 5923862.159405351
+                            #
+                            # example gdal.GetGeoTransform():
+                            # (564714.0907, 0.08819443529800908, 0.0, 5923862.203502568, 0.0, -0.08819443529823931)
+                            center_x, center_y = gdal.ApplyGeoTransform(gt, 0.5, 0.5)
+
+                            # write worldfile content
+                            with open(worldfile_path, "w", encoding="utf-8") as f:
+                                f.write(
+                                    f"{gt[1]}\n"  # pixel size x
+                                    f"{gt[4]}\n"  # rotation y
+                                    f"{gt[2]}\n"  # rotation x
+                                    f"{gt[5]}\n"  # pixel size y (usually negative)
+                                    f"{center_x}\n"  # top left x (center)
+                                    f"{center_y}\n"  # top left y (center)
+                                )
+
+                            # keep reference to prevent premature cleanup
+                            self._temp_dirs.append(tmp_dir_obj)
+
+                            file_export_paths[cat].append(str(worldfile_path))
+                            worldfile_count += 1
+
+                        # cleanup GDAL memory file
+                        ds = None
+                        gdal.Unlink(vsimem_path)
+
+        # export
+        if file_export_paths:
+            collected_cat_count = len(file_export_paths.keys())
+            self.progressBar.setMaximum(collected_cat_count)
+
+            for cat in file_export_paths:
+                self.log_info(self.tr("Exporting category {cat}").format(cat=cat))
+
+                self.progressBar.setValue(step)
+                self.progressBar.setFormat(
+                    self.tr("Exporting images for category {cat} %p%").format(cat=cat)
+                )
+                QApplication.processEvents()
+
+                resp = self.file_api.post_images(
+                    file_export_paths[cat], cat, read_creators_from_metadata)
+                result = resp.json()
+
+                # todo: when could that happen?
+                if not result:
+                    self.log_info("No response for category {cat}".format(cat=cat))  # debug
+                    continue
+
+                imported_images, imported_worldfiles, messages = result.values()
+                field_imported_images += imported_images
+                field_imported_worldfiles += imported_worldfiles
+                if not field_messages and messages:
+                    field_messages = True
+                for msg in messages:
+                    self.log_info(msg)
+
+                step += 1
+                self.progressBar.setValue(step)
+                QApplication.processEvents()
+
+        # remove temporary directories that may have been created
+        self._cleanup_temp_dirs()
+        msg_level = Qgis.MessageLevel.Info
+        self._export_running = False
+        QTimer.singleShot(2000, self.show_or_hide_progress_bar)
+
+        msg_content = self.tr(
+            "Exported images: {ii}/{rc}"
+        )
+
+        if field_imported_worldfiles:
+            msg_content += self.tr(", Exported worldfiles: {iw}/{wc}")
+
+        msg_content += "."
+
+        if stats_warnings:
+            msg_level = Qgis.MessageLevel.Warning
+            msg_content += self.tr(" There have been problems during the export.")
+
+        if field_messages or stats_warnings:
+            msg_content += self.tr(" Check the {pn} logs for more information.")
+
+        msg = self.mB.createMessage(
+            msg_content.format(
+                ii=field_imported_images,
+                rc=raster_count,
+                iw=field_imported_worldfiles,
+                wc=worldfile_count,
+                pn=self.plugin_name,
+            )
+        )
+
+        if field_messages:
+            button = QPushButton(self.tr("Open Logs"))
+
+            def open_logs():
+                self.iface.openMessageLog(self.plugin_name)
+
+            button.clicked.connect(open_logs)
+            msg.layout().addWidget(button)
+
+        self.iface.messageBar().pushWidget(msg, msg_level, 10)
+
+    def file_api_open_folder_path(self):
+        path = self.project.readPath(self.fileApiDir.filePath())
+        if path:
+            webbrowser.open("file:///" + urllib.parse.quote(path, safe=":/", encoding="1252"))
+        else:
+            # todo: message
+            return
+
+    def _cleanup_temp_dirs(self):
+        for tmp in self._temp_dirs:
+            tmp.cleanup()
+
+        self._temp_dirs = []
