@@ -534,7 +534,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="2447"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2060"/>
@@ -733,7 +733,7 @@ Um das GeoPackage zu aktualisieren, müssen alle Änderungen gespeichert oder ve
     <message>
         <location filename="../field_connect_dockwidget.py" line="3207"/>
         <source>Successfully processed {image_count} image(s). Check the log for more details.</source>
-        <translation>{image_count} Bild(er) wurden erfolgreich importiert. Weitere Informationen finden Sie im Protokoll.</translation>
+        <translation>{image_count} Bild(er) wurden erfolgreich verarbeitet. Weitere Informationen finden Sie im Protokoll.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3210"/>
@@ -762,7 +762,7 @@ Um das GeoPackage zu aktualisieren, müssen alle Änderungen gespeichert oder ve
 Please select the category the image &apos;{image_name}&apos; belongs to.</source>
         <translation>Keine Kategorie gefunden.
 
-Bitte wählen Sie die Kategorie aus, zu der das Bild '{image_name}' gehört.</translation>
+Bitte wählen Sie die Kategorie aus, zu der das Bild &apos;{image_name}&apos; gehört.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3293"/>
