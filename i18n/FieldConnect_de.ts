@@ -534,7 +534,7 @@
     <message>
         <location filename="../field_connect_dockwidget.py" line="2452"/>
         <source>Selected timezone &apos;{tz}&apos; is invalid!</source>
-        <translation>Ausgewählte Zeitzone '{tz}' ist ungültig!</translation>
+        <translation>Ausgewählte Zeitzone &apos;{tz}&apos; ist ungültig!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="2065"/>
@@ -683,134 +683,136 @@ Um das GeoPackage zu aktualisieren, müssen alle Änderungen gespeichert oder ve
     <message>
         <location filename="../field_connect_dockwidget.py" line="237"/>
         <source>No folder selected!</source>
-        <translation type="unfinished"></translation>
+        <translation>Kein Verzeichnis ausgewählt!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="240"/>
         <source>The selected folder does not exist!</source>
-        <translation type="unfinished"></translation>
+        <translation>Das ausgewählte Verzeichnis existiert nicht!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3056"/>
         <source>Image import started</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilderimport gestartet</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3150"/>
         <source>Skipping {ident}: No embedded georeferencing or world file detected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Überspringe {ident}: Keine eingebettete Georeferenzierung oder World-File gefunden.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3204"/>
         <source>Total images processed: {ip}</source>
-        <translation type="unfinished"></translation>
+        <translation>Gesamtzahl der verarbeiteten Bilder: {ip}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3209"/>
         <source>Images written: {iw} ({iow} overwritten)</source>
-        <translation type="unfinished"></translation>
+        <translation>Geschriebene Bilder: {iw} ({iow} überschrieben)</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3214"/>
         <source>Images skipped: {skipped}</source>
-        <translation type="unfinished"></translation>
+        <translation>Übersprungene Bilder: {skipped}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3217"/>
         <source>Image import errors: {ec}</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler beim Bilderimport: {ec}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3220"/>
         <source>Layers added to tree: {la}</source>
-        <translation type="unfinished"></translation>
+        <translation>Zum Baum hinzugefügte Layer: {la}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3226"/>
         <source>{nf} original image file(s) are not present in the Field image directory and therefore could not be imported.</source>
-        <translation type="unfinished"></translation>
+        <translation>{nf} Original-Bilddatei(en) sind nicht im Field-Bilderverzeichnis vorhanden und konnten daher nicht importiert werden.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3234"/>
         <source>Successfully processed {image_count} image(s). Check the log for more details.</source>
-        <translation type="unfinished"></translation>
+        <translation>{image_count} Bild(er) wurden erfolgreich importiert. Weitere Informationen finden Sie im Protokoll.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3237"/>
         <source>Image import successful!</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilderimport erfolgreich!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3240"/>
         <source>Import finished with {ec} error(s). Check the log for more details.</source>
-        <translation type="unfinished"></translation>
+        <translation>Der Import wurde mit {ec} Fehler(n) abgeschlossen. Weitere Informationen finden Sie im Protokoll.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3243"/>
         <source>Image import finished with errors!</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilderimport mit Fehlern abgeschlossen!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3307"/>
         <source>Image export</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilderexport</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3308"/>
         <source>No category found.
 
 Please select the category the image &apos;{image_name}&apos; belongs to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine Kategorie gefunden.
+
+Bitte wählen Sie die Kategorie aus, zu der das Bild &apos;{image_name}&apos; gehört.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3322"/>
         <source>Use for all</source>
-        <translation type="unfinished"></translation>
+        <translation>Für alle verwenden</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3325"/>
         <source>Use once</source>
-        <translation type="unfinished"></translation>
+        <translation>Einmalig verwenden</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3328"/>
         <source>Cancel export</source>
-        <translation type="unfinished"></translation>
+        <translation>Export abbrechen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3385"/>
         <source>Raster layer {ident} not found, but was selected in layer {lyr}.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rasterlayer {ident} nicht gefunden, jedoch ausgewählt in Layer {lyr}.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3466"/>
         <source>Exporting category {cat}</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Kategorie {cat}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3469"/>
         <source>Exporting images for category {cat} %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Bilder für Kategorie {cat} %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3502"/>
         <source>Exported images: {ii}/{rc}</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportiere Bilder: {ii}/{rc}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3505"/>
         <source>, Exported worldfiles: {iw}/{wc}</source>
-        <translation type="unfinished"></translation>
+        <translation>, Exportierte World-Files: {iw}/{wc}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3511"/>
         <source> There have been problems during the export.</source>
-        <translation type="unfinished"></translation>
+        <translation> Während des Exports sind Probleme aufgetreten.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3514"/>
         <source> Check the {pn} logs for more information.</source>
-        <translation type="unfinished"></translation>
+        <translation> Bitte prüfen Sie das {pn}-Protokoll für weitere Informationen.</translation>
     </message>
 </context>
 <context>
@@ -1018,17 +1020,17 @@ Please select the category the image &apos;{image_name}&apos; belongs to.</sourc
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1193"/>
         <source>Images:</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilder:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="555"/>
         <source>Folder:</source>
-        <translation type="unfinished"></translation>
+        <translation>Verzeichnis:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="590"/>
         <source>Open folder path</source>
-        <translation type="unfinished"></translation>
+        <translation>Verzeichnispfad öffnen</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="651"/>
