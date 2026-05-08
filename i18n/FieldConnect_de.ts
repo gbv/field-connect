@@ -1050,42 +1050,42 @@ Bitte wählen Sie die Kategorie aus, zu der das Bild &apos;{image_name}&apos; ge
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="762"/>
         <source>At least one image category has to be selected in the dropdown menu &quot;Categories&quot; to be able to import images.</source>
-        <translation type="unfinished"></translation>
+        <translation>Mindestens eine Bild-Kategorie muss im Auswahlmenü &quot;Kategorien&quot; ausgewählt sein, damit Bilder importiert werden können.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="765"/>
         <source>Import images</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilder importieren</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="792"/>
         <source>Import georeferenced images only</source>
-        <translation type="unfinished"></translation>
+        <translation>Nur georeferenzierte Bilder importieren</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="819"/>
         <source>Overwrites existing images and world files. If not enabled, these files are skipped during import.</source>
-        <translation type="unfinished"></translation>
+        <translation>Überschreibt existierende Bilder und World-Files. Falls nicht aktiviert, werden diese Dateien beim Import übersprungen.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="822"/>
         <source>Overwrite existing files</source>
-        <translation type="unfinished"></translation>
+        <translation>Existierende Dateien überschreiben</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1208"/>
         <source>Export images</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilder exportieren</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1238"/>
         <source>Export world files</source>
-        <translation type="unfinished"></translation>
+        <translation>World-Files exportieren</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1268"/>
         <source>Populate field &quot;Creator&quot; from image metadata</source>
-        <translation type="unfinished"></translation>
+        <translation>Feld &quot;Bildersteller/Bilderstellerin&quot; aus Bildmetadaten befüllen</translation>
     </message>
 </context>
 </TS>
