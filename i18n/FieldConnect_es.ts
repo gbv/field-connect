@@ -683,52 +683,52 @@ Para actualizar el GeoPackage, es necesario guardar o descartar todos los cambio
     <message>
         <location filename="../field_connect_dockwidget.py" line="234"/>
         <source>No folder selected!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡No se ha seleccionado ninguna carpeta!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="237"/>
         <source>The selected folder does not exist!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡La carpeta seleccionada no existe!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3041"/>
         <source>Image import started</source>
-        <translation type="unfinished"></translation>
+        <translation>Se ha iniciado la importación de imágenes</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3123"/>
         <source>Skipping {ident}: No embedded georeferencing or world file detected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Se omite {ident}: no se ha detectado ninguna georreferencia incrustada ni ningún archivo de coordenadas globales.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3177"/>
         <source>Total images processed: {ip}</source>
-        <translation type="unfinished"></translation>
+        <translation>Total de imágenes procesadas: {ip}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3182"/>
         <source>Images written: {iw} ({iow} overwritten)</source>
-        <translation type="unfinished"></translation>
+        <translation>Imágenes grabadas: {iw} ({iow} sobrescrito)</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3187"/>
         <source>Images skipped: {skipped}</source>
-        <translation type="unfinished"></translation>
+        <translation>Imágenes omitidas: {skipped}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3190"/>
         <source>Image import errors: {ec}</source>
-        <translation type="unfinished"></translation>
+        <translation>Errores al importar imágenes: {ec}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3193"/>
         <source>Layers added to tree: {la}</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Capas añadidas al árbol: {la}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3199"/>
         <source>{nf} original image file(s) are not present in the Field image directory and therefore could not be imported.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">{nf} Los archivos de imagen originales no se encuentran en el directorio de imágenes de Field y, por lo tanto, no se han podido importar.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3207"/>
@@ -785,27 +785,27 @@ Please select the category the image &apos;{image_name}&apos; belongs to.</sourc
     <message>
         <location filename="../field_connect_dockwidget.py" line="3437"/>
         <source>Exporting category {cat}</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportando la categoría {cat}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3440"/>
         <source>Exporting images for category {cat} %p%</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportando imágenes de la categoría {cat} %p%</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3473"/>
         <source>Exported images: {ii}/{rc}</source>
-        <translation type="unfinished"></translation>
+        <translation>Imágenes exportadas: {ii}/{rc}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3476"/>
         <source>, Exported worldfiles: {iw}/{wc}</source>
-        <translation type="unfinished"></translation>
+        <translation>, Archivos world file exportados: {iw}/{wc}</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3482"/>
         <source> There have been problems during the export.</source>
-        <translation type="unfinished"></translation>
+        <translation> Se han producido problemas durante la exportación.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3485"/>
@@ -1038,37 +1038,37 @@ Please select the category the image &apos;{image_name}&apos; belongs to.</sourc
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="613"/>
         <source>Import images</source>
-        <translation type="unfinished"></translation>
+        <translation>Importar imágenes</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="640"/>
         <source>Import georeferenced images only</source>
-        <translation type="unfinished"></translation>
+        <translation>Importar solo imágenes georreferenciadas</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="667"/>
         <source>Overwrites existing images and world files. If not enabled, these files are skipped during import.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sobrescribe las imágenes y los archivos world file existentes. Si no está activada, estos archivos se omiten durante la importación.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="670"/>
         <source>Overwrite existing files</source>
-        <translation type="unfinished"></translation>
+        <translation>Sobrescribir los archivos existentes</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1102"/>
         <source>Export images</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportar imágenes</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1132"/>
         <source>Export world files</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportar archivos world file</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1162"/>
         <source>Populate field &quot;Creator&quot; from image metadata</source>
-        <translation type="unfinished"></translation>
+        <translation>Rellenar el campo &quot;Autor&quot; a partir de los metadatos de la imagen</translation>
     </message>
 </context>
 </TS>
