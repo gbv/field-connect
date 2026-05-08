@@ -528,9 +528,13 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # file api
         # import
         self.fileApiDirOpen.clicked.connect(self.file_api_open_folder_path)
-        self.chk_file_api_import_images.stateChanged.connect(self.file_api_import_images_checkbox_set_enabled)
+        self.chk_file_api_import_images.stateChanged.connect(
+            self.file_api_import_images_checkbox_set_enabled
+        )
         # export
-        self.chk_file_api_export_images.stateChanged.connect(self.file_api_export_images_form_set_enabled)
+        self.chk_file_api_export_images.stateChanged.connect(
+            self.file_api_export_images_form_set_enabled
+        )
 
     def closeEvent(self, event):  # noqa: N802
         self.closing_plugin.emit()
@@ -1542,10 +1546,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if cat in image_cats:
                 ignored_fields = {"height", "width", "originalFilename"}
 
-                csv_header = [
-                    field for field in csv_header
-                    if field not in ignored_fields
-                ]
+                csv_header = [field for field in csv_header if field not in ignored_fields]
 
             field_informations, valuemaps = self.collect_field_informations(cat)
             # merge without overwriting nested items
@@ -1977,7 +1978,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         f_idx = layer.fields().indexFromName(fname)
                         split = fname.split(".")  # dating 0 begin inputType
                         # print(split)
-                        input_type = safe_get(field_informations, split[0], "inputType", default="")
+                        input_type = safe_get(
+                            field_informations, split[0], "inputType", default=""
+                        )
                         sub_type = None
 
                         date_config = safe_get(
@@ -2005,7 +2008,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             if (
                                 len(part) == 2 or part == "unspecifiedLanguage"
                             ) and part in field_informations:
-                                parts.append(safe_get(field_informations, part, "label", default=part))
+                                parts.append(
+                                    safe_get(field_informations, part, "label", default=part)
+                                )
                                 paths.append(part)
                                 continue
 
@@ -2037,7 +2042,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     )
                                 )
                             else:
-                                look_up = safe_get(field_informations, *paths, "label", default=part)
+                                look_up = safe_get(
+                                    field_informations, *paths, "label", default=part
+                                )
 
                                 # look for composite field translation by its nested input_type (sub_type)
                                 if sub_type and look_up == part:
@@ -2197,17 +2204,23 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 )
                         elif input_type == "volume":
                             if "inputUnit" in split:
-                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":volInputUnit"])
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap", valuemaps[":volInputUnit"]
+                                )
                             elif "isImprecise" in split:
                                 setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
                         elif input_type == "weight":
                             if "inputUnit" in split:
-                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":weightInputUnit"])
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap", valuemaps[":weightInputUnit"]
+                                )
                             elif "isImprecise" in split:
                                 setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
                         elif input_type == "dimension":
                             if "inputUnit" in split:
-                                setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":dimInputUnit"])
+                                setup = QgsEditorWidgetSetup(
+                                    "ValueMap", valuemaps[":dimInputUnit"]
+                                )
                             if "isImprecise" in split:
                                 setup = QgsEditorWidgetSetup("ValueMap", valuemaps[":boolean"])
 
@@ -2233,7 +2246,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         }
 
                         for base, sub in lup.items():
-                            if base in valuemaps and base in split and any(s in split for s in sub):
+                            if (
+                                base in valuemaps
+                                and base in split
+                                and any(s in split for s in sub)
+                            ):
                                 setup = QgsEditorWidgetSetup("ValueMap", valuemaps[base])
                                 layer.setEditorWidgetSetup(f_idx, setup)
                                 break
@@ -3206,7 +3223,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.log_info(m)
 
         if _import_images_not_found:
-            self.log_warning(self.tr("{nf} original image file(s) are not present in the Field image directory and therefore could not be imported.").format(nf=stats_images_not_found))
+            self.log_warning(
+                self.tr(
+                    "{nf} original image file(s) are not present in the Field image directory and therefore could not be imported."
+                ).format(nf=stats_images_not_found)
+            )
 
         if not _import_errors:
             msg_level = Qgis.MessageLevel.Success
@@ -3370,10 +3391,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         if raster_layer.type() == QgsMapLayerType.RasterLayer:
                             file_export_paths[category].append(raster_layer.source())
 
-        collected_paths = {
-            k: v.copy()
-            for k, v in file_export_paths.items()
-        }
+        collected_paths = {k: v.copy() for k, v in file_export_paths.items()}
         # find worldfiles for collected paths
         if export_worldfiles:
             for cat in collected_paths:
@@ -3454,7 +3472,8 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QApplication.processEvents()
 
                 resp = self.file_api.post_images(
-                    file_export_paths[cat], cat, read_creators_from_metadata)
+                    file_export_paths[cat], cat, read_creators_from_metadata
+                )
                 result = resp.json()
 
                 # todo: when could that happen?
@@ -3480,9 +3499,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self._export_running = False
         QTimer.singleShot(2000, self.show_or_hide_progress_bar)
 
-        msg_content = self.tr(
-            "Exported images: {ii}/{rc}"
-        )
+        msg_content = self.tr("Exported images: {ii}/{rc}")
 
         if field_imported_worldfiles:
             msg_content += self.tr(", Exported worldfiles: {iw}/{wc}")
