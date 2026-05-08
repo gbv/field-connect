@@ -176,9 +176,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.labelServerAddress.hide()
         self.lineEditServerAddress.hide()
         self.progressBar.hide()
-        # hide file import mode selector for getting images from vector layers/features
-        # for a possible implementation in the future
-        self.widget_2.hide()
 
         self.plugin_name = "Field Connect"
         self.plugin_dir = plugin_dir
@@ -1194,8 +1191,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # file api options
         self.fileApiDir.setEnabled(on_off)
         self.fileApiDirOpen.setEnabled(on_off)
-        self.fileApiImportAll.setEnabled(on_off)
-        self.fileApiImportLayers.setEnabled(on_off)
         self.chk_file_api_export_images.setEnabled(on_off)
         if self.chk_file_api_export_images.isChecked():
             self.chkExportWorldfiles.setEnabled(on_off)
@@ -3030,16 +3025,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     @handle_api_errors
     def file_api_import(self, group_ref, image_folder, image_cats: dict, *args):
-        if not self._check_connection_and_project():
-            return
-        # todo: layers are unselected as they are recreated on import.
-        #    ?:  remove option to import from selected layers anyway?
-        layers: list[QgsVectorLayer] = self.iface.layerTreeView().selectedLayers()
-        import_from_layers = self.fileApiImportLayers.isChecked()
-        if import_from_layers and not layers:
-            self.mB.pushInfo(self.plugin_name, self.labels["INFO_NO_LAYER_SELECTED"])
-            return
-
         folder = image_folder
 
         self.progressBar.resetFormat()
@@ -3067,23 +3052,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         group: QgsLayerTreeGroup = group_ref
         group_layer_count = len(group.findLayers())
 
-        # import from selected vector layers/features
-        if import_from_layers:
-            # get list of identifiers from csv export or selected layers
-            for layer in layers:
-                selected_features = layer.selectedFeatures()
-                if not selected_features:
-                    selected_features = layer.getFeatures()
-                category = self.get_category_name_for_export(layer)
-                ids = [feature["identifier"] for feature in selected_features]
-
-                import_list[category] = ids
         # import all from image and subcategories csv export
-        else:
-            for cat_name, label in image_cats.items():
-                csv_reader = self.get_category_csv(cat_name)
-                ids = [row["identifier"] for row in csv_reader]
-                import_list[cat_name] = ids
+        for cat_name, label in image_cats.items():
+            csv_reader = self.get_category_csv(cat_name)
+            ids = [row["identifier"] for row in csv_reader]
+            import_list[cat_name] = ids
 
         # get identifier count of finished import_list
         total_import_count = sum(len(v) for v in import_list.values())
@@ -3251,8 +3224,6 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     @handle_api_errors
     def file_api_export(self, group_ref, is_group_export, *args):
-        if not self._check_connection_and_project():
-            return
         # field_export already brings either a group reference or creates a temporary group
         # with the selected layers
         group: QgsLayerTreeGroup = group_ref
