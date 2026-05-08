@@ -20,8 +20,13 @@ class FileApiClient:
         except ApiBadRequestError as e:
             message = str(e)
 
+            image_not_found_messages = [
+                "ENOENT",
+                "Could not find image",
+                "No original image file found",
+            ]
             # continue if image missing or identifier not found
-            if "ENOENT" in message or "Could not find image" in message:
+            if any(m in message for m in image_not_found_messages):
                 raise ImageNotFoundError(message)
 
             raise

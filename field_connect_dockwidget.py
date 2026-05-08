@@ -3028,6 +3028,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.progressBar.resetFormat()
         self.show_or_hide_progress_bar()
         _import_errors = False
+        _import_images_not_found = False
         step = 0
         self.progressBar.setValue(step)
         import_list = {}
@@ -3038,6 +3039,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.log_info(self.tr("Image import started"))
 
         # collect statistics
+        stats_images_not_found = 0
         stats_images_import_errors = 0
         stats_images_overwritten = 0
         stats_images_skipped = 0
@@ -3099,11 +3101,11 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 try:
                     image_data, image_ext = self.file_api.get_image_data(identifier)
                 except ImageNotFoundError as e:
+                    stats_images_not_found += 1
                     self.log_warning(str(e))
-                    if not _import_errors:
-                        _import_errors = True
+                    if not _import_images_not_found:
+                        _import_images_not_found = True
                 if not image_data:
-                    stats_images_import_errors += 1
                     step += 1
                     self.progressBar.setValue(step)
                     QApplication.processEvents()
@@ -3168,7 +3170,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             node.setExpanded(False)
                             stats_layers_added += 1
                         else:
-                            _import_errors = True
+                            stats_images_import_errors += 1
+                            if not _import_errors:
+                                _import_errors = True
                     else:
                         # get existing raster layer
                         raster_layer = cat_group.findLayer(cat_group_existing_layers[identifier])
@@ -3200,6 +3204,9 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         for m in log_messages:
             self.log_info(m)
+
+        if _import_images_not_found:
+            self.log_warning(self.tr("{nf} original image file(s) are not present in the Field image directory and therefore could not be imported.").format(nf=stats_images_not_found))
 
         if not _import_errors:
             msg_level = Qgis.MessageLevel.Success
