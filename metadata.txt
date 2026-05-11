@@ -7,7 +7,7 @@ name=Field Connect
 qgisMinimumVersion=3.40
 qgisMaximumVersion=4.99
 description=Exchange data between QGIS and Field Desktop
-version=1.0.0
+version=1.1.0
 author=Head Office of the GBV Common Library Network (VZG)
 email=oliver.zapiec@gbv.de,Thomas.Kleinke@gbv.de
 
@@ -21,7 +21,7 @@ repository=https://github.com/gbv/field-connect
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=<p>1.1.0 Add image import/export support
 
 # Tags are comma separated with spaces allowed
 tags=python,dai,field,field desktop,idai.field,archaeology
