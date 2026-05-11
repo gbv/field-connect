@@ -16,7 +16,7 @@
 
 The plugin enables the exchange of data (including image files) between a QGIS project and a Field Desktop installation running on the same computer. In this context, it can also be used to create [GeoPackage](https://www.geopackage.org) files from data recorded in Field Desktop.
 
-The user interface of Field Connect is available in German and English.
+The user interface of Field Connect is available in English, German and Spanish.
 
 ## Requirements
 

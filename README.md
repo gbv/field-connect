@@ -12,6 +12,6 @@ Please refer to the [user manual](https://gbv.github.io/field-connect/) for info
 
 ## Translations
 
-The user interface is currently available in German and English.
+The user interface is currently available in English, German and Spanish.
 
 If you'd like to provide translations for another language, please create a GitHub issue. The translation process takes place via the platform [Weblate](https://weblate.dainst.org) maintained by the DAI. 
