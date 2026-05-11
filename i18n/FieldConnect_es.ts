@@ -733,54 +733,56 @@ Para actualizar el GeoPackage, es necesario guardar o descartar todos los cambio
     <message>
         <location filename="../field_connect_dockwidget.py" line="3207"/>
         <source>Successfully processed {image_count} image(s). Check the log for more details.</source>
-        <translation type="unfinished"></translation>
+        <translation>Se han procesado correctamente {image_count} imágenes. Consulta el registro para obtener más detalles.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3210"/>
         <source>Image import successful!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡La imagen se ha importado correctamente!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3213"/>
         <source>Import finished with {ec} error(s). Check the log for more details.</source>
-        <translation type="unfinished"></translation>
+        <translation>La importación ha finalizado con {ec} errores. Consulta el registro para obtener más detalles.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3216"/>
         <source>Image import finished with errors!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡La importación de imágenes ha finalizado con errores!</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3278"/>
         <source>Image export</source>
-        <translation type="unfinished"></translation>
+        <translation>Exportación de imágenes</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3279"/>
         <source>No category found.
 
 Please select the category the image &apos;{image_name}&apos; belongs to.</source>
-        <translation type="unfinished"></translation>
+        <translation>No se ha encontrado ninguna categoría.
+
+Selecciona la categoría a la que pertenece la imagen &apos;{image_name}&apos;.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3293"/>
         <source>Use for all</source>
-        <translation type="unfinished"></translation>
+        <translation>Utilizar para todos</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3296"/>
         <source>Use once</source>
-        <translation type="unfinished"></translation>
+        <translation>Utilizar para uno</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3299"/>
         <source>Cancel export</source>
-        <translation type="unfinished"></translation>
+        <translation>Cancelar exportación</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3356"/>
         <source>Raster layer {ident} not found, but was selected in layer {lyr}.</source>
-        <translation type="unfinished"></translation>
+        <translation>No se ha encontrado la capa ráster {ident}, aunque estaba seleccionada en la capa {lyr}.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget.py" line="3437"/>
@@ -810,7 +812,7 @@ Please select the category the image &apos;{image_name}&apos; belongs to.</sourc
     <message>
         <location filename="../field_connect_dockwidget.py" line="3485"/>
         <source> Check the {pn} logs for more information.</source>
-        <translation type="unfinished"></translation>
+        <translation> Consulta los registros de {pn} para obtener más información.</translation>
     </message>
 </context>
 <context>
@@ -1018,22 +1020,22 @@ Please select the category the image &apos;{image_name}&apos; belongs to.</sourc
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="1087"/>
         <source>Images:</source>
-        <translation type="unfinished"></translation>
+        <translation>Imágenes:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="555"/>
         <source>Folder:</source>
-        <translation type="unfinished"></translation>
+        <translation>Carpeta:</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="590"/>
         <source>Open folder path</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir ruta de la carpeta</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="610"/>
         <source>At least one image category has to be selected in the dropdown menu &quot;Categories&quot; to be able to import images.</source>
-        <translation type="unfinished"></translation>
+        <translation>Para poder importar imágenes, es necesario seleccionar al menos una categoría de imágenes en el menú desplegable &quot;Categorías&quot;.</translation>
     </message>
     <message>
         <location filename="../field_connect_dockwidget_base.ui" line="613"/>
