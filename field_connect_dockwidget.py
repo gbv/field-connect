@@ -2590,7 +2590,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                 )
 
                     # todo?: precision as ui param?
-                    exporter = QgsJsonExporter(layer, precision=6)
+                    exporter = QgsJsonExporter(layer, precision=16)
                     exporter.setTransformGeometries(False)  # transforms to EPSG:4326 by default
                     exporter.setVectorLayer(layer)
 
