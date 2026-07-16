@@ -1508,8 +1508,7 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Critical, 0)
 
             self.log_error(
-                self.tr("List of layers without a field_category layer variable:"),
-                Qgis.MessageLevel.Critical,
+                self.tr("List of layers without a field_category layer variable:")
             )
             for n in group_ref_layer_names_missing_variables:
                 self.log_error(n)
@@ -1688,12 +1687,12 @@ class FieldConnectDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     self.iface.messageBar().pushWidget(msg, Qgis.MessageLevel.Warning, 0)
 
                     self.log_warning(
-                        self.tr("Duplicate identifiers found:"),
+                        self.tr("Duplicate identifiers found:")
                     )
                     for ident, entries in duplicate_ids.items():
                         layers = {layer.name() for layer, _, _ in entries}
                         self.log_warning(
-                            f"{ident} → {', '.join(layers)}",
+                            f"{ident} → {', '.join(layers)}"
                         )
 
                 # unify old and new index and get differences/transitions
